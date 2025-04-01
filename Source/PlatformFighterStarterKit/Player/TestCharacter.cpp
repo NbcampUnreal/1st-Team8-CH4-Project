@@ -1,7 +1,4 @@
-
-
-
-#include "Player/TestCharacter.h"
+#include "TestCharacter.h"
 
 // Sets default values
 ATestCharacter::ATestCharacter()
