@@ -19,13 +19,13 @@ void ABaseItem::BeginPlay()
 
 void ABaseItem::Interact_Implementation(ATestCharacter* Player)
 {
-	if (Player)
+	/*if (Player)
 	{
 		Player->PickupItem(this);
-	}
+	}*/
 }
 
-void ABaseItem::Use(APlayerCharacter* Player)
+void ABaseItem::Use(ATestCharacter* Player)
 {
 	// 기본 사용 로직, 파생 클래스에서 오버라이드
 }

@@ -11,7 +11,7 @@ enum class EItemType : uint8
 	Throwable,
 	Consumable
 };
-
+class ATestCharacter;
 UCLASS()
 class PROJECTT8_API ABaseItem : public AActor, public IInteractable
 {
@@ -19,8 +19,8 @@ class PROJECTT8_API ABaseItem : public AActor, public IInteractable
 	
 public:	
 	ABaseItem();
-	virtual void Interact_Implementation(class ATestCharacter* Player) override;
-	virtual void Use(class APlayerCharacter* Player);
+	virtual void Interact_Implementation(ATestCharacter* Player) override;
+	virtual void Use(ATestCharacter* Player);
 
 protected:
 	virtual void BeginPlay() override;
