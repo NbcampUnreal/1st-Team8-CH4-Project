@@ -1,9 +1,5 @@
+#include "TestCharacter.h"
 
-
-
-#include "Player/TestCharacter.h"
-
-// Sets default values
 ATestCharacter::ATestCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
