@@ -5,7 +5,7 @@
 #include "TestCharacter.generated.h"
 
 UCLASS()
-class PLATFORMFIGHTERSTARTERKIT_API ATestCharacter : public ACharacter
+class PROJECTT8_API ATestCharacter : public ACharacter
 {
 	GENERATED_BODY()
 

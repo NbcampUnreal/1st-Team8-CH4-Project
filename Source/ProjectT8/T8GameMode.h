@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -10,7 +8,7 @@
  * 
  */
 UCLASS()
-class PLATFORMFIGHTERSTARTERKIT_API AT8GameMode : public AGameMode
+class PROJECTT8_API AT8GameMode : public AGameMode
 {
 	GENERATED_BODY()
 	

@@ -1,12 +1,11 @@
-
-
 using UnrealBuildTool;
 
-public class PlatformFighterStarterKit : ModuleRules
+public class ProjectT8 : ModuleRules
 {
-	public PlatformFighterStarterKit(ReadOnlyTargetRules Target) : base(Target)
+	public ProjectT8(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		CppStandard = CppStandardVersion.Cpp20;
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
