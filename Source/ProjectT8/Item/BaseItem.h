@@ -32,7 +32,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EItemType ItemType;
-
-public:	
-
 };

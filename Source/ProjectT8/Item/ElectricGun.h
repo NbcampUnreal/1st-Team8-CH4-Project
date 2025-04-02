@@ -10,5 +10,4 @@ class PROJECTT8_API AElectricGun : public AGun
 
 public:
     AElectricGun();
-
 };

@@ -2,7 +2,6 @@
 #include "Components/SphereComponent.h"
 #include "Player/TestCharacter.h"
 
-// Sets default values
 AProjectile::AProjectile()
 {
     ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh"));
@@ -22,7 +21,6 @@ void AProjectile::BeginPlay()
 	Super::BeginPlay();	
 }
 
-// Called every frame
 void AProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
