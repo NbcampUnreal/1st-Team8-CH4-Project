@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "T8AIController.generated.h"
 
 class UAIPerceptionComponent;
@@ -28,4 +30,10 @@ protected:
 
 	UFUNCTION()
 	void OnTargetPerceived(AActor* ACtor, FAIStimulus Stimulus);
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	UBehaviorTree* BehaviorTreeAsset;
+
+private:
+	UBlackboardComponent* Blackboard;
 };
