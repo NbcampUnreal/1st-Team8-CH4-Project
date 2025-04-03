@@ -9,5 +9,4 @@ class PROJECTT8_API ADagger : public AMelee
 	GENERATED_BODY()
 public:
 	ADagger();
-	virtual void Attack() override;
 };
