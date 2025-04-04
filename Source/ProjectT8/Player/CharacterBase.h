@@ -30,13 +30,22 @@ class ACharacterBase : public ACharacter
 	UInputAction* JumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* SprintAction;
 public:
 	ACharacterBase();
 protected:
 	void Move(const FInputActionValue& Value);
+	void SprintStart();
+	void SprintEnd();
 protected:
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+private:
+	bool bIsRunning = false;
+	const float WalkSpeed = 150.f;
+	const float RunSpeed = 600.f;
+
 public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
