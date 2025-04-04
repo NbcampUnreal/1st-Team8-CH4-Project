@@ -12,9 +12,25 @@ class PROJECTT8_API AT8AICharacter : public ACharacter
 public:
 	AT8AICharacter();
 
-	UFUNCTION()
+	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintCallable)
 	void PerformAttackHitCheck();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float AttackCooldown = 1.0f;
+
+	bool bCanAttack = true;
+
+	FTimerHandle AttackCooldownTimer;
+
+	UFUNCTION()
+	void ResetCanAttack();
+
 protected:
-	virtual void BeginPlay() override;
+	
+
 };

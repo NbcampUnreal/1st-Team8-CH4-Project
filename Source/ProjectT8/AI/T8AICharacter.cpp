@@ -30,3 +30,8 @@ void AT8AICharacter::PerformAttackHitCheck()
 
 	DrawDebugSphere(GetWorld(), End, 50.0f, 12, FColor::Red, false, 1.0f);
 }
+
+void AT8AICharacter::ResetCanAttack()
+{
+	bCanAttack = true;
+}

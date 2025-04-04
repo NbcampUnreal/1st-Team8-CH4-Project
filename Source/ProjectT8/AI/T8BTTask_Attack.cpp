@@ -2,7 +2,7 @@
 #include "AIController.h"
 #include "GameFramework/Character.h"
 #include "Animation/AnimInstance.h"
-
+#include "AI/T8AICharacter.h"
 
 UT8BTTask_Attack::UT8BTTask_Attack()
 {
@@ -17,11 +17,30 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	ACharacter* AIPawn = Cast<ACharacter>(AICon->GetPawn());
 	if (!AIPawn) return EBTNodeResult::Failed;
 
+
 	UAnimInstance* AnimInstance = AIPawn->GetMesh()->GetAnimInstance();
-	if (AttackMontage && AnimInstance)
+	AT8AICharacter* T8Char = Cast<AT8AICharacter>(AIPawn);
+
+	if (T8Char && T8Char->AttackMontage && AnimInstance)
 	{
-		AnimInstance->Montage_Play(AttackMontage);
+		if (!T8Char->bCanAttack)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Attack on cooldown."));
+			return EBTNodeResult::Failed;
+		}
+
+		T8Char->bCanAttack = false;
+
+		AnimInstance->Montage_Play(T8Char->AttackMontage);
 		UE_LOG(LogTemp, Warning, TEXT("AI is attacking."));
+
+		T8Char->GetWorldTimerManager().SetTimer(
+			T8Char->AttackCooldownTimer,
+			T8Char,
+			&AT8AICharacter::ResetCanAttack,
+			T8Char->AttackCooldown,
+			false
+		);
 	}
 	else
 	{
