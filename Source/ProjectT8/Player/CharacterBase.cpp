@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "TP_ThirdPersonCharacter.h"
+#include "CharacterBase.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -13,10 +13,7 @@
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
-//////////////////////////////////////////////////////////////////////////
-// ATP_ThirdPersonCharacter
-
-ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter()
+ACharacterBase::ACharacterBase()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -57,7 +54,7 @@ ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter()
 //////////////////////////////////////////////////////////////////////////
 // Input
 
-void ATP_ThirdPersonCharacter::NotifyControllerChanged()
+void ACharacterBase::NotifyControllerChanged()
 {
 	Super::NotifyControllerChanged();
 
@@ -71,7 +68,7 @@ void ATP_ThirdPersonCharacter::NotifyControllerChanged()
 	}
 }
 
-void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
@@ -81,10 +78,10 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* Player
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATP_ThirdPersonCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACharacterBase::Move);
 
 		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATP_ThirdPersonCharacter::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACharacterBase::Look);
 	}
 	else
 	{
@@ -92,7 +89,7 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* Player
 	}
 }
 
-void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
+void ACharacterBase::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -115,7 +112,7 @@ void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
 	}
 }
 
-void ATP_ThirdPersonCharacter::Look(const FInputActionValue& Value)
+void ACharacterBase::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();

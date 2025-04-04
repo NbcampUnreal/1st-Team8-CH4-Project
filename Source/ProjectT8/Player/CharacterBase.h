@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
-#include "TP_ThirdPersonCharacter.generated.h"
+#include "CharacterBase.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -16,7 +16,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ATP_ThirdPersonCharacter : public ACharacter
+class ACharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -45,7 +45,7 @@ class ATP_ThirdPersonCharacter : public ACharacter
 	UInputAction* LookAction;
 
 public:
-	ATP_ThirdPersonCharacter();
+	ACharacterBase();
 	
 
 protected:
