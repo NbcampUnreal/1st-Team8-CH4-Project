@@ -2,7 +2,9 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Engine/Engine.h"
-#include "TimerManager.h" // 타이머 관련
+#include "TimerManager.h"
+
+static const FName SESSION_SEARCH_KEYWORDS(TEXT("SEARCH_KEYWORDS"));
 
 // 디버그용 출력 함수
 void PrintString(FString String)
@@ -50,46 +52,132 @@ void UMultiplayerSessionsSubsystem::Deinitialize()
 // Quick Match 버튼을 눌렀을 때 호출
 void UMultiplayerSessionsSubsystem::QuickMatch()
 {
-    // TODO: 현재 Quick Match 세션 검색 후,
-    //       있으면 해당 세션에 참가, 없으면 랜덤 맵/모드로 새 세션 생성
-    PrintString("QuickMatch: 기능 구현 필요");
+    if (!SessionInterface.IsValid())
+    {
+        PrintString("QuickMatch: SessionInterface가 유효하지 않습니다.");
+        return;
+    }
+
+    // 세션 검색 객체 생성 및 설정
+    SessionSearch = MakeShareable(new FOnlineSessionSearch());
+    SessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL";
+    SessionSearch->MaxSearchResults = 100;
+
+    // "QuickMatch" 키워드로 세션을 필터링
+    SessionSearch->QuerySettings.Set(SESSION_SEARCH_KEYWORDS, FString("QuickMatch"), EOnlineComparisonOp::Equals);
+
+    PrintString("QuickMatch: 세션 검색 중...");
+    SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
 // 세션 검색 완료 delegate (Quick Match용)
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
-    // TODO: 검색 결과 처리 후,
-    //       Quick Match 세션이 있으면 Join, 없으면 CreateQuickMatchSession 호출
-    PrintString("OnFindSessionsComplete: 기능 구현 필요");
+    if (bWasSuccessful && SessionSearch.IsValid())
+    {
+        bool bFoundSession = false;
+        for (const FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
+        {
+            FString FoundKeyword;
+            if (SearchResult.Session.SessionSettings.Get(SESSION_SEARCH_KEYWORDS, FoundKeyword) && FoundKeyword == "QuickMatch")
+            {
+                bFoundSession = true;
+                PrintString("QuickMatch: 기존 세션 발견. 세션 참가 진행...");
+                SessionInterface->JoinSession(0, FName("QuickMatchSession"), SearchResult);
+                break;
+            }
+        }
+
+        if (!bFoundSession)
+        {
+            PrintString("QuickMatch: 세션을 찾지 못했습니다. 새 세션 생성...");
+            CreateQuickMatchSession();
+        }
+    }
+    else
+    {
+        PrintString("QuickMatch: 세션 검색 실패. CreateQuickMatchSession 호출 안 됨.");
+    }
 }
 
 // 새로운 Quick Match 세션 생성
 void UMultiplayerSessionsSubsystem::CreateQuickMatchSession()
 {
-    // TODO: 랜덤 맵과 랜덤 모드를 선택하여 Quick Match 세션 생성
-    PrintString("CreateQuickMatchSession: 기능 구현 필요");
+    if (!SessionInterface.IsValid())
+    {
+        PrintString("QuickMatch: SessionInterface가 유효하지 않습니다.");
+        return;
+    }
+
+    FName SessionName("QuickMatchSession");
+    FOnlineSessionSettings SessionSettings;
+    SessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL";
+    SessionSettings.NumPublicConnections = 4; // 예: 2vs2 모드 -> 4명
+    SessionSettings.bShouldAdvertise = true;
+    SessionSettings.bUsesPresence = true;
+    SessionSettings.bAllowJoinInProgress = true;
+
+    // QuickMatch임을 나타내는 키워드 설정
+    SessionSettings.Set(SESSION_SEARCH_KEYWORDS, FString("QuickMatch"), EOnlineDataAdvertisementType::ViaOnlineService);
+
+    // 랜덤 맵 및 게임 모드 선택
+    FString SelectedMap = GetRandomMap();
+    FString SelectedMode = GetRandomMode();
+    SessionSettings.Set(FName("MapName"), SelectedMap, EOnlineDataAdvertisementType::ViaOnlineService);
+    SessionSettings.Set(FName("GameMode"), SelectedMode, EOnlineDataAdvertisementType::ViaOnlineService);
+
+    PrintString(FString::Printf(TEXT("QuickMatch: 세션 생성 - 맵: %s, 모드: %s"), *SelectedMap, *SelectedMode));
+    SessionInterface->CreateSession(0, SessionName, SessionSettings);
 }
 
 // 세션 생성 완료 delegate (Quick Match 또는 다른 세션용)
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
-    // TODO: 세션 생성 성공 여부에 따른 후속 처리
-    // 예를 들어, Quick Match의 경우 필요한 인원이 모이면 OnQuickMatchReady 호출
-    PrintString("OnCreateSessionComplete: 기능 구현 필요");
-    
-    // 예시: Quick Match 세션에서 모든 플레이어가 모였다고 가정
-    if (SessionName == FName("QuickMatchSession") && bWasSuccessful)
+    if (bWasSuccessful)
     {
-        // TODO: 실제 플레이어 수 체크 후 조건 만족 시 호출하도록 수정
-        OnQuickMatchReady();
+        PrintString("QuickMatch: 세션 생성 성공.");
+        if (SessionName == FName("QuickMatchSession"))
+        {
+            // 실제 환경에서는 플레이어 조인 이벤트로 플레이어 수를 체크해야 함
+            int32 CurrentPlayers = GetCurrentPlayerCount();
+            int32 RequiredPlayers = 4;
+
+            if (CurrentPlayers >= RequiredPlayers)
+            {
+                OnQuickMatchReady();
+            }
+            else
+            {
+                PrintString("QuickMatch: 세션 생성됨. 추가 플레이어 대기 중...");
+            }
+        }
+    }
+    else
+    {
+        PrintString("QuickMatch: 세션 생성 실패.");
     }
 }
 
 // 세션 참가 완료 delegate
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-    // TODO: 참가 완료 후 클라이언트 이동 처리(ClientTravel 등)
-    PrintString("OnJoinSessionComplete: 기능 구현 필요");
+    if (SessionInterface.IsValid())
+    {
+        FString ConnectString;
+        if (SessionInterface->GetResolvedConnectString(SessionName, ConnectString))
+        {
+            PrintString("QuickMatch: 세션 참가 성공.");
+            APlayerController* PC = GetWorld()->GetFirstPlayerController();
+            if (PC)
+            {
+                PC->ClientTravel(ConnectString, TRAVEL_Absolute);
+            }
+        }
+        else
+        {
+            PrintString("QuickMatch: 세션 참가 후 접속 문자열 획득 실패.");
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -101,7 +189,7 @@ void UMultiplayerSessionsSubsystem::OnQuickMatchReady()
 {
     // 게임 시작 알림 출력
     PrintString("모든 플레이어가 모였습니다! 게임 시작 5초 후 레벨 이동합니다.");
-    
+
     // 5초 후 게임 레벨로 이동하는 타이머 설정
     FTimerHandle TimerHandle;
     if (GetWorld())
@@ -113,10 +201,12 @@ void UMultiplayerSessionsSubsystem::OnQuickMatchReady()
 // 타이머가 만료되면 게임 레벨로 이동
 void UMultiplayerSessionsSubsystem::TravelToGameLevel()
 {
-    // TODO: 실제 게임 레벨 이름(예: 랜덤으로 선택된 맵)을 적용
+    // 세션 생성 시 설정한 맵 이름을 사용할 수도 있음. 여기서는 예시로 고정된 경로 사용.
+    FString GameMap = "/Game/Maps/GameMap";
     if (GetWorld())
     {
-        GetWorld()->ServerTravel("/Game/Maps/GameMap?listen");
+        PrintString("QuickMatch: 게임 레벨로 이동합니다.");
+        GetWorld()->ServerTravel(GameMap + "?listen");
     }
 }
 

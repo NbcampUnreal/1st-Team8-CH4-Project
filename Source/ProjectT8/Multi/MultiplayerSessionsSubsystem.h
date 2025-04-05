@@ -18,6 +18,13 @@ class PROJECTT8_API UMultiplayerSessionsSubsystem : public UGameInstanceSubsyste
 public:
 	UMultiplayerSessionsSubsystem();
 
+
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+
+
+
+
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	void Deinitialize() override;
 
