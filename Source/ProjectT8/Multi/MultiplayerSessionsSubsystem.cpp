@@ -35,9 +35,9 @@ void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collect
         if (SessionInterface.IsValid())
         {
             // 세션 생성, 검색, 참가 delegate 바인딩
-            SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateSessionComplete);
-            SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnFindSessionsComplete);
-            SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnJoinSessionComplete);
+            SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateQuickSessionComplete);
+            SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnFindQuickSessionsComplete);
+            SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnJoinQuickSessionComplete);
         }
     }
 }
@@ -73,7 +73,7 @@ void UMultiplayerSessionsSubsystem::QuickMatch()
 }
 
 // 세션 검색 완료 delegate (Quick Match용)
-void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
+void UMultiplayerSessionsSubsystem::OnFindQuickSessionsComplete(bool bWasSuccessful)
 {
     if (bWasSuccessful && SessionSearch.IsValid())
     {
@@ -98,7 +98,7 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
     }
     else
     {
-        PrintString("QuickMatch: 세션 검색 실패. CreateQuickMatchSession 호출 안 됨.");
+        PrintString("QuickMatch: 세션 검색 실패. CreateQuickMatchSession 호출 안 함.");
     }
 }
 
@@ -114,7 +114,14 @@ void UMultiplayerSessionsSubsystem::CreateQuickMatchSession()
     FName SessionName("QuickMatchSession");
     FOnlineSessionSettings SessionSettings;
     SessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL";
-    SessionSettings.NumPublicConnections = 4; // 예: 2vs2 모드 -> 4명
+
+    FGameModeData SelectedModeData = GetRandomMode();
+    FString SelectedMap = GetRandomMap();
+
+    QuickMatchSelectedMap = SelectedMap;
+    QuickMatchRequiredPlayers = SelectedModeData.RequiredPlayers;
+
+    SessionSettings.NumPublicConnections = SelectedModeData.RequiredPlayers; // 예: 2vs2 모드 -> 4명
     SessionSettings.bShouldAdvertise = true;
     SessionSettings.bUsesPresence = true;
     SessionSettings.bAllowJoinInProgress = true;
@@ -122,18 +129,15 @@ void UMultiplayerSessionsSubsystem::CreateQuickMatchSession()
     // QuickMatch임을 나타내는 키워드 설정
     SessionSettings.Set(SESSION_SEARCH_KEYWORDS, FString("QuickMatch"), EOnlineDataAdvertisementType::ViaOnlineService);
 
-    // 랜덤 맵 및 게임 모드 선택
-    FString SelectedMap = GetRandomMap();
-    FString SelectedMode = GetRandomMode();
     SessionSettings.Set(FName("MapName"), SelectedMap, EOnlineDataAdvertisementType::ViaOnlineService);
-    SessionSettings.Set(FName("GameMode"), SelectedMode, EOnlineDataAdvertisementType::ViaOnlineService);
+    SessionSettings.Set(FName("GameMode"), SelectedModeData.ModeName, EOnlineDataAdvertisementType::ViaOnlineService);
 
-    PrintString(FString::Printf(TEXT("QuickMatch: 세션 생성 - 맵: %s, 모드: %s"), *SelectedMap, *SelectedMode));
+    PrintString(FString::Printf(TEXT("QuickMatch: 세션 생성 - 맵: %s, 모드: %s, 인원: %d"), *SelectedMap, *SelectedModeData.ModeName, SelectedModeData.RequiredPlayers));
     SessionInterface->CreateSession(0, SessionName, SessionSettings);
 }
 
 // 세션 생성 완료 delegate (Quick Match 또는 다른 세션용)
-void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+void UMultiplayerSessionsSubsystem::OnCreateQuickSessionComplete(FName SessionName, bool bWasSuccessful)
 {
     if (bWasSuccessful)
     {
@@ -161,7 +165,7 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 }
 
 // 세션 참가 완료 delegate
-void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+void UMultiplayerSessionsSubsystem::OnJoinQuickSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
     if (SessionInterface.IsValid())
     {
@@ -203,8 +207,8 @@ void UMultiplayerSessionsSubsystem::OnQuickMatchReady()
 // 타이머가 만료되면 게임 레벨로 이동
 void UMultiplayerSessionsSubsystem::TravelToGameLevel()
 {
-    // 세션 생성 시 설정한 맵 이름을 사용할 수도 있음. 여기서는 예시로 고정된 경로 사용.
-    FString GameMap = "/Game/Maps/GameMap";
+    FString GameMap = QuickMatchSelectedMap.IsEmpty() ? "/Game/PlatformFighterKit/Maps/Levels/DefaultLevel" : QuickMatchSelectedMap;
+
     if (GetWorld())
     {
         PrintString("QuickMatch: 게임 레벨로 이동합니다.");
@@ -298,10 +302,18 @@ FString UMultiplayerSessionsSubsystem::GetRandomMap()
     }
 }
 
-FString UMultiplayerSessionsSubsystem::GetRandomMode()
+FGameModeData UMultiplayerSessionsSubsystem::GetRandomMode()
 {
-    // TODO: 랜덤 모드 선택 로직 (예: "2vs2", "Solo", "AIMatch" 등)
-    return FString("RandomMode");
+    TArray<FGameModeData> Modes;
+
+    Modes.Add({ "2vs2vs2", 6 });
+    Modes.Add({ "3vs3", 6 });
+    Modes.Add({ "Solo", 4 });
+    Modes.Add({ "2Human_vs_2AI", 2 });
+    Modes.Add({ "1v1vAIvAI", 2 });
+
+    int32 RandomIndex = FMath::RandRange(0, Modes.Num() - 1);
+    return Modes[RandomIndex];
 }
 
 int32 UMultiplayerSessionsSubsystem::GetCurrentPlayerCount()
