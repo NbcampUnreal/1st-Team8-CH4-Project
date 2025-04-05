@@ -144,17 +144,10 @@ void UMultiplayerSessionsSubsystem::OnCreateQuickSessionComplete(FName SessionNa
         PrintString("QuickMatch: 세션 생성 성공.");
         if (SessionName == FName("QuickMatchSession"))
         {
-            // 실제 환경에서는 플레이어 조인 이벤트로 플레이어 수를 체크해야 함
-            int32 CurrentPlayers = GetCurrentPlayerCount();
-            int32 RequiredPlayers = 4;
-
-            if (CurrentPlayers >= RequiredPlayers)
+            // 기존 즉시 체크 대신 폴링 타이머를 시작
+            if (GetWorld())
             {
-                OnQuickMatchReady();
-            }
-            else
-            {
-                PrintString("QuickMatch: 세션 생성됨. 추가 플레이어 대기 중...");
+                GetWorld()->GetTimerManager().SetTimer(QuickMatchPollTimerHandle, this, &UMultiplayerSessionsSubsystem::PollQuickMatchPlayerCount, 1.f, true);
             }
         }
     }
@@ -320,4 +313,17 @@ int32 UMultiplayerSessionsSubsystem::GetCurrentPlayerCount()
 {
     // TODO: 현재 접속 플레이어 수 반환 로직 구현
     return 0;
+}
+
+void UMultiplayerSessionsSubsystem::PollQuickMatchPlayerCount()
+{
+    int32 CurrentPlayers = GetCurrentPlayerCount();
+    if (CurrentPlayers >= QuickMatchRequiredPlayers)
+    {
+        if (GetWorld())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(QuickMatchPollTimerHandle);
+        }
+        OnQuickMatchReady();
+    }
 }
