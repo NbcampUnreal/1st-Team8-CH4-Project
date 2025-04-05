@@ -1,12 +1,14 @@
-#include "Multi/MultiplayerSessionsSubsystem.h"
+ï»¿#include "Multi/MultiplayerSessionsSubsystem.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Engine/Engine.h"
 #include "TimerManager.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistry/IAssetRegistry.h"
 
 static const FName SESSION_SEARCH_KEYWORDS(TEXT("SEARCH_KEYWORDS"));
 
-// µğ¹ö±×¿ë Ãâ·Â ÇÔ¼ö
+// ë””ë²„ê·¸ìš© ì¶œë ¥ í•¨ìˆ˜
 void PrintString(FString String)
 {
     if (GEngine)
@@ -16,7 +18,7 @@ void PrintString(FString String)
 }
 
 //////////////////////////////////////////////////////////////////////////
-// »ı¼ºÀÚ, ÃÊ±âÈ­, ÇØÁ¦
+// ìƒì„±ì, ì´ˆê¸°í™”, í•´ì œ
 //////////////////////////////////////////////////////////////////////////
 
 UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
@@ -25,14 +27,14 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 
 void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-    // OnlineSubsystem°ú SessionInterface ÃÊ±âÈ­ ¹× delegate ¹ÙÀÎµù
+    // OnlineSubsystemê³¼ SessionInterface ì´ˆê¸°í™” ë° delegate ë°”ì¸ë”©
     IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
     if (OnlineSubsystem)
     {
         SessionInterface = OnlineSubsystem->GetSessionInterface();
         if (SessionInterface.IsValid())
         {
-            // ¼¼¼Ç »ı¼º, °Ë»ö, Âü°¡ delegate ¹ÙÀÎµù
+            // ì„¸ì…˜ ìƒì„±, ê²€ìƒ‰, ì°¸ê°€ delegate ë°”ì¸ë”©
             SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateSessionComplete);
             SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnFindSessionsComplete);
             SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnJoinSessionComplete);
@@ -42,35 +44,35 @@ void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collect
 
 void UMultiplayerSessionsSubsystem::Deinitialize()
 {
-    // TODO: ÇÊ¿äÇÑ Á¤¸® ÄÚµå
+    // TODO: í•„ìš”í•œ ì •ë¦¬ ì½”ë“œ
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Quick Match °ü·Ã ±â´É
+// Quick Match ê´€ë ¨ ê¸°ëŠ¥
 //////////////////////////////////////////////////////////////////////////
 
-// Quick Match ¹öÆ°À» ´­·¶À» ¶§ È£Ãâ
+// Quick Match ë²„íŠ¼ì„ ëˆŒë €ì„ ë•Œ í˜¸ì¶œ
 void UMultiplayerSessionsSubsystem::QuickMatch()
 {
     if (!SessionInterface.IsValid())
     {
-        PrintString("QuickMatch: SessionInterface°¡ À¯È¿ÇÏÁö ¾Ê½À´Ï´Ù.");
+        PrintString("QuickMatch: SessionInterfaceê°€ ìœ íš¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
         return;
     }
 
-    // ¼¼¼Ç °Ë»ö °´Ã¼ »ı¼º ¹× ¼³Á¤
+    // ì„¸ì…˜ ê²€ìƒ‰ ê°ì²´ ìƒì„± ë° ì„¤ì •
     SessionSearch = MakeShareable(new FOnlineSessionSearch());
     SessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL";
     SessionSearch->MaxSearchResults = 100;
 
-    // "QuickMatch" Å°¿öµå·Î ¼¼¼ÇÀ» ÇÊÅÍ¸µ
+    // "QuickMatch" í‚¤ì›Œë“œë¡œ ì„¸ì…˜ì„ í•„í„°ë§
     SessionSearch->QuerySettings.Set(SESSION_SEARCH_KEYWORDS, FString("QuickMatch"), EOnlineComparisonOp::Equals);
 
-    PrintString("QuickMatch: ¼¼¼Ç °Ë»ö Áß...");
+    PrintString("QuickMatch: ì„¸ì…˜ ê²€ìƒ‰ ì¤‘...");
     SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
-// ¼¼¼Ç °Ë»ö ¿Ï·á delegate (Quick Match¿ë)
+// ì„¸ì…˜ ê²€ìƒ‰ ì™„ë£Œ delegate (Quick Matchìš©)
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
     if (bWasSuccessful && SessionSearch.IsValid())
@@ -82,7 +84,7 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
             if (SearchResult.Session.SessionSettings.Get(SESSION_SEARCH_KEYWORDS, FoundKeyword) && FoundKeyword == "QuickMatch")
             {
                 bFoundSession = true;
-                PrintString("QuickMatch: ±âÁ¸ ¼¼¼Ç ¹ß°ß. ¼¼¼Ç Âü°¡ ÁøÇà...");
+                PrintString("QuickMatch: ê¸°ì¡´ ì„¸ì…˜ ë°œê²¬. ì„¸ì…˜ ì°¸ê°€ ì§„í–‰...");
                 SessionInterface->JoinSession(0, FName("QuickMatchSession"), SearchResult);
                 break;
             }
@@ -90,55 +92,55 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 
         if (!bFoundSession)
         {
-            PrintString("QuickMatch: ¼¼¼ÇÀ» Ã£Áö ¸øÇß½À´Ï´Ù. »õ ¼¼¼Ç »ı¼º...");
+            PrintString("QuickMatch: ì„¸ì…˜ì„ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ìƒˆ ì„¸ì…˜ ìƒì„±...");
             CreateQuickMatchSession();
         }
     }
     else
     {
-        PrintString("QuickMatch: ¼¼¼Ç °Ë»ö ½ÇÆĞ. CreateQuickMatchSession È£Ãâ ¾È µÊ.");
+        PrintString("QuickMatch: ì„¸ì…˜ ê²€ìƒ‰ ì‹¤íŒ¨. CreateQuickMatchSession í˜¸ì¶œ ì•ˆ ë¨.");
     }
 }
 
-// »õ·Î¿î Quick Match ¼¼¼Ç »ı¼º
+// ìƒˆë¡œìš´ Quick Match ì„¸ì…˜ ìƒì„±
 void UMultiplayerSessionsSubsystem::CreateQuickMatchSession()
 {
     if (!SessionInterface.IsValid())
     {
-        PrintString("QuickMatch: SessionInterface°¡ À¯È¿ÇÏÁö ¾Ê½À´Ï´Ù.");
+        PrintString("QuickMatch: SessionInterfaceê°€ ìœ íš¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
         return;
     }
 
     FName SessionName("QuickMatchSession");
     FOnlineSessionSettings SessionSettings;
     SessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL";
-    SessionSettings.NumPublicConnections = 4; // ¿¹: 2vs2 ¸ğµå -> 4¸í
+    SessionSettings.NumPublicConnections = 4; // ì˜ˆ: 2vs2 ëª¨ë“œ -> 4ëª…
     SessionSettings.bShouldAdvertise = true;
     SessionSettings.bUsesPresence = true;
     SessionSettings.bAllowJoinInProgress = true;
 
-    // QuickMatchÀÓÀ» ³ªÅ¸³»´Â Å°¿öµå ¼³Á¤
+    // QuickMatchì„ì„ ë‚˜íƒ€ë‚´ëŠ” í‚¤ì›Œë“œ ì„¤ì •
     SessionSettings.Set(SESSION_SEARCH_KEYWORDS, FString("QuickMatch"), EOnlineDataAdvertisementType::ViaOnlineService);
 
-    // ·£´ı ¸Ê ¹× °ÔÀÓ ¸ğµå ¼±ÅÃ
+    // ëœë¤ ë§µ ë° ê²Œì„ ëª¨ë“œ ì„ íƒ
     FString SelectedMap = GetRandomMap();
     FString SelectedMode = GetRandomMode();
     SessionSettings.Set(FName("MapName"), SelectedMap, EOnlineDataAdvertisementType::ViaOnlineService);
     SessionSettings.Set(FName("GameMode"), SelectedMode, EOnlineDataAdvertisementType::ViaOnlineService);
 
-    PrintString(FString::Printf(TEXT("QuickMatch: ¼¼¼Ç »ı¼º - ¸Ê: %s, ¸ğµå: %s"), *SelectedMap, *SelectedMode));
+    PrintString(FString::Printf(TEXT("QuickMatch: ì„¸ì…˜ ìƒì„± - ë§µ: %s, ëª¨ë“œ: %s"), *SelectedMap, *SelectedMode));
     SessionInterface->CreateSession(0, SessionName, SessionSettings);
 }
 
-// ¼¼¼Ç »ı¼º ¿Ï·á delegate (Quick Match ¶Ç´Â ´Ù¸¥ ¼¼¼Ç¿ë)
+// ì„¸ì…˜ ìƒì„± ì™„ë£Œ delegate (Quick Match ë˜ëŠ” ë‹¤ë¥¸ ì„¸ì…˜ìš©)
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
     if (bWasSuccessful)
     {
-        PrintString("QuickMatch: ¼¼¼Ç »ı¼º ¼º°ø.");
+        PrintString("QuickMatch: ì„¸ì…˜ ìƒì„± ì„±ê³µ.");
         if (SessionName == FName("QuickMatchSession"))
         {
-            // ½ÇÁ¦ È¯°æ¿¡¼­´Â ÇÃ·¹ÀÌ¾î Á¶ÀÎ ÀÌº¥Æ®·Î ÇÃ·¹ÀÌ¾î ¼ö¸¦ Ã¼Å©ÇØ¾ß ÇÔ
+            // ì‹¤ì œ í™˜ê²½ì—ì„œëŠ” í”Œë ˆì´ì–´ ì¡°ì¸ ì´ë²¤íŠ¸ë¡œ í”Œë ˆì´ì–´ ìˆ˜ë¥¼ ì²´í¬í•´ì•¼ í•¨
             int32 CurrentPlayers = GetCurrentPlayerCount();
             int32 RequiredPlayers = 4;
 
@@ -148,17 +150,17 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
             }
             else
             {
-                PrintString("QuickMatch: ¼¼¼Ç »ı¼ºµÊ. Ãß°¡ ÇÃ·¹ÀÌ¾î ´ë±â Áß...");
+                PrintString("QuickMatch: ì„¸ì…˜ ìƒì„±ë¨. ì¶”ê°€ í”Œë ˆì´ì–´ ëŒ€ê¸° ì¤‘...");
             }
         }
     }
     else
     {
-        PrintString("QuickMatch: ¼¼¼Ç »ı¼º ½ÇÆĞ.");
+        PrintString("QuickMatch: ì„¸ì…˜ ìƒì„± ì‹¤íŒ¨.");
     }
 }
 
-// ¼¼¼Ç Âü°¡ ¿Ï·á delegate
+// ì„¸ì…˜ ì°¸ê°€ ì™„ë£Œ delegate
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
     if (SessionInterface.IsValid())
@@ -166,7 +168,7 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
         FString ConnectString;
         if (SessionInterface->GetResolvedConnectString(SessionName, ConnectString))
         {
-            PrintString("QuickMatch: ¼¼¼Ç Âü°¡ ¼º°ø.");
+            PrintString("QuickMatch: ì„¸ì…˜ ì°¸ê°€ ì„±ê³µ.");
             APlayerController* PC = GetWorld()->GetFirstPlayerController();
             if (PC)
             {
@@ -175,22 +177,22 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
         }
         else
         {
-            PrintString("QuickMatch: ¼¼¼Ç Âü°¡ ÈÄ Á¢¼Ó ¹®ÀÚ¿­ È¹µæ ½ÇÆĞ.");
+            PrintString("QuickMatch: ì„¸ì…˜ ì°¸ê°€ í›„ ì ‘ì† ë¬¸ìì—´ íšë“ ì‹¤íŒ¨.");
         }
     }
 }
 
 //////////////////////////////////////////////////////////////////////////
-// °ÔÀÓ ½ÃÀÛ ¾Ë¸² ¹× ·¹º§ ÀÌµ¿ (Quick Match)
+// ê²Œì„ ì‹œì‘ ì•Œë¦¼ ë° ë ˆë²¨ ì´ë™ (Quick Match)
 //////////////////////////////////////////////////////////////////////////
 
-// ¸ğµç Âü°¡ÀÚ°¡ ¸ğ¿´À» ¶§ È£Ãâ (Quick Match)
+// ëª¨ë“  ì°¸ê°€ìê°€ ëª¨ì˜€ì„ ë•Œ í˜¸ì¶œ (Quick Match)
 void UMultiplayerSessionsSubsystem::OnQuickMatchReady()
 {
-    // °ÔÀÓ ½ÃÀÛ ¾Ë¸² Ãâ·Â
-    PrintString("¸ğµç ÇÃ·¹ÀÌ¾î°¡ ¸ğ¿´½À´Ï´Ù! °ÔÀÓ ½ÃÀÛ 5ÃÊ ÈÄ ·¹º§ ÀÌµ¿ÇÕ´Ï´Ù.");
+    // ê²Œì„ ì‹œì‘ ì•Œë¦¼ ì¶œë ¥
+    PrintString("ëª¨ë“  í”Œë ˆì´ì–´ê°€ ëª¨ì˜€ìŠµë‹ˆë‹¤! ê²Œì„ ì‹œì‘ 5ì´ˆ í›„ ë ˆë²¨ ì´ë™í•©ë‹ˆë‹¤.");
 
-    // 5ÃÊ ÈÄ °ÔÀÓ ·¹º§·Î ÀÌµ¿ÇÏ´Â Å¸ÀÌ¸Ó ¼³Á¤
+    // 5ì´ˆ í›„ ê²Œì„ ë ˆë²¨ë¡œ ì´ë™í•˜ëŠ” íƒ€ì´ë¨¸ ì„¤ì •
     FTimerHandle TimerHandle;
     if (GetWorld())
     {
@@ -198,80 +200,112 @@ void UMultiplayerSessionsSubsystem::OnQuickMatchReady()
     }
 }
 
-// Å¸ÀÌ¸Ó°¡ ¸¸·áµÇ¸é °ÔÀÓ ·¹º§·Î ÀÌµ¿
+// íƒ€ì´ë¨¸ê°€ ë§Œë£Œë˜ë©´ ê²Œì„ ë ˆë²¨ë¡œ ì´ë™
 void UMultiplayerSessionsSubsystem::TravelToGameLevel()
 {
-    // ¼¼¼Ç »ı¼º ½Ã ¼³Á¤ÇÑ ¸Ê ÀÌ¸§À» »ç¿ëÇÒ ¼öµµ ÀÖÀ½. ¿©±â¼­´Â ¿¹½Ã·Î °íÁ¤µÈ °æ·Î »ç¿ë.
+    // ì„¸ì…˜ ìƒì„± ì‹œ ì„¤ì •í•œ ë§µ ì´ë¦„ì„ ì‚¬ìš©í•  ìˆ˜ë„ ìˆìŒ. ì—¬ê¸°ì„œëŠ” ì˜ˆì‹œë¡œ ê³ ì •ëœ ê²½ë¡œ ì‚¬ìš©.
     FString GameMap = "/Game/Maps/GameMap";
     if (GetWorld())
     {
-        PrintString("QuickMatch: °ÔÀÓ ·¹º§·Î ÀÌµ¿ÇÕ´Ï´Ù.");
+        PrintString("QuickMatch: ê²Œì„ ë ˆë²¨ë¡œ ì´ë™í•©ë‹ˆë‹¤.");
         GetWorld()->ServerTravel(GameMap + "?listen");
     }
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Room List / Browse Game °ü·Ã ±â´É
+// Room List / Browse Game ê´€ë ¨ ê¸°ëŠ¥
 //////////////////////////////////////////////////////////////////////////
 
-// Room ListÀÇ Create Game ¹öÆ°À» ´­·¶À» ¶§ È£Ãâ (·Îºñ ¼¼¼Ç »ı¼º)
+// Room Listì˜ Create Game ë²„íŠ¼ì„ ëˆŒë €ì„ ë•Œ í˜¸ì¶œ (ë¡œë¹„ ì„¸ì…˜ ìƒì„±)
 void UMultiplayerSessionsSubsystem::CreateGameSession(FString ServerName)
 {
-    // TODO: ¼¼¼Ç »ı¼º ÈÄ ·Îºñ ·¹º§·Î ÀÌµ¿
-    PrintString("CreateGameSession: ±â´É ±¸Çö ÇÊ¿ä");
+    // TODO: ì„¸ì…˜ ìƒì„± í›„ ë¡œë¹„ ë ˆë²¨ë¡œ ì´ë™
+    PrintString("CreateGameSession: ê¸°ëŠ¥ êµ¬í˜„ í•„ìš”");
 }
 
-// Room List¿¡¼­ ¼¼¼Ç ¼±ÅÃ ÈÄ Join Game ¹öÆ°À» ´­·¶À» ¶§ È£Ãâ
+// Room Listì—ì„œ ì„¸ì…˜ ì„ íƒ í›„ Join Game ë²„íŠ¼ì„ ëˆŒë €ì„ ë•Œ í˜¸ì¶œ
 void UMultiplayerSessionsSubsystem::JoinGameSession()
 {
-    // TODO: ¼±ÅÃÇÑ ¼¼¼Ç ¿©ºÎ È®ÀÎ ¹× ÀÎ¿ø ¼ö Ã¼Å© ÈÄ Âü°¡ Ã³¸®
-    //       - ¼±ÅÃµÈ ¼¼¼ÇÀÌ ¾øÀ¸¸é "¼¼¼Ç ¼±ÅÃÇØÁÖ¼¼¿ä" ¸Ş½ÃÁö Ãâ·Â
-    //       - ¼±ÅÃµÈ ¼¼¼ÇÀÌ °¡µæ Ã¡À¸¸é "¼¼¼ÇÀÌ °¡µæ Ã¡½À´Ï´Ù" ¸Ş½ÃÁö Ãâ·Â
-    //       - ±×·¸Áö ¾ÊÀ¸¸é ¼¼¼Ç Âü°¡ ÁøÇà
-    PrintString("JoinGameSession: ±â´É ±¸Çö ÇÊ¿ä");
+    // TODO: ì„ íƒí•œ ì„¸ì…˜ ì—¬ë¶€ í™•ì¸ ë° ì¸ì› ìˆ˜ ì²´í¬ í›„ ì°¸ê°€ ì²˜ë¦¬
+    //       - ì„ íƒëœ ì„¸ì…˜ì´ ì—†ìœ¼ë©´ "ì„¸ì…˜ ì„ íƒí•´ì£¼ì„¸ìš”" ë©”ì‹œì§€ ì¶œë ¥
+    //       - ì„ íƒëœ ì„¸ì…˜ì´ ê°€ë“ ì°¼ìœ¼ë©´ "ì„¸ì…˜ì´ ê°€ë“ ì°¼ìŠµë‹ˆë‹¤" ë©”ì‹œì§€ ì¶œë ¥
+    //       - ê·¸ë ‡ì§€ ì•Šìœ¼ë©´ ì„¸ì…˜ ì°¸ê°€ ì§„í–‰
+    PrintString("JoinGameSession: ê¸°ëŠ¥ êµ¬í˜„ í•„ìš”");
 }
 
 //////////////////////////////////////////////////////////////////////////
-// ·Îºñ¿¡¼­ °ÔÀÓ ½ÃÀÛ °ü·Ã ±â´É
+// ë¡œë¹„ì—ì„œ ê²Œì„ ì‹œì‘ ê´€ë ¨ ê¸°ëŠ¥
 //////////////////////////////////////////////////////////////////////////
 
-// ·Îºñ ·¹º§ÀÇ Game Start ¹öÆ°À» ´­·¶À» ¶§ È£Ãâ
+// ë¡œë¹„ ë ˆë²¨ì˜ Game Start ë²„íŠ¼ì„ ëˆŒë €ì„ ë•Œ í˜¸ì¶œ
 void UMultiplayerSessionsSubsystem::StartGameFromLobby()
 {
-    // TODO: ÇöÀç ÇÃ·¹ÀÌ¾î ¼ö¿Í ÇØ´ç ¸ğµåÀÇ ¿ä±¸ ÀÎ¿øÀ» È®ÀÎÇÏ¿©
-    //       Á¶°ÇÀÌ ¸ÂÀ¸¸é °ÔÀÓ ½ÃÀÛ, ¾Æ´Ï¸é ¾Ë¸² Ãâ·Â
-    PrintString("StartGameFromLobby: ±â´É ±¸Çö ÇÊ¿ä");
+    // TODO: í˜„ì¬ í”Œë ˆì´ì–´ ìˆ˜ì™€ í•´ë‹¹ ëª¨ë“œì˜ ìš”êµ¬ ì¸ì›ì„ í™•ì¸í•˜ì—¬
+    //       ì¡°ê±´ì´ ë§ìœ¼ë©´ ê²Œì„ ì‹œì‘, ì•„ë‹ˆë©´ ì•Œë¦¼ ì¶œë ¥
+    PrintString("StartGameFromLobby: ê¸°ëŠ¥ êµ¬í˜„ í•„ìš”");
 }
 
 //////////////////////////////////////////////////////////////////////////
-// ¹æÀå ±â´É - ÇÃ·¹ÀÌ¾î Ãß¹æ
+// ë°©ì¥ ê¸°ëŠ¥ - í”Œë ˆì´ì–´ ì¶”ë°©
 //////////////////////////////////////////////////////////////////////////
 
-// ¹æÀåÀÌ ¼±ÅÃÇÑ ÇÃ·¹ÀÌ¾î¸¦ Ãß¹æÇÒ ¶§ È£Ãâ
+// ë°©ì¥ì´ ì„ íƒí•œ í”Œë ˆì´ì–´ë¥¼ ì¶”ë°©í•  ë•Œ í˜¸ì¶œ
 void UMultiplayerSessionsSubsystem::KickPlayer(const FUniqueNetIdRepl& PlayerId)
 {
-    // TODO: ¼±ÅÃÇÑ ÇÃ·¹ÀÌ¾î¸¦ ¼¼¼Ç¿¡¼­ Ãß¹æÇÏ´Â ·ÎÁ÷ ±¸Çö
-    PrintString("KickPlayer: ±â´É ±¸Çö ÇÊ¿ä");
+    // TODO: ì„ íƒí•œ í”Œë ˆì´ì–´ë¥¼ ì„¸ì…˜ì—ì„œ ì¶”ë°©í•˜ëŠ” ë¡œì§ êµ¬í˜„
+    PrintString("KickPlayer: ê¸°ëŠ¥ êµ¬í˜„ í•„ìš”");
 }
 
 //////////////////////////////////////////////////////////////////////////
-// À¯Æ¿¸®Æ¼ ÇÔ¼ö: ·£´ı ¸Ê, ·£´ı ¸ğµå, ÇöÀç ÇÃ·¹ÀÌ¾î ¼ö È®ÀÎ µî
+// ìœ í‹¸ë¦¬í‹° í•¨ìˆ˜: ëœë¤ ë§µ, ëœë¤ ëª¨ë“œ, í˜„ì¬ í”Œë ˆì´ì–´ ìˆ˜ í™•ì¸ ë“±
 //////////////////////////////////////////////////////////////////////////
 
 FString UMultiplayerSessionsSubsystem::GetRandomMap()
 {
-    // TODO: ·£´ı ¸Ê ¼±ÅÃ ·ÎÁ÷
-    return FString("RandomMap");
+    // ê²€ìƒ‰í•  í´ë” ê²½ë¡œ (Content/ ì•„ë˜ ê²½ë¡œëŠ” "/Game/"ìœ¼ë¡œ ì‹œì‘)
+    FString FolderPath = "/Game/PlatformFighterKit/Maps/Levels";
+    TArray<FAssetData> AssetList;
+
+    // AssetRegistryModule ë¡œë“œ ë° IAssetRegistry ì°¸ì¡° íšë“
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+
+    // í´ë” ë‚´ ëª¨ë“  ìì‚°(í•˜ìœ„ í´ë” í¬í•¨) ê²€ìƒ‰
+    AssetRegistry.GetAssetsByPath(FName(*FolderPath), AssetList, true);
+
+    // ë ˆë²¨(ì›”ë“œ)ë§Œ í•„í„°ë§ (ì›”ë“œ í´ë˜ìŠ¤ëŠ” "World")
+    TArray<FAssetData> WorldAssets;
+    for (const FAssetData& Asset : AssetList)
+    {
+        if (Asset.AssetClass == FName("World"))
+        {
+            WorldAssets.Add(Asset);
+        }
+    }
+
+    // ë ˆë²¨ì´ í•˜ë‚˜ë¼ë„ ìˆë‹¤ë©´ ëœë¤ìœ¼ë¡œ ì„ íƒ
+    if (WorldAssets.Num() > 0)
+    {
+        int32 RandomIndex = FMath::RandRange(0, WorldAssets.Num() - 1);
+        FString MapPath = WorldAssets[RandomIndex].ObjectPath.ToString();
+        return MapPath;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No level found in folder: %s"), *FolderPath);
+        // ê¸°ë³¸ê°’ ì§€ì • (í´ë” ë‚´ì— ë ˆë²¨ì´ ì—†ì„ ê²½ìš°)
+        return FString("/Game/PlatformFighterKit/Maps/Levels/DefaultLevel");
+    }
 }
 
 FString UMultiplayerSessionsSubsystem::GetRandomMode()
 {
-    // TODO: ·£´ı ¸ğµå ¼±ÅÃ ·ÎÁ÷ (¿¹: "2vs2", "Solo", "AIMatch" µî)
+    // TODO: ëœë¤ ëª¨ë“œ ì„ íƒ ë¡œì§ (ì˜ˆ: "2vs2", "Solo", "AIMatch" ë“±)
     return FString("RandomMode");
 }
 
 int32 UMultiplayerSessionsSubsystem::GetCurrentPlayerCount()
 {
-    // TODO: ÇöÀç Á¢¼Ó ÇÃ·¹ÀÌ¾î ¼ö ¹İÈ¯ ·ÎÁ÷ ±¸Çö
+    // TODO: í˜„ì¬ ì ‘ì† í”Œë ˆì´ì–´ ìˆ˜ ë°˜í™˜ ë¡œì§ êµ¬í˜„
     return 0;
 }
