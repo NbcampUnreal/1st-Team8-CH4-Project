@@ -311,7 +311,15 @@ FGameModeData UMultiplayerSessionsSubsystem::GetRandomMode()
 
 int32 UMultiplayerSessionsSubsystem::GetCurrentPlayerCount()
 {
-    // TODO: 현재 접속 플레이어 수 반환 로직 구현
+    if (SessionInterface.IsValid())
+    {
+        // "QuickMatchSession" is the session name used for Quick Match sessions.
+        FNamedOnlineSession* Session = SessionInterface->GetNamedSession(FName("QuickMatchSession"));
+        if (Session)
+        {
+            return Session->RegisteredPlayers.Num();
+        }
+    }
     return 0;
 }
 
