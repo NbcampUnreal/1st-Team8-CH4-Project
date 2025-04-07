@@ -13,7 +13,7 @@ void PrintString(FString String)
 {
     if (GEngine)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, String);
+        GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, String);
     }
 }
 
@@ -27,6 +27,7 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 
 void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+    Super::Initialize(Collection);
     // OnlineSubsystem과 SessionInterface 초기화 및 delegate 바인딩
     IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
     if (OnlineSubsystem)
@@ -38,6 +39,7 @@ void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collect
             SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateQuickSessionComplete);
             SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnFindQuickSessionsComplete);
             SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnJoinQuickSessionComplete);
+			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnDestroySessionComplete);
         }
     }
 }
@@ -68,7 +70,7 @@ void UMultiplayerSessionsSubsystem::QuickMatch()
     // "QuickMatch" 키워드로 세션을 필터링
     SessionSearch->QuerySettings.Set(SESSION_SEARCH_KEYWORDS, FString("QuickMatch"), EOnlineComparisonOp::Equals);
 
-    PrintString("QuickMatch: 세션 검색 중...");
+    PrintString("QuickMatch: Searching for sessions...");
     SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
@@ -84,7 +86,7 @@ void UMultiplayerSessionsSubsystem::OnFindQuickSessionsComplete(bool bWasSuccess
             if (SearchResult.Session.SessionSettings.Get(SESSION_SEARCH_KEYWORDS, FoundKeyword) && FoundKeyword == "QuickMatch")
             {
                 bFoundSession = true;
-                PrintString("QuickMatch: 기존 세션 발견. 세션 참가 진행...");
+                PrintString("QuickMatch: Existing session found. Join session...");
                 SessionInterface->JoinSession(0, FName("QuickMatchSession"), SearchResult);
                 break;
             }
@@ -92,7 +94,7 @@ void UMultiplayerSessionsSubsystem::OnFindQuickSessionsComplete(bool bWasSuccess
 
         if (!bFoundSession)
         {
-            PrintString("QuickMatch: 세션을 찾지 못했습니다. 새 세션 생성...");
+            PrintString("QuickMatch: Failed to find session, create new session...");
             CreateQuickMatchSession();
         }
     }
@@ -141,7 +143,7 @@ void UMultiplayerSessionsSubsystem::OnCreateQuickSessionComplete(FName SessionNa
 {
     if (bWasSuccessful)
     {
-        PrintString("QuickMatch: 세션 생성 성공.");
+        PrintString("QuickMatch: Successfully created session.");
         if (SessionName == FName("QuickMatchSession"))
         {
             // 기존 즉시 체크 대신 폴링 타이머를 시작
@@ -153,7 +155,7 @@ void UMultiplayerSessionsSubsystem::OnCreateQuickSessionComplete(FName SessionNa
     }
     else
     {
-        PrintString("QuickMatch: 세션 생성 실패.");
+        PrintString("QuickMatch: Failed to create session.");
     }
 }
 
@@ -165,7 +167,7 @@ void UMultiplayerSessionsSubsystem::OnJoinQuickSessionComplete(FName SessionName
         FString ConnectString;
         if (SessionInterface->GetResolvedConnectString(SessionName, ConnectString))
         {
-            PrintString("QuickMatch: 세션 참가 성공.");
+            PrintString("QuickMatch: Successful session participation.");
             APlayerController* PC = GetWorld()->GetFirstPlayerController();
             if (PC)
             {
@@ -174,7 +176,7 @@ void UMultiplayerSessionsSubsystem::OnJoinQuickSessionComplete(FName SessionName
         }
         else
         {
-            PrintString("QuickMatch: 세션 참가 후 접속 문자열 획득 실패.");
+            PrintString("QuickMatch: Failed to obtain access string after session participation.");
         }
     }
 }
