@@ -6,6 +6,10 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "MultiplayerSessionsSubsystem.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerCreateDelegate, bool, WasSuccessful);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerJoinDelegate, bool, WasSuccessful);
+
+
 USTRUCT(BlueprintType)
 struct FGameModeData
 {
@@ -41,21 +45,31 @@ public:
     virtual void Deinitialize() override;
 
     // Quick Match 관련 기능
-    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
-    void QuickMatch();
+    //UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
+    //void QuickMatch();
 
-    void OnFindQuickSessionsComplete(bool bWasSuccessful);
-    void CreateQuickMatchSession();
-    void OnCreateQuickSessionComplete(FName SessionName, bool bWasSuccessful);
-    void OnJoinQuickSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
-    void OnQuickMatchReady();
-    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
-    void TravelToGameLevel();
+    //void OnFindQuickSessionsComplete(bool bWasSuccessful);
+    //void CreateQuickMatchSession();
+    //void OnCreateQuickSessionComplete(FName SessionName, bool bWasSuccessful);
+    //void OnJoinQuickSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+    //UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
+    //void OnQuickMatchReady();
+    //UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
+    //void TravelToGameLevel();
     UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
     void CreateGameSession(FString ServerName);
     UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
-    void JoinGameSession();
+    void FindSession(FString ServerName);
+
+    void OnCreateSessionComplete(FName SessionName, bool WasSuccessful);
+
+    void OnDestroySessionComplete(FName SessionName, bool WasSuccessful);
+
+    void OnFindSessionsComplete(bool WasSuccessful);
+    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
+    void DestroySession(FName SessionName);
+
+    void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
     void StartGameFromLobby();
 
@@ -65,15 +79,25 @@ public:
     FString GetRandomMap();
     int32 GetCurrentPlayerCount();
 
+    bool CreateServerAfterDestroy;
+    FString DestroyServerName;
+    FString ServerNameToFind;
+    FName MySessionName;
+
+    UPROPERTY(BlueprintAssignable)
+    FServerCreateDelegate ServerCreateDel;
+    UPROPERTY(BlueprintAssignable)
+    FServerJoinDelegate ServerJoinDel;
+
 private:
     // 세션 인터페이스 관련 변수
     IOnlineSessionPtr SessionInterface;
-    TSharedPtr<class FOnlineSessionSearch> SessionSearch;
+    TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
     // Quick Match 세션 생성 시 선택한 랜덤 맵 경로 (나중에 레벨 이동 시 사용)
     FString QuickMatchSelectedMap;
     int32 QuickMatchRequiredPlayers;
     FTimerHandle QuickMatchPollTimerHandle;
 
-    void PollQuickMatchPlayerCount();
+    //void PollQuickMatchPlayerCount();
 };
