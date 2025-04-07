@@ -14,7 +14,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void ApplyEffect(class ATestCharacter* Target);
+	virtual void ApplyEffect(class ACharacterBase* Target);
 
 protected:
     UPROPERTY(VisibleAnywhere)

@@ -9,7 +9,7 @@ class PROJECTT8_API ACloneGenerator : public AConsumable
 	GENERATED_BODY()
 public:
     ACloneGenerator();
-    virtual void Use(class ATestCharacter* Player) override;
+    virtual void Use(class ACharacterBase* Player) override;
 
 protected:
     UPROPERTY(EditAnywhere)

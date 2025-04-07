@@ -4,7 +4,7 @@ AFireProjectile::AFireProjectile()
 {
 }
 
-void AFireProjectile::ApplyEffect(ATestCharacter* Target)
+void AFireProjectile::ApplyEffect(ACharacterBase* Target)
 {
     /*if (Target)
     {

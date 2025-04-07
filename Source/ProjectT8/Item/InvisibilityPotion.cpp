@@ -5,7 +5,7 @@ AInvisibilityPotion::AInvisibilityPotion()
 	ItemName = "InvisibilityPotion";
 }
 
-void AInvisibilityPotion::Use(ATestCharacter* Player)
+void AInvisibilityPotion::Use(ACharacterBase* Player)
 {
     //if (Player)
     //{

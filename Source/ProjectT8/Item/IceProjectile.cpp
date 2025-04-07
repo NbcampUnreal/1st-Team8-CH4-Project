@@ -4,7 +4,7 @@ AIceProjectile::AIceProjectile()
 {
 }
 
-void AIceProjectile::ApplyEffect(ATestCharacter* Target)
+void AIceProjectile::ApplyEffect(ACharacterBase* Target)
 {
    /* if (Target)
     {

@@ -4,7 +4,7 @@ AThrowable::AThrowable()
 {
 }
 
-void AThrowable::Use(ATestCharacter* Player)
+void AThrowable::Use(ACharacterBase* Player)
 {
 }
 

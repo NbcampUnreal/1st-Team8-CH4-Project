@@ -1,5 +1,5 @@
 #include "BaseItem.h"
-#include "Player/TestCharacter.h"
+#include "Player/CharacterBase.h"
 
 
 ABaseItem::ABaseItem()
@@ -17,7 +17,7 @@ void ABaseItem::BeginPlay()
 	
 }
 
-void ABaseItem::Interact_Implementation(ATestCharacter* Player)
+void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 {
 	/*if (Player)
 	{
@@ -25,7 +25,7 @@ void ABaseItem::Interact_Implementation(ATestCharacter* Player)
 	}*/
 }
 
-void ABaseItem::Use(ATestCharacter* Player)
+void ABaseItem::Use(ACharacterBase* Player)
 {
 	// 기본 사용 로직, 파생 클래스에서 오버라이드
 }

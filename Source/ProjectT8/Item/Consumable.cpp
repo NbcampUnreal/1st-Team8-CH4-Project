@@ -5,6 +5,6 @@ AConsumable::AConsumable()
     ItemType = EItemType::Consumable;
 }
 
-void AConsumable::Use(ATestCharacter* Player)
+void AConsumable::Use(ACharacterBase* Player)
 {
 }

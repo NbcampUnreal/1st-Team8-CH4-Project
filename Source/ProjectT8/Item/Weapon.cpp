@@ -1,12 +1,12 @@
 #include "Weapon.h"
-#include "Player/TestCharacter.h"
+#include "Player/CharacterBase.h"
 
 AWeapon::AWeapon()
 {
     ItemType = EItemType::Weapon;
 }
 
-void AWeapon::Use(ATestCharacter* Player)
+void AWeapon::Use(ACharacterBase* Player)
 {
     Attack(); // 기본적으로 공격 호출 
 }

@@ -10,5 +10,5 @@ class PROJECTT8_API AConsumable : public ABaseItem
 
 public:
     AConsumable();
-    virtual void Use(ATestCharacter* Player) override;
+    virtual void Use(ACharacterBase* Player) override;
 };

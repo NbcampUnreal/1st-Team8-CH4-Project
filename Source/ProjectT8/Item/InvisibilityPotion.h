@@ -10,7 +10,7 @@ class PROJECTT8_API AInvisibilityPotion : public AConsumable
 
 public:
     AInvisibilityPotion();
-    virtual void Use(class ATestCharacter* Player) override;
+    virtual void Use(class ACharacterBase* Player) override;
 
 protected:
     UPROPERTY(EditAnywhere)

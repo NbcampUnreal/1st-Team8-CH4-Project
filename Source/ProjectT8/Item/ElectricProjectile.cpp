@@ -4,7 +4,7 @@ AElectricProjectile::AElectricProjectile()
 {
 }
 
-void AElectricProjectile::ApplyEffect(ATestCharacter* Target)
+void AElectricProjectile::ApplyEffect(ACharacterBase* Target)
 {
     /*if (Target)
     {

@@ -10,7 +10,7 @@ class PROJECTT8_API AThrowable : public ABaseItem
 public:
     AThrowable();
 
-    virtual void Use(class ATestCharacter* Player) override;
+    virtual void Use(class ACharacterBase* Player) override;
     virtual void Tick(float DeltaTime) override;
     virtual void BeginPlay() override;
 
