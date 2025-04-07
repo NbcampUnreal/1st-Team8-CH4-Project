@@ -16,7 +16,7 @@ AT8AIController::AT8AIController()
 	{
 		SightConfig->SightRadius = 200000.0f;
 		SightConfig->LoseSightRadius = 220000.0f;
-		SightConfig->PeripheralVisionAngleDegrees = 180.0f;
+		SightConfig->PeripheralVisionAngleDegrees = 90.0f;
 		SightConfig->SetMaxAge(5.0f);
 		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;

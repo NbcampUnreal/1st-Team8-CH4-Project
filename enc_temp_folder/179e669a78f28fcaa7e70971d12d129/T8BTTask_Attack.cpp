@@ -3,7 +3,6 @@
 #include "GameFramework/Character.h"
 #include "Animation/AnimInstance.h"
 #include "AI/T8AICharacter.h"
-#include "BehaviorTree/BlackboardComponent.h"
 
 UT8BTTask_Attack::UT8BTTask_Attack()
 {
@@ -31,9 +30,8 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		}
 
 		T8Char->bCanAttack = false;
-		T8Char->bIsAttacking = true;
 
-		AICon->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttacking"), true);
+		T8Char->bIsAttacking = true;
 
 		AnimInstance->Montage_Play(T8Char->AttackMontage);
 		UE_LOG(LogTemp, Warning, TEXT("AI is attacking."));

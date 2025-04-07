@@ -1,7 +1,6 @@
 #include "AI/T8AICharacter.h"
-#include "AIController.h"
 #include "DrawDebugHelpers.h"
-#include "BehaviorTree/BlackboardComponent.h"
+
 
 AT8AICharacter::AT8AICharacter()
 {
@@ -35,14 +34,6 @@ void AT8AICharacter::PerformAttackHitCheck()
 void AT8AICharacter::ResetCanAttack()
 {
 	bCanAttack = true;
-	bIsAttacking = false;
 
-	if (AAIController* AICon = Cast<AAIController>(GetController()))
-	{
-		UBlackboardComponent* BB = AICon->GetBlackboardComponent();
-		if (BB)
-		{
-			BB->SetValueAsBool(TEXT("IsAttacking"), false);
-		}
-	}
+	bIsAttacking = false;
 }
