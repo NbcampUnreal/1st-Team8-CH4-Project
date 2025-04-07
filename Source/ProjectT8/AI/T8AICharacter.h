@@ -33,6 +33,22 @@ public:
 	UFUNCTION()
 	void ResetCanAttack();
 
+	FTimerHandle DetectionTimer;
+
+	UFUNCTION()
+	void DetectNearbyActors();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float MaxHP = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
+	float CurrentHP = 0.0f;
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyDamage(float DamageAmount);
+
+	void Die();
+
 protected:
 	
 };
