@@ -67,6 +67,8 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ACharacterBase::SprintStart);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ACharacterBase::SprintEnd);
+
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ACharacterBase::Attack);
 	}
 	else
 	{
@@ -101,4 +103,16 @@ void ACharacterBase::SprintEnd()
 {
 	bIsRunning = false;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
+void ACharacterBase::Attack()
+{
+	if (!AttackMontage) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && !AnimInstance->Montage_IsPlaying(AttackMontage))
+	{
+		AnimInstance->Montage_Play(AttackMontage);
+		UE_LOG(LogTemp, Warning, TEXT("Attack!!"));
+	}
 }
