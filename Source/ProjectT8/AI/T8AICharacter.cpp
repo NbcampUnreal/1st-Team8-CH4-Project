@@ -2,6 +2,8 @@
 #include "AIController.h"
 #include "DrawDebugHelpers.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AT8AICharacter::AT8AICharacter()
 {
@@ -11,6 +13,8 @@ AT8AICharacter::AT8AICharacter()
 void AT8AICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CurrentHP = MaxHP;
 
 	GetWorldTimerManager().SetTimer(
 		DetectionTimer,
@@ -96,4 +100,30 @@ void AT8AICharacter::DetectNearbyActors()
 	}
 
 	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
+}
+
+void AT8AICharacter::ApplyDamage(float DamageAmount)
+{
+	CurrentHP -= DamageAmount;
+	UE_LOG(LogTemp, Warning, TEXT("AI 체력 : %.1f"), CurrentHP);
+
+	if (CurrentHP <= 0.0f)
+	{
+		Die();
+	}
+}
+
+void AT8AICharacter::Die()
+{
+	UE_LOG(LogTemp, Warning, TEXT("AI 사망 처리 시작"));
+
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->DisableMovement();
+
+	DetachFromControllerPendingDestroy();
+
+	SetLifeSpan(5.0f);
 }
