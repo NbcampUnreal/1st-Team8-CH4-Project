@@ -113,6 +113,50 @@ void ACharacterBase::Attack()
 	if (AnimInstance && !AnimInstance->Montage_IsPlaying(AttackMontage))
 	{
 		AnimInstance->Montage_Play(AttackMontage);
-		UE_LOG(LogTemp, Warning, TEXT("Attack!!"));
+	}
+}
+
+void ACharacterBase::ApplyKnockback(AActor* TargetActor)
+{
+	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
+	if (!TargetCharacter) return;
+
+	FVector KnockbackDirection = (TargetCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+	FVector KnockbackForce = KnockbackDirection * 800.f;
+
+	TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
+}
+
+void ACharacterBase::OnAttackHit()
+{
+	FVector Start = GetActorLocation();
+	FVector Forward = GetActorForwardVector();
+	FVector End = Start + Forward * 150.f;
+
+	TArray<FHitResult> HitResults;
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(60.f);
+
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults, Start, End, FQuat::Identity,
+		ECC_Pawn, Sphere
+	);
+
+	if (bHit)
+	{
+		DealDamageToActors(HitResults);
+	}
+}
+
+void ACharacterBase::DealDamageToActors(const TArray<FHitResult>& HitResults)
+{
+	for (const FHitResult& Hit : HitResults)
+	{
+		AActor* HitActor = Hit.GetActor();
+		if (HitActor && HitActor != this)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Hit!!!"));
+
+			ApplyKnockback(HitActor);
+		}
 	}
 }
