@@ -33,6 +33,11 @@ public:
 	UFUNCTION()
 	void ResetCanAttack();
 
+	FTimerHandle DetectionTimer;
+
+	UFUNCTION()
+	void DetectNearbyActors();
+
 protected:
 	
 };

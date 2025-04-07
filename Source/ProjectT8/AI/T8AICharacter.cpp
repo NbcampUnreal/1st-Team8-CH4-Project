@@ -11,6 +11,14 @@ AT8AICharacter::AT8AICharacter()
 void AT8AICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetWorldTimerManager().SetTimer(
+		DetectionTimer,
+		this,
+		&AT8AICharacter::DetectNearbyActors,
+		1.0f,
+		true
+	);
 }
 
 void AT8AICharacter::PerformAttackHitCheck()
@@ -45,4 +53,47 @@ void AT8AICharacter::ResetCanAttack()
 			BB->SetValueAsBool(TEXT("IsAttacking"), false);
 		}
 	}
+}
+
+void AT8AICharacter::DetectNearbyActors()
+{
+	const float DetectionRadius = 5000.0f;
+	const FVector Center = GetActorLocation();
+
+	TArray<FHitResult> HitResults;
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(DetectionRadius);
+
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		Center,
+		Center + FVector(0, 0, 1),
+		FQuat::Identity,
+		ECC_Pawn,
+		Sphere
+	);
+
+	if (bHit)
+	{
+		for (auto& Hit : HitResults)
+		{
+			AActor* Detected = Hit.GetActor();
+			if (Detected && Detected != this)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("감지한 ACtor : %s"), *Detected->GetName());
+
+				if (AAIController* AICon = Cast<AAIController>(GetController()))
+				{
+
+
+					if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+					{
+						BB->SetValueAsObject(TEXT("TargetActor"), Detected);
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
 }
