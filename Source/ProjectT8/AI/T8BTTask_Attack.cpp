@@ -31,6 +31,8 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 
 		T8Char->bCanAttack = false;
 
+		T8Char->bIsAttacking = true;
+
 		AnimInstance->Montage_Play(T8Char->AttackMontage);
 		UE_LOG(LogTemp, Warning, TEXT("AI is attacking."));
 

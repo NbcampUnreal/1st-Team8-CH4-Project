@@ -25,6 +25,9 @@ public:
 
 	bool bCanAttack = true;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	bool bIsAttacking = false;
+
 	FTimerHandle AttackCooldownTimer;
 
 	UFUNCTION()
@@ -32,5 +35,4 @@ public:
 
 protected:
 	
-
 };

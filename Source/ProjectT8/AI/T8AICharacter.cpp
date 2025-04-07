@@ -34,4 +34,6 @@ void AT8AICharacter::PerformAttackHitCheck()
 void AT8AICharacter::ResetCanAttack()
 {
 	bCanAttack = true;
+
+	bIsAttacking = false;
 }

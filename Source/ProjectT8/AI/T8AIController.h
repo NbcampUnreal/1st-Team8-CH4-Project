@@ -36,4 +36,6 @@ protected:
 
 private:
 	UBlackboardComponent* Blackboard;
+
+	virtual void Tick(float DeltaTime) override;
 };
