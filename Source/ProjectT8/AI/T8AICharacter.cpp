@@ -4,6 +4,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "BrainComponent.h"
 
 AT8AICharacter::AT8AICharacter()
 {
@@ -76,25 +77,82 @@ void AT8AICharacter::DetectNearbyActors()
 		Sphere
 	);
 
+	AActor* Closest = nullptr;
+	float ClosestDist = TNumericLimits<float>::Max();
+
 	if (bHit)
 	{
-		for (auto& Hit : HitResults)
+		for (const FHitResult& Hit : HitResults)
 		{
 			AActor* Detected = Hit.GetActor();
 			if (Detected && Detected != this)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("감지한 ACtor : %s"), *Detected->GetName());
+				float Dist = FVector::Dist(Detected->GetActorLocation(), GetActorLocation());
+				if (Dist < ClosestDist)
+				{
+					Closest = Detected;
+					ClosestDist = Dist;
+				}
+			}
+		}
+	}
+
+	if (CurrentTarget == nullptr)
+	{
+		CurrentTarget = Closest;
+		TargetTrackTime = 0.0f;
+	}
+	else if (Closest == CurrentTarget)
+	{
+		TargetTrackTime += 1.0f;
+		PotentialTarget = nullptr;
+		PotentialTargetTime = 0.0f;
+	}
+	else
+	{
+		if (PotentialTarget == Closest)
+		{
+			PotentialTargetTime += 1.0f;
+			if (PotentialTargetTime >= TargetStickTime)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("타겟 전환 조건 충족! 기존: %s -> 새로운: %s"),
+					*GetNameSafe(CurrentTarget), *GetNameSafe(PotentialTarget));
+
+				CurrentTarget = PotentialTarget;
+				TargetTrackTime = 0.0f;
+				PotentialTarget = nullptr;
+				PotentialTargetTime = 0.0f;
 
 				if (AAIController* AICon = Cast<AAIController>(GetController()))
 				{
-
-
 					if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
 					{
-						BB->SetValueAsObject(TEXT("TargetActor"), Detected);
+						BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
+					}
+
+					AICon->StopMovement();
+					if (AICon->BrainComponent)
+					{
+						AICon->BrainComponent->RestartLogic();
 					}
 				}
-				break;
+
+				UE_LOG(LogTemp, Warning, TEXT("목표 전환 : %s"), *CurrentTarget->GetName());
+			}
+		}
+		else
+		{
+			PotentialTarget = Closest;
+			PotentialTargetTime = 0.0f;
+		}
+	}
+	if (CurrentTarget)
+	{
+		if (AAIController* AICon = Cast<AAIController>(GetController()))
+		{
+			if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+			{
+				BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
 			}
 		}
 	}

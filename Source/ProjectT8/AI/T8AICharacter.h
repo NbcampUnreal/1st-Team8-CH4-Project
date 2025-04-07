@@ -49,6 +49,15 @@ public:
 
 	void Die();
 
+	UPROPERTY()
+	AActor* CurrentTarget = nullptr;
+
+	float TargetTrackTime = 0.0f;
+	AActor* PotentialTarget = nullptr;
+	float PotentialTargetTime = 0.0f;
+
+	const float TargetStickTime = 2.0f;
+
 protected:
 	
 };
