@@ -48,11 +48,13 @@ public:
     void CreateQuickMatchSession();
     void OnCreateQuickSessionComplete(FName SessionName, bool bWasSuccessful);
     void OnJoinQuickSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
     void OnQuickMatchReady();
+    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
     void TravelToGameLevel();
-
+    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
     void CreateGameSession(FString ServerName);
-
+    UFUNCTION(BlueprintCallable, Category = "Multiplayer Sessions")
     void JoinGameSession();
 
     void StartGameFromLobby();
