@@ -24,9 +24,9 @@ ACharacterBase::ACharacterBase()
 	GetCharacterMovement()->bOrientRotationToMovement = true; 	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); 
 
-	GetCharacterMovement()->JumpZVelocity = 700.f;
+	GetCharacterMovement()->JumpZVelocity = 300.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = 150.0f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
@@ -39,6 +39,8 @@ ACharacterBase::ACharacterBase()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); 
 	FollowCamera->bUsePawnControlRotation = false;
+
+	bIsRunning = false;
 }
 
 void ACharacterBase::NotifyControllerChanged()
@@ -62,6 +64,11 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACharacterBase::Move);
+
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ACharacterBase::SprintStart);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ACharacterBase::SprintEnd);
+
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ACharacterBase::Attack);
 	}
 	else
 	{
@@ -83,5 +90,29 @@ void ACharacterBase::Move(const FInputActionValue& Value)
 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+	}
+}
+
+void ACharacterBase::SprintStart()
+{
+	bIsRunning = true;
+	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+}
+
+void ACharacterBase::SprintEnd()
+{
+	bIsRunning = false;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
+void ACharacterBase::Attack()
+{
+	if (!AttackMontage) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && !AnimInstance->Montage_IsPlaying(AttackMontage))
+	{
+		AnimInstance->Montage_Play(AttackMontage);
+		UE_LOG(LogTemp, Warning, TEXT("Attack!!"));
 	}
 }
