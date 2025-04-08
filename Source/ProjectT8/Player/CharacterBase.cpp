@@ -1,4 +1,4 @@
-#include "CharacterBase.h"
+﻿#include "CharacterBase.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -56,7 +56,6 @@ UAbilitySystemComponent* ACharacterBase::GetAbilitySystemComponent() const
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-
 	InitAbilityActorInfo();
 }
 
@@ -153,6 +152,23 @@ void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
 }
 
+void ACharacterBase::ApplyGameplayDamage(ACharacterBase* Target)
+{
+	if (!DamageEffectClass || !AbilitySystemComponent || !Target) return;
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	Context.AddSourceObject(this);
+
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(
+		DamageEffectClass, 1.0f, Context);
+
+	if (Spec.IsValid())
+	{
+		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		UE_LOG(LogTemp, Warning, TEXT("%s 에게 데미지 효과 적용"),  *Target->GetName());
+	}
+}
+
 void ACharacterBase::OnAttackHit()
 {
 	FVector Start = GetActorLocation();
@@ -177,12 +193,13 @@ void ACharacterBase::DealDamageToActors(const TArray<FHitResult>& HitResults)
 {
 	for (const FHitResult& Hit : HitResults)
 	{
-		AActor* HitActor = Hit.GetActor();
-		if (HitActor && HitActor != this)
+		ACharacterBase* TargetCharacter = Cast<ACharacterBase>(Hit.GetActor());
+		if (TargetCharacter && TargetCharacter != this)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Hit!!!"));
+			UE_LOG(LogTemp, Warning, TEXT("타격 대상: %s"), *TargetCharacter->GetName());
 
-			ApplyKnockback(HitActor);
+			ApplyGameplayDamage(TargetCharacter);
+			ApplyKnockback(TargetCharacter);
 		}
 	}
 }

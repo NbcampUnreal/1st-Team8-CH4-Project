@@ -1,4 +1,4 @@
-#include "GAS/CharacterAttributeSet.h"
+﻿#include "GAS/CharacterAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
 
@@ -11,6 +11,8 @@ UCharacterAttributeSet::UCharacterAttributeSet()
 
 void UCharacterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
+	Super::PostGameplayEffectExecute(Data);
+
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
 		const float DamageDone = GetDamage();
@@ -20,6 +22,8 @@ void UCharacterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 
 			const float NewHealth = FMath::Clamp(GetHealth() - DamageDone, 0.0f, GetMaxHealth());
 			SetHealth(NewHealth);
+
+			UE_LOG(LogTemp, Warning, TEXT("Damage %f !!! Current Health: %f"), DamageDone, NewHealth);
 		}
 	}
 }
@@ -35,6 +39,7 @@ void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 void UCharacterAttributeSet::OnRep_Health(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, Health, OldValue);
+	UE_LOG(LogTemp, Warning, TEXT("Health 동기화됨: %f -> %f"), OldValue.GetCurrentValue(), GetHealth());
 }
 
 void UCharacterAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)

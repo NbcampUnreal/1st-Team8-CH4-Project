@@ -33,6 +33,9 @@ class ACharacterBase : public ACharacter, public IAbilitySystemInterface
 	UInputAction* AttackAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 public:
 	ACharacterBase();
 	
@@ -46,6 +49,7 @@ public:
 
 	void InitAbilityActorInfo();
 
+	void ApplyGameplayDamage(ACharacterBase* Target);
 
 	void OnAttackHit();
 	void DealDamageToActors(const TArray<FHitResult>& HitResults);
