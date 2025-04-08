@@ -47,6 +47,15 @@ public:
 	UPROPERTY()
 	TObjectPtr<class UCharacterAttributeSet> AttributeSet;
 
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyKnockback(AActor* TargetActor);
+
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyDamage(ACharacterBase* Target);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction);
+
 	void InitAbilityActorInfo();
 
 	void ApplyGameplayDamage(ACharacterBase* Target);
@@ -59,6 +68,8 @@ protected:
 	void SprintEnd();
 	void Attack();
 	void ApplyKnockback(AActor* TargetActor);
+
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;

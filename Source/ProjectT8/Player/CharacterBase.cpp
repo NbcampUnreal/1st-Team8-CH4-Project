@@ -57,6 +57,7 @@ void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	InitAbilityActorInfo();
+
 }
 
 void ACharacterBase::NotifyControllerChanged()
@@ -127,15 +128,58 @@ void ACharacterBase::Attack()
 	}
 }
 
-void ACharacterBase::ApplyKnockback(AActor* TargetActor)
+void ACharacterBase::Multicast_ApplyKnockback_Implementation(AActor* TargetActor, FVector Direction)
 {
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
 	if (!TargetCharacter) return;
 
-	FVector KnockbackDirection = (TargetCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-	FVector KnockbackForce = KnockbackDirection * 800.f;
+	const float KnockbackStrength = 800.f;
+	FVector KnockbackForce = Direction * KnockbackStrength;
 
 	TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
+}
+
+void ACharacterBase::ApplyKnockback(AActor* TargetActor)
+{
+	if (!HasAuthority()) return;
+	
+	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
+	if (!TargetCharacter) return;
+
+	FVector KnockbackDir = (TargetCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+	KnockbackDir.Z = 0.5f;
+	KnockbackDir.Normalize();
+
+	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
+}
+
+void ACharacterBase::Server_ApplyDamage_Implementation(ACharacterBase* Target)
+{
+	if (!HasAuthority() || !Target || !DamageEffectClass) return;
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	Context.AddSourceObject(this);
+
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(DamageEffectClass, 1.f, Context);
+	if (Spec.IsValid())
+	{
+		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		UE_LOG(LogTemp, Warning, TEXT("%s 에게 데미지 효과 적용"), *Target->GetName());
+	}
+}
+
+void ACharacterBase::Server_ApplyKnockback_Implementation(AActor* TargetActor)
+{
+	if (!HasAuthority()) return;
+
+	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
+	if (!TargetCharacter) return;
+
+	FVector KnockbackDir = (TargetCharacter->GetActorLocation() - GetActorLocation());
+	KnockbackDir.Z = 0.5f;
+	KnockbackDir.Normalize();
+
+	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
 }
 
 void ACharacterBase::InitAbilityActorInfo()
@@ -198,8 +242,17 @@ void ACharacterBase::DealDamageToActors(const TArray<FHitResult>& HitResults)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("타격 대상: %s"), *TargetCharacter->GetName());
 
-			ApplyGameplayDamage(TargetCharacter);
-			ApplyKnockback(TargetCharacter);
+			if (HasAuthority())
+			{
+				ApplyGameplayDamage(TargetCharacter);
+				ApplyKnockback(TargetCharacter);
+			}
+			else
+			{
+				Server_ApplyDamage(TargetCharacter);
+				Server_ApplyKnockback(TargetCharacter);
+			}
+			
 		}
 	}
 }
