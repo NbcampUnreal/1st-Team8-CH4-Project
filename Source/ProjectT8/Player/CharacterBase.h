@@ -48,6 +48,12 @@ public:
 	TObjectPtr<class UCharacterAttributeSet> AttributeSet;
 
 	UFUNCTION(Server, Reliable)
+	void Server_Attack();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayAttackMontage();
+
+	UFUNCTION(Server, Reliable)
 	void Server_ApplyKnockback(AActor* TargetActor);
 
 	UFUNCTION(Server, Reliable)

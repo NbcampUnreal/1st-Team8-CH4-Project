@@ -119,6 +119,22 @@ void ACharacterBase::SprintEnd()
 
 void ACharacterBase::Attack()
 {
+	if (!HasAuthority())
+	{
+		Server_Attack();
+		return;
+	}
+
+	Multicast_PlayAttackMontage();
+}
+
+void ACharacterBase::Server_Attack_Implementation()
+{
+	Multicast_PlayAttackMontage();
+}
+
+void ACharacterBase::Multicast_PlayAttackMontage_Implementation()
+{
 	if (!AttackMontage) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
