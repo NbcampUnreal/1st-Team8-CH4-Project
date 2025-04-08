@@ -5,6 +5,7 @@
 #include "TimerManager.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
+#include "Kismet/GameplayStatics.h"
 
 static const FName SESSION_SEARCH_KEYWORDS(TEXT("SEARCH_KEYWORDS"));
 
@@ -224,11 +225,29 @@ void UMultiplayerSessionsSubsystem::CreateGameSession(FString ServerName)
     if (!SessionInterface.IsValid())
     {
         PrintString("CreateGameSession: SessionInterface가 유효하지 않습니다.");
+        ServerCreateDel.Broadcast(false);
+        return;
+    }
+    if (ServerName.IsEmpty())
+    {
+        PrintString("CreateGameSession: Session Name cannot be Empty");
+        ServerCreateDel.Broadcast(false);
         return;
     }
 
-    FName SessionName("LobbySession");
+    FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(MySessionName);
+    if (ExistingSession)
+    {
+        FString Msg = FString::Printf(TEXT("Session with name %s already exists, destroying it."), *MySessionName.ToString());
+        PrintString(Msg);
+        CreateServerAfterDestroy = true;
+        DestroyServerName = ServerName;
+        SessionInterface->DestroySession(MySessionName);
+        return;
+    }
+
     FOnlineSessionSettings SessionSettings;
+
     SessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL";
     SessionSettings.bIsDedicated = false;
     int32 LobbyRequiredPlayers = 4;
@@ -239,15 +258,17 @@ void UMultiplayerSessionsSubsystem::CreateGameSession(FString ServerName)
     SessionSettings.bUseLobbiesIfAvailable = true;
     SessionSettings.bAllowJoinViaPresence = true;
 
-    // QuickMatch와 구분하기 위해 "Lobby" 키워드 사용
-    SessionSettings.Set(SESSION_SEARCH_KEYWORDS, ServerName, EOnlineDataAdvertisementType::ViaOnlineService);
-    // 서버 이름 설정
-    SessionSettings.Set(FName("ServerName"), ServerName, EOnlineDataAdvertisementType::ViaOnlineService);
-    // 요구 플레이어 수를 세션 설정에 추가 (추후 비교용)
-    SessionSettings.Set(FName("RequiredPlayers"), LobbyRequiredPlayers, EOnlineDataAdvertisementType::ViaOnlineService);
+    SessionSettings.Set(FName("SERVER_NAME"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
-    PrintString(FString::Printf(TEXT("CreateGameSession: 로비 세션 생성 중, 서버 이름: %s"), *ServerName));
-    SessionInterface->CreateSession(0, SessionName, SessionSettings);
+    PrintString(FString::Printf(TEXT("CreateGameSession: Creating lobby session, Server name: %s"), *ServerName));
+    if (!SessionInterface->CreateSession(0, FName(NAME_GameSession), SessionSettings))
+    {
+        PrintString("CreateGameSession: CreateSession 호출 자체 실패.");
+        ServerCreateDel.Broadcast(false);
+        // 필요한 경우 CreateServerAfterDestroy 등 상태 초기화
+        CreateServerAfterDestroy = false;
+        DestroyServerName = TEXT("");
+    }
 }
 
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool WasSuccessful)
@@ -267,130 +288,256 @@ void UMultiplayerSessionsSubsystem::FindSession(FString ServerName)
 {
     PrintString("FindServer");
 
-	if (ServerName.IsEmpty())
-	{
-		PrintString("Server name cannot be empty!");
-		ServerJoinDel.Broadcast(false);
-		return;
-	}
+    if (!SessionInterface.IsValid())
+    {
+        PrintString("FindSession: SessionInterface가 유효하지 않습니다.");
+        // ServerJoinDel.Broadcast(false); // 여기서 Join 실패를 알리는 것은 적절하지 않음
+        return;
+    }
+
+    if (ServerName.IsEmpty())
+    {
+        PrintString("FindSession: 서버 이름이 비어있습니다!");
+        // ServerJoinDel.Broadcast(false); // 여기서 Join 실패를 알리는 것은 적절하지 않음
+        return;
+    }
 
 	SessionSearch = MakeShareable(new FOnlineSessionSearch());
-	bool IsLAN = false;
-	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL")
-	{
-		IsLAN = true;
-	}
-	SessionSearch->bIsLanQuery = IsLAN;
-	SessionSearch->MaxSearchResults = 9999;
-	SessionSearch->QuerySettings.Set(SESSION_SEARCH_KEYWORDS, true, EOnlineComparisonOp::Equals);
+    if (!SessionSearch.IsValid())
+    {
+        PrintString("FindSession: 세션 검색 객체 생성 실패.");
+        return;
+    }
+
+    SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSearch->MaxSearchResults = 20;
 
 	ServerNameToFind = ServerName;
 
-	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+    PrintString(FString::Printf(TEXT("FindSession: 온라인 서브시스템에 세션 검색 요청 (IsLAN: %d)..."), SessionSearch->bIsLanQuery));
+
+    if (!SessionInterface->FindSessions(0, SessionSearch.ToSharedRef()))
+    {
+        // FindSessions 호출 자체가 실패한 경우
+        PrintString("FindSession: FindSessions 호출 자체 실패.");
+        ServerNameToFind = ""; // 검색 상태 초기화
+        // ServerJoinDel.Broadcast(false); // 여기서 Join 실패를 알리는 것은 적절하지 않음
+    }
 
 }
 
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
 {
-    if (!WasSuccessful) return;
-    if (ServerNameToFind.IsEmpty()) return;
+    PrintString(FString::Printf(TEXT("OnFindSessionsComplete: 검색 성공 여부: %d"), WasSuccessful));
 
-    TArray<FOnlineSessionSearchResult> Results = SessionSearch->SearchResults;
-    FOnlineSessionSearchResult* CorrectResult = 0;
-
-    if (Results.Num() > 0)
+    // 검색 자체가 실패했거나, 검색 객체가 유효하지 않으면 더 이상 진행하지 않음
+    if (!WasSuccessful || !SessionSearch.IsValid())
     {
-        FString Msg = FString::Printf(TEXT("%d sessions found."), Results.Num());
-        PrintString(Msg);
+        ServerNameToFind = ""; // 검색 상태 초기화
+        // ServerJoinDel.Broadcast(false); // 여기서 Join 실패를 알리는 것은 적절하지 않음
+        PrintString("OnFindSessionsComplete: 세션 검색 실패 또는 검색 객체 무효.");
+        return;
+    }
 
-        for (FOnlineSessionSearchResult Result : Results)
+    // 검색 결과를 로컬 변수에 복사 (SessionSearch는 다른 검색에 재사용될 수 있으므로)
+    TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
+
+    PrintString(FString::Printf(TEXT("OnFindSessionsComplete: %d개의 세션 찾음."), SearchResults.Num()));
+
+    // 찾으려는 서버 이름이 설정되어 있는지 확인 (FindSession 호출 후 변경되지 않았는지)
+    if (ServerNameToFind.IsEmpty())
+    {
+        PrintString("OnFindSessionsComplete: 찾으려는 서버 이름이 지정되지 않았습니다.");
+        return;
+    }
+
+    FOnlineSessionSearchResult* FoundResultPtr = nullptr;
+
+    // 검색 결과를 순회하며 원하는 서버 이름(SERVER_NAME)을 가진 세션 찾기
+    for (FOnlineSessionSearchResult& Result : SearchResults)
+    {
+        if (Result.IsValid())
         {
-            if (Result.IsValid())
-            {
-                FString ServerName = "No-name";
-                Result.Session.SessionSettings.Get(FName("SERVER_NAME"), ServerName);
+            FString AdvertisedServerName = TEXT("No-name"); // 기본값
+            // 세션 설정에서 "SERVER_NAME" 키의 값을 가져옴
+            Result.Session.SessionSettings.Get(FName("SERVER_NAME"), AdvertisedServerName);
 
-                if (ServerName.Equals(ServerNameToFind))
-                {
-                    CorrectResult = &Result;
-                    FString Msg2 = FString::Printf(TEXT("Found server with name: %s"), *ServerName);
-                    PrintString(Msg2);
-                    break;
-                }
+            PrintString(FString::Printf(TEXT(" - 찾은 세션 이름: %s"), *AdvertisedServerName));
+
+            // 찾으려는 이름과 광고된 이름이 일치하는지 확인
+            if (AdvertisedServerName.Equals(ServerNameToFind, ESearchCase::IgnoreCase)) // 대소문자 무시 비교
+            {
+                PrintString(FString::Printf(TEXT("OnFindSessionsComplete: 원하는 서버 '%s' 찾음! 참가 시도..."), *ServerNameToFind));
+                FoundResultPtr = &Result; // 포인터 저장
+                break; // 찾았으므로 반복 중단
             }
         }
+    }
 
-        if (CorrectResult)
+    // 일치하는 세션을 찾았는지 확인
+    if (FoundResultPtr)
+    {
+        // 세션 참가 시작 (비동기)
+        if (!SessionInterface->JoinSession(0, MySessionName, *FoundResultPtr))
         {
-            SessionInterface->JoinSession(0, MySessionName, *CorrectResult);
+            // JoinSession 호출 자체가 실패한 경우
+            PrintString(FString::Printf(TEXT("OnFindSessionsComplete: '%s' 서버 JoinSession 호출 자체 실패."), *ServerNameToFind));
+            ServerNameToFind = ""; // 검색 상태 초기화
+            ServerJoinDel.Broadcast(false); // 참가 시도 결과를 알림
         }
-        else
-        {
-            PrintString(FString::Printf(TEXT("Couldn't find server: %s"), *ServerNameToFind));
-            ServerNameToFind = "";
-            ServerJoinDel.Broadcast(false);
-        }
+        // JoinSession 호출 성공 시, 결과는 OnJoinSessionComplete 콜백에서 처리됨
     }
     else
     {
-        PrintString("Zero sessions found.");
-        ServerJoinDel.Broadcast(false);
+        // 검색 결과 중에서 원하는 이름의 서버를 찾지 못한 경우
+        PrintString(FString::Printf(TEXT("OnFindSessionsComplete: 검색 결과 중 '%s' 이름의 서버를 찾지 못했습니다."), *ServerNameToFind));
+        // ServerJoinDel.Broadcast(false); // 여기서 Join 실패를 알리는 것은 적절하지 않음 (찾지 못한 것일 뿐)
     }
+
+    // 검색 상태 초기화 (다음 검색을 위해)
+    ServerNameToFind = "";
 }
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
+    // 참가 시도 결과 브로드캐스트 (성공/실패 모두 여기서 처리)
     ServerJoinDel.Broadcast(Result == EOnJoinSessionCompleteResult::Success);
 
     if (Result == EOnJoinSessionCompleteResult::Success)
     {
-        FString Msg = FString::Printf(TEXT("Successfully joined session %s"), *SessionName.ToString());
-        PrintString(Msg);
+        PrintString(FString::Printf(TEXT("OnJoinSessionComplete: 세션 '%s' 참가 성공!"), *SessionName.ToString()));
 
-        FString Address = "";
-        bool Success = SessionInterface->GetResolvedConnectString(MySessionName, Address);
-        if (Success)
+        FString ConnectAddress = TEXT("");
+        // 참가한 세션의 접속 주소(IP 또는 OSS별 식별자) 가져오기
+        if (SessionInterface.IsValid() && SessionInterface->GetResolvedConnectString(SessionName, ConnectAddress))
         {
-            PrintString(FString::Printf(TEXT("Address: %s"), *Address));
+            PrintString(FString::Printf(TEXT("OnJoinSessionComplete: 접속 주소 확인: %s"), *ConnectAddress));
             APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
             if (PlayerController)
             {
-                PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+                PrintString(FString::Printf(TEXT("OnJoinSessionComplete: ClientTravel 실행 -> %s"), *ConnectAddress));
+                // 클라이언트를 해당 주소의 서버(호스트)로 이동시킴
+                PlayerController->ClientTravel(ConnectAddress, ETravelType::TRAVEL_Absolute);
+            }
+            else
+            {
+                PrintString("OnJoinSessionComplete: PlayerController 가져오기 실패.");
             }
         }
         else
         {
-            PrintString("GetResolvedConnectString returned false!");
+            PrintString("OnJoinSessionComplete: GetResolvedConnectString 실패!");
+            // 필요하다면 여기서도 ServerJoinDel.Broadcast(false)를 다시 호출할 수 있지만, 이미 위에서 처리됨.
         }
     }
-    else
+    else // 참가 실패 처리
     {
-        PrintString("OnJoinSessionComplete failed");
+        // 실패 이유에 따른 로그 출력 (더 상세하게)
+        FString FailureReason;
+        switch (Result)
+        {
+        case EOnJoinSessionCompleteResult::SessionIsFull: FailureReason = TEXT("Session is full"); break;
+        case EOnJoinSessionCompleteResult::SessionDoesNotExist: FailureReason = TEXT("Session does not exist"); break;
+        case EOnJoinSessionCompleteResult::AlreadyInSession: FailureReason = TEXT("Already in session"); break;
+            // ... 기타 다른 실패 이유들 ...
+        default: FailureReason = TEXT("Unknown error"); break;
+        }
+        PrintString(FString::Printf(TEXT("OnJoinSessionComplete: 세션 참가 실패. 이유: %s"), *FailureReason));
     }
 }
 
-void UMultiplayerSessionsSubsystem::DestroySession(FName SessionName)
+void UMultiplayerSessionsSubsystem::DestroySession()
 {
     if (!SessionInterface.IsValid())
     {
         PrintString("DestroySession: SessionInterface가 유효하지 않습니다.");
+        ServerDestroyDel.Broadcast(false); // 실패 브로드캐스트
         return;
     }
 
-    PrintString(FString::Printf(TEXT("DestroySession: 세션 (%s) 파괴 요청 중..."), *SessionName.ToString()));
-    SessionInterface->DestroySession(SessionName);
+    bIsHost = true;
+    PrintString(FString::Printf(TEXT("DestroySession: 세션 (%s) 파괴 요청 중..."), *MySessionName.ToString()));
+    if (!SessionInterface->DestroySession(MySessionName))
+    {
+        PrintString("DestroySession: DestroySession 호출 자체 실패.");
+        bIsHost = false;
+        ServerDestroyDel.Broadcast(false); // 실패 브로드캐스트
+    }
+}
+
+void UMultiplayerSessionsSubsystem::LeaveSession()
+{
+    if (!SessionInterface.IsValid())
+    {
+        PrintString("LeaveSession (Client): SessionInterface가 유효하지 않습니다.");
+        ClientLeaveSessionDel.Broadcast(false);
+        return;
+    }
+
+    bIsHost = false; // 클라이언트가 나가기를 시작했음을 표시 (콜백에서 구분하기 위한 예시)
+    PrintString(FString::Printf(TEXT("LeaveSession (Client): 세션 (%s) 나가기 요청 중..."), *MySessionName.ToString()));
+    if (!SessionInterface->DestroySession(MySessionName)) // 동일한 DestroySession 함수 사용
+    {
+        PrintString("LeaveSession (Client): DestroySession 호출 자체 실패.");
+        ClientLeaveSessionDel.Broadcast(false);
+    }
 }
 
 void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
-    if (bWasSuccessful)
+    PrintString(FString::Printf(TEXT("OnDestroySessionComplete: 세션 이름: %s, 성공 여부: %d"), *SessionName.ToString(), bWasSuccessful));
+
+    if (bIsHost) // 호스트가 시작한 파괴 작업의 콜백인 경우
     {
-        PrintString(FString::Printf(TEXT("DestroySession: 세션 (%s) 파괴 성공"), *SessionName.ToString()));
+        PrintString("OnDestroySessionComplete: Session destruction complete on host");
+        ServerDestroyDel.Broadcast(bWasSuccessful);
+        if (bWasSuccessful)
+        {
+            PrintString(FString::Printf(TEXT("호스트: 세션 '%s' 성공적으로 파괴됨."), *SessionName.ToString()));
+            // 호스트는 PersonalRoom 등으로 이동 (델리게이트 받은 곳에서 처리)
+            if (CreateServerAfterDestroy)
+            {
+                PrintString(FString::Printf(TEXT("호스트: 이전 세션 파괴 완료, 새 세션 '%s' 생성 시도."), *DestroyServerName));
+                CreateServerAfterDestroy = false; // 플래그 리셋
+                FString ServerNameToCreate = DestroyServerName; // 로컬 변수에 복사
+                DestroyServerName = TEXT(""); // 상태 변수 리셋
+                CreateGameSession(ServerNameToCreate); // *** 여기서 재생성 호출 ***
+            }
+            else
+            {
+                GetWorld()->ServerTravel("/Game/Session/PersonalRoom");
+            }
+        }
+        else
+        {
+            PrintString(FString::Printf(TEXT("호스트: 세션 '%s' 파괴 실패."), *SessionName.ToString()));
+        }
     }
-    else
+    else // 클라이언트가 시작한 나가기 작업의 콜백인 경우
     {
-        PrintString(FString::Printf(TEXT("DestroySession: 세션 (%s) 파괴 실패"), *SessionName.ToString()));
+        PrintString("OnDestroySessionComplete: 클라이언트의 세션 나가기 완료됨.");
+        ClientLeaveSessionDel.Broadcast(bWasSuccessful);
+        if (bWasSuccessful)
+        {
+            PrintString(FString::Printf(TEXT("클라이언트: 세션 '%s'에서 성공적으로 나감."), *SessionName.ToString()));
+            GetWorld()->ServerTravel("/Game/Session/PersonalRoom");
+            // *** 클라이언트: 여기서 메인 메뉴 레벨로 이동 ***
+            // 예: 델리게이트를 받은 UI 위젯 등에서 레벨 이동 실행
+            // APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+            // if (PC)
+            // {
+            //     PC->ClientTravel(TEXT("/Game/Session/PersonalRoom"), ETravelType::TRAVEL_Absolute);
+            // }
+            // 또는 콘솔 명령 실행:
+            // GEngine->Exec(GetWorld(), TEXT("Disconnect"));
+            // GEngine->Exec(GetWorld(), TEXT("open /Game/Levels/MainMenuLevelName")); // 레벨 경로 확인
+        }
+        else
+        {
+            PrintString(FString::Printf(TEXT("클라이언트: 세션 '%s' 나가기 실패."), *SessionName.ToString()));
+        }
     }
+    bIsHost = false; // 상태 초기화 (선택적)
 }
 
 //////////////////////////////////////////////////////////////////////////
