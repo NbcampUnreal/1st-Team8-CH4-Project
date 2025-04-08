@@ -1,10 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Logging/LogMacros.h"
+#include "AbilitySystemInterface.h"
+#include "GAS/CharacterAttributeSet.h"
 #include "CharacterBase.generated.h"
 
 class USpringArmComponent;
@@ -13,10 +12,8 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
-
-UCLASS(config=Game)
-class ACharacterBase : public ACharacter
+UCLASS()
+class ACharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -38,6 +35,18 @@ class ACharacterBase : public ACharacter
 	UAnimMontage* AttackMontage;
 public:
 	ACharacterBase();
+	
+	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", Replicated)
+	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY()
+	TObjectPtr<class UCharacterAttributeSet> AttributeSet;
+
+	void InitAbilityActorInfo();
+
+
 	void OnAttackHit();
 	void DealDamageToActors(const TArray<FHitResult>& HitResults);
 protected:
@@ -47,6 +56,7 @@ protected:
 	void Attack();
 	void ApplyKnockback(AActor* TargetActor);
 protected:
+	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 private:

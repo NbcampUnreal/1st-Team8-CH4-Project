@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "CharacterBase.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
@@ -10,11 +8,18 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-
-DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+#include "Net/UnrealNetwork.h"
 
 ACharacterBase::ACharacterBase()
 {
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
+
+	bReplicates = true;
+
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
 	bUseControllerRotationPitch = false;
@@ -41,6 +46,18 @@ ACharacterBase::ACharacterBase()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	bIsRunning = false;
+}
+
+UAbilitySystemComponent* ACharacterBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+void ACharacterBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitAbilityActorInfo();
 }
 
 void ACharacterBase::NotifyControllerChanged()
@@ -70,12 +87,7 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ACharacterBase::Attack);
 	}
-	else
-	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-	}
 }
-
 void ACharacterBase::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -125,6 +137,20 @@ void ACharacterBase::ApplyKnockback(AActor* TargetActor)
 	FVector KnockbackForce = KnockbackDirection * 800.f;
 
 	TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
+}
+
+void ACharacterBase::InitAbilityActorInfo()
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+}
+
+void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
 }
 
 void ACharacterBase::OnAttackHit()
