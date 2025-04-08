@@ -261,6 +261,8 @@ void UMultiplayerSessionsSubsystem::CreateGameSession(FString ServerName)
     SessionSettings.Set(FName("SERVER_NAME"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
     PrintString(FString::Printf(TEXT("CreateGameSession: Creating lobby session, Server name: %s"), *ServerName));
+    PrintString(FString::Printf(TEXT("CreateGameSession: Settings BuildUniqueId = 0x%08x"), SessionSettings.BuildUniqueId));
+    PrintString(FString::Printf(TEXT("CreateGameSession: LocalNetworkVersion = %u"), FNetworkVersion::GetLocalNetworkVersion())); // GetLocalNetworkVersion() 반환 타입에 맞춰 %u 또는 다른 형식 지정자 사용
     if (!SessionInterface->CreateSession(0, FName(NAME_GameSession), SessionSettings))
     {
         PrintString("CreateGameSession: CreateSession 호출 자체 실패.");
@@ -338,6 +340,9 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool WasSuccessful)
         PrintString("OnFindSessionsComplete: 세션 검색 실패 또는 검색 객체 무효.");
         return;
     }
+
+    int32 RawResultsNum = SessionSearch->SearchResults.Num();
+    PrintString(FString::Printf(TEXT("OnFindSessionsComplete: Steam으로부터 받은 Raw 검색 결과 수: %d"), RawResultsNum));
 
     // 검색 결과를 로컬 변수에 복사 (SessionSearch는 다른 검색에 재사용될 수 있으므로)
     TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
