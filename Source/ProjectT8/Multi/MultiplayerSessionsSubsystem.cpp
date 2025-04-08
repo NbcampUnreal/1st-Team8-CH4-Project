@@ -567,57 +567,57 @@ void UMultiplayerSessionsSubsystem::KickPlayer(const FUniqueNetIdRepl& PlayerId)
 // 유틸리티 함수: 랜덤 맵, 랜덤 모드, 현재 플레이어 수 확인 등
 //////////////////////////////////////////////////////////////////////////
 
-FString UMultiplayerSessionsSubsystem::GetRandomMap()
-{
-    // 검색할 폴더 경로 (Content/ 아래 경로는 "/Game/"으로 시작)
-    FString FolderPath = "/Game/PlatformFighterKit/Maps/Levels";
-    TArray<FAssetData> AssetList;
-
-    // AssetRegistryModule 로드 및 IAssetRegistry 참조 획득
-    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-    IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-
-    // 폴더 내 모든 자산(하위 폴더 포함) 검색
-    AssetRegistry.GetAssetsByPath(FName(*FolderPath), AssetList, true);
-
-    // 레벨(월드)만 필터링 (월드 클래스는 "World")
-    TArray<FAssetData> WorldAssets;
-    for (const FAssetData& Asset : AssetList)
-    {
-        if (Asset.AssetClass == FName("World"))
-        {
-            WorldAssets.Add(Asset);
-        }
-    }
-
-    // 레벨이 하나라도 있다면 랜덤으로 선택
-    if (WorldAssets.Num() > 0)
-    {
-        int32 RandomIndex = FMath::RandRange(0, WorldAssets.Num() - 1);
-        FString MapPath = WorldAssets[RandomIndex].ObjectPath.ToString();
-        return MapPath;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No level found in folder: %s"), *FolderPath);
-        // 기본값 지정 (폴더 내에 레벨이 없을 경우)
-        return FString("/Game/PlatformFighterKit/Maps/Levels/DefaultLevel");
-    }
-}
-
-FGameModeData UMultiplayerSessionsSubsystem::GetRandomMode()
-{
-    TArray<FGameModeData> Modes;
-
-    Modes.Add({ "2vs2vs2", 6 });
-    Modes.Add({ "3vs3", 6 });
-    Modes.Add({ "Solo", 4 });
-    Modes.Add({ "2Human_vs_2AI", 2 });
-    Modes.Add({ "1v1vAIvAI", 2 });
-
-    int32 RandomIndex = FMath::RandRange(0, Modes.Num() - 1);
-    return Modes[RandomIndex];
-}
+//FString UMultiplayerSessionsSubsystem::GetRandomMap()
+//{
+//    // 검색할 폴더 경로 (Content/ 아래 경로는 "/Game/"으로 시작)
+//    FString FolderPath = "/Game/PlatformFighterKit/Maps/Levels";
+//    TArray<FAssetData> AssetList;
+//
+//    // AssetRegistryModule 로드 및 IAssetRegistry 참조 획득
+//    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+//    IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+//
+//    // 폴더 내 모든 자산(하위 폴더 포함) 검색
+//    AssetRegistry.GetAssetsByPath(FName(*FolderPath), AssetList, true);
+//
+//    // 레벨(월드)만 필터링 (월드 클래스는 "World")
+//    TArray<FAssetData> WorldAssets;
+//    for (const FAssetData& Asset : AssetList)
+//    {
+//        if (Asset.AssetClass == FName("World"))
+//        {
+//            WorldAssets.Add(Asset);
+//        }
+//    }
+//
+//    // 레벨이 하나라도 있다면 랜덤으로 선택
+//    if (WorldAssets.Num() > 0)
+//    {
+//        int32 RandomIndex = FMath::RandRange(0, WorldAssets.Num() - 1);
+//        FString MapPath = WorldAssets[RandomIndex].ObjectPath.ToString();
+//        return MapPath;
+//    }
+//    else
+//    {
+//        UE_LOG(LogTemp, Warning, TEXT("No level found in folder: %s"), *FolderPath);
+//        // 기본값 지정 (폴더 내에 레벨이 없을 경우)
+//        return FString("/Game/PlatformFighterKit/Maps/Levels/DefaultLevel");
+//    }
+//}
+//
+//FGameModeData UMultiplayerSessionsSubsystem::GetRandomMode()
+//{
+//    TArray<FGameModeData> Modes;
+//
+//    Modes.Add({ "2vs2vs2", 6 });
+//    Modes.Add({ "3vs3", 6 });
+//    Modes.Add({ "Solo", 4 });
+//    Modes.Add({ "2Human_vs_2AI", 2 });
+//    Modes.Add({ "1v1vAIvAI", 2 });
+//
+//    int32 RandomIndex = FMath::RandRange(0, Modes.Num() - 1);
+//    return Modes[RandomIndex];
+//}
 
 int32 UMultiplayerSessionsSubsystem::GetCurrentPlayerCount()
 {
