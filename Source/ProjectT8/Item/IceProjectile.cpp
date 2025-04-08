@@ -6,8 +6,12 @@ AIceProjectile::AIceProjectile()
 
 void AIceProjectile::ApplyEffect(ACharacterBase* Target)
 {
-   /* if (Target)
+    /*if (Target)
     {
-        Target->ApplyFreeze(FreezeDuration, SlideSpeed);
+        UCharacterEffectComponent* EffectComp = Target->FindComponentByClass<UCharacterEffectComponent>();
+        if (EffectComp)
+        {
+            EffectComp->ApplyFreeze(FreezeDuration, SlideSpeed);
+        }
     }*/
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Player/EffectComponent.h"
+#include "Player/CharacterBase.h"
 #include "Projectile.generated.h"
 
 UCLASS()

@@ -5,7 +5,7 @@ AMelee::AMelee()
 	WeaponType = EWeaponType::Melee;
 	ItemName = "Melee";
 }
-void AMelee::Attack()
+void AMelee::Use(ACharacterBase* Player)
 {	// 공격 로직
 	TArray<FHitResult> HitResults;
 	//주변 액터 감지

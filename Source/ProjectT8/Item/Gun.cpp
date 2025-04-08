@@ -7,7 +7,7 @@ AGun::AGun()
     ItemName = "Gun";
 }
 
-void AGun::Attack()
+void AGun::Use(ACharacterBase* Player)
 {
     if (CurrentAmmo > 0 && ProjectileClass)
     {

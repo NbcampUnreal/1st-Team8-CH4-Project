@@ -10,11 +10,5 @@ class PROJECTT8_API AFlashGrenade : public AThrowable
 
 public:
     AFlashGrenade();
-
-protected:
-    UPROPERTY(EditAnywhere)
-    float RangeRadius = 500.0f;
-
-    UPROPERTY(EditAnywhere)
-    float FlashDuration = 2.0f;
+    virtual void ApplyEffect(ACharacterBase* Target) override;
 };

@@ -7,7 +7,16 @@ ASpeedBoostPotion::ASpeedBoostPotion()
 
 void ASpeedBoostPotion::Use(ACharacterBase* Player)
 {
-	//캐릭터에 스피드+ 로직 추가必
-	// player -> func(지속시간, 증가배율)
-	Destroy();
+    if (Player)
+    {
+        UEffectComponent* EffectComp = Player->FindComponentByClass<UEffectComponent>();
+        if (EffectComp)
+        {
+            FEffectParams Params;
+            Params.Multiplier = 1.5f; // 속도 1.5배
+            Params.Duration = 5.0f;   // 5초 지속
+            EffectComp->ApplyEffect(EEffectType::SpeedUp, Params);
+        }
+	    Destroy();
+    }
 }

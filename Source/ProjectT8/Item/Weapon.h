@@ -23,5 +23,4 @@ public:
     AWeapon();
 
     virtual void Use(class ACharacterBase* Player) override;
-    virtual void Attack(); // 무기 사용 시 호출
 };

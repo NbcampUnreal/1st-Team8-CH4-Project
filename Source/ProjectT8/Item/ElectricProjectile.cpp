@@ -6,8 +6,14 @@ AElectricProjectile::AElectricProjectile()
 
 void AElectricProjectile::ApplyEffect(ACharacterBase* Target)
 {
-    /*if (Target)
+    if (Target)
     {
-        Target->ApplyStun(StunDuration); 끼고있는 무기로 알아서 바뀌게? 고민
-    }*/
+        UEffectComponent* EffectComp = Target->FindComponentByClass<UEffectComponent>();
+        if (EffectComp)
+        {
+            FEffectParams Params;
+            Params.Duration = 3.0f; // 3초간 스턴 효과
+            EffectComp->ApplyEffect(EEffectType::Electric, Params);
+        }
+    }
 }

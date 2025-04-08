@@ -9,7 +9,7 @@ class PROJECTT8_API AMelee : public AWeapon
     GENERATED_BODY()
 public:
     AMelee();
-    virtual void Attack() override;
+    virtual void Use(ACharacterBase* Player) override;
 
 protected:
     UPROPERTY(EditAnywhere)

@@ -9,13 +9,6 @@ class PROJECTT8_API APoisonKnife : public AThrowable
 	GENERATED_BODY()
 
 public:
-    APoisonKnife();
-
-protected:
-    UPROPERTY(EditAnywhere)
-    float FOVReduction;
-
-    UPROPERTY(EditAnywhere)
-    float Duration = 5.0f;
-
+    APoisonKnife(); 
+	virtual void ApplyEffect(ACharacterBase* Target) override;
 };

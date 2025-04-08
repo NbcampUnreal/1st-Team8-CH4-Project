@@ -1,6 +1,6 @@
 #include "Item/Projectile.h"
 #include "Components/SphereComponent.h"
-#include "Player/CharacterBase.h"
+
 
 AProjectile::AProjectile()
 {

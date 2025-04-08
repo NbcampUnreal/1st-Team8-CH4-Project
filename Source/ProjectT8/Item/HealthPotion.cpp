@@ -1,5 +1,5 @@
 #include "Item/HealthPotion.h"
-
+#include "Player/CharacterBase.h"
 AHealthPotion::AHealthPotion()
 {
 	ItemName = "HealthPotion";
@@ -7,7 +7,15 @@ AHealthPotion::AHealthPotion()
 
 void AHealthPotion::Use(ACharacterBase* Player)
 {
-	//캐릭터에 HP+ 로직 추가必
-	// player -> func(체력 회복량)
-	Destroy();
+    if (Player)
+    {
+        UEffectComponent* EffectComp = Player->FindComponentByClass<UEffectComponent>();
+        if (EffectComp)
+        {
+            FEffectParams Params;
+			Params.Value = HealthRestore;
+            EffectComp->ApplyEffect(EEffectType::Heal, Params);
+        }
+        Destroy();
+    }
 }

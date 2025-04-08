@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interactable.h"
+#include "Components/SphereComponent.h"
 #include "BaseItem.generated.h"
 
 UENUM(BlueprintType)
@@ -28,8 +29,14 @@ protected:
 	FString ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USceneComponent* RootComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EItemType ItemType;
+
+	UPROPERTY(VisibleAnywhere)
+	USphereComponent* InteractSphere;
 };

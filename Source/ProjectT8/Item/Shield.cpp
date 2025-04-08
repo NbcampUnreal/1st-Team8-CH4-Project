@@ -1,5 +1,6 @@
 #include "Item/Shield.h"
 
+
 AShield::AShield()
 {
 	ItemName = "Shield";

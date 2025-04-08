@@ -10,8 +10,5 @@ class PROJECTT8_API ABlackHoleGenerator : public AThrowable
 
 public:
     ABlackHoleGenerator();
-
-protected:
-    UPROPERTY(EditAnywhere)
-    float RangeRadius = 500.0f;
+    virtual void ApplyEffect(ACharacterBase* Target) override;
 };

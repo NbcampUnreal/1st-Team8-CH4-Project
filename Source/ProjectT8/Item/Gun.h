@@ -18,7 +18,6 @@ protected:
     UPROPERTY(EditAnywhere)
     TSubclassOf<class AProjectile> ProjectileClass;
 public:
-    AGun();
-
-    virtual void Attack() override;
+    AGun(); 
+    virtual void Use(ACharacterBase* Player) override;
 };
