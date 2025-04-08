@@ -22,15 +22,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	UAIPerceptionComponent* AIPerception;
-
-	UPROPERTY()
-	UAISenseConfig_Sight* SightConfig;
-
-	UFUNCTION()
-	void OnTargetPerceived(AActor* ACtor, FAIStimulus Stimulus);
-
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UBehaviorTree* BehaviorTreeAsset;
 
