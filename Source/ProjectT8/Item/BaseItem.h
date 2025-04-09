@@ -26,6 +26,12 @@ public:
 	virtual void Interact_Implementation(ACharacterBase* Player) override;
 	virtual void Use(ACharacterBase* Player);
 
+	UPROPERTY(EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> AssociatedEffect;
+
+	UFUNCTION(BlueprintCallable)
+	virtual TSubclassOf<UGameplayEffect> GetAssociatedGameplayEffect() const { return AssociatedEffect; }
+
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

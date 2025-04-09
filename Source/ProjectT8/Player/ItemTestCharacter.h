@@ -15,20 +15,20 @@ public:
 
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))//* 추가 * +4줄
-	UInputAction* InteractAction;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))//* 추가 * +4줄
+	//UInputAction* InteractAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* UseItemAction;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	//UInputAction* UseItemAction;
 	
 	void UseItem();// * 추가 * 하위 코드 전부
 
-	UFUNCTION(Server, Reliable)
-	void Server_PickupItem(ABaseItem* Item);
+	/*UFUNCTION(Server, Reliable)
+	void Server_PickupItem(ABaseItem* Item);*/
 	void PickupItem(ABaseItem* Item);
 
-	UFUNCTION(Server, Reliable)
-	void Server_Interact(AActor* InteractableActor);
+	/*UFUNCTION(Server, Reliable)
+	void Server_Interact(AActor* InteractableActor);*/
 	void TryInteract();
 
 	UFUNCTION(BlueprintCallable)
@@ -38,8 +38,8 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Effect, meta = (AllowPrivateAccess = "true"))
 	UEffectComponent* EffectComponent;
-	UPROPERTY(Replicated, VisibleAnywhere)
-	ABaseItem* EquippedItem;
+	/*UPROPERTY(Replicated, VisibleAnywhere)
+	ABaseItem* EquippedItem;*/
 
 public:
 	void ModifyHealth(float Amount);

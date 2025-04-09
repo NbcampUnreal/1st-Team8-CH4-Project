@@ -32,12 +32,9 @@ void ABaseItem::BeginPlay()
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 {
-	if (AItemTestCharacter* TestPlayer = Cast<AItemTestCharacter>(Player)) {
-
-		if (TestPlayer && !GetOwner())
-		{
-			TestPlayer->PickupItem(this);
-		}
+	if (Player && !GetOwner())
+	{
+		Player->PickupItem(this);
 	}
 }
 

@@ -10,6 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class ABaseItem;
 struct FInputActionValue;
 
 UCLASS()
@@ -59,6 +60,25 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction);
 
+	// Item
+	UPROPERTY(Replicated)
+	ABaseItem* EquippedItem;
+
+	UFUNCTION(BlueprintCallable)
+	void PickupItem(ABaseItem* Item);
+
+	UFUNCTION(BlueprintCallable)
+	void UseItem();
+
+	UFUNCTION(BlueprintCallable)
+	void TryInteract();
+
+	UFUNCTION(Server, Reliable)
+	void Server_PickupItem(ABaseItem* Item);
+
+	UFUNCTION(Server, Reliable)
+	void Server_Interact(AActor* InteractableActor);
+
 protected:
 	// Input
 	virtual void BeginPlay() override;
@@ -85,6 +105,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* AttackAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* InteractAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* UseItemAction;
+
 
 	// Camera
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")

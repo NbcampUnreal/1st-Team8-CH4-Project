@@ -9,6 +9,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+#include "Item/BaseItem.h"
+#include "Engine/OverlapResult.h"
 
 // Constructor
 ACharacterBase::ACharacterBase()
@@ -68,6 +70,7 @@ void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
+	DOREPLIFETIME(ACharacterBase, EquippedItem);
 }
 
 // BeginPlay
@@ -77,6 +80,7 @@ void ACharacterBase::BeginPlay()
 	InitAbilityActorInfo();
 
 	CurrentDamageEffect = StunEffectClass;
+	DrawDebugSphere(GetWorld(), GetActorLocation(), 250.0f, 16, FColor::Green, false, 1.0f);
 }
 
 // Controller & Input
@@ -102,6 +106,8 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ACharacterBase::SprintStart);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ACharacterBase::SprintEnd);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ACharacterBase::Attack);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ACharacterBase::TryInteract);
+		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, this, &ACharacterBase::UseItem);
 	}
 }
 
@@ -276,4 +282,88 @@ void ACharacterBase::Server_ApplyKnockback_Implementation(AActor* TargetActor)
 	KnockbackDir.Z = 0.5f;
 	KnockbackDir.Normalize();
 	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
+}
+
+void ACharacterBase::PickupItem(ABaseItem* Item)
+{
+	if (EquippedItem)
+	{
+		EquippedItem->Destroy();
+	}
+
+	EquippedItem = Item;
+
+	if (EquippedItem)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Picking up item: %s"), *GetNameSafe(EquippedItem));
+		EquippedItem->SetOwner(this);
+		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
+		EquippedItem->SetActorHiddenInGame(false);
+		EquippedItem->SetActorEnableCollision(false);
+
+		// 작업 필요
+		CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+	}
+}
+
+void ACharacterBase::UseItem()
+{
+	if (EquippedItem)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UseItem Triggered"));
+		EquippedItem->Use(this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("EquippedItem Is Null!!!"));
+	}
+}
+
+void ACharacterBase::TryInteract()
+{
+	TArray<FOverlapResult> Overlaps;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	if (GetWorld()->OverlapMultiByChannel(
+		Overlaps, 
+		GetActorLocation(), 
+		FQuat::Identity, 
+		ECC_Visibility, 
+		FCollisionShape::MakeSphere(250.f), Params))
+	{
+		for (const FOverlapResult& Overlap : Overlaps)
+		{
+			if (AActor* OverlappedActor = Overlap.GetActor())
+			{
+				if (OverlappedActor->Implements<UInteractable>())
+				{
+					UE_LOG(LogTemp, Display, TEXT("check"));
+					IInteractable::Execute_Interact(OverlappedActor, this);
+				}
+				else
+				{	
+					UE_LOG(LogTemp, Display, TEXT("server check"));
+					Server_Interact(OverlappedActor);
+				}
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("TryInteract Is Fail!!!"));
+	}
+}
+
+void ACharacterBase::Server_PickupItem_Implementation(ABaseItem* Item)
+{
+	PickupItem(Item);
+}
+
+void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
+{
+	if (InteractableActor && InteractableActor->Implements<UInteractable>())
+	{
+		IInteractable::Execute_Interact(InteractableActor, this);
+	}
 }
