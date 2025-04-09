@@ -34,7 +34,17 @@ void AT8AICharacter::BeginPlay()
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	/*CurrentHP = MaxHP;*/
+	if (InitEffectClass && AbilitySystemComponent)
+	{
+		FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+		Context.AddSourceObject(this);
+		FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(InitEffectClass, 1.0f, Context);
+		if (Spec.IsValid())
+		{
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+			UE_LOG(LogTemp, Warning, TEXT("초기화 이펙트 적용 완료"));
+		}
+	}
 
 	GetWorldTimerManager().SetTimer(
 		DetectionTimer,
@@ -76,6 +86,8 @@ void AT8AICharacter::PerformAttackHitCheck()
 
 	if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_Pawn, Shape))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PerformAttackHitCheck"));
+
 		for (const FHitResult& Hit : HitResults)
 		{
 			AActor* HitActor = Hit.GetActor();
@@ -215,17 +227,6 @@ void AT8AICharacter::DetectNearbyActors()
 
 	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
 }
-
-//void AT8AICharacter::ApplyDamage(float DamageAmount)
-//{
-//	CurrentHP -= DamageAmount;
-//	UE_LOG(LogTemp, Warning, TEXT("AI 체력 : %.1f"), CurrentHP);
-//
-//	if (CurrentHP <= 0.0f)
-//	{
-//		Die();
-//	}
-//}
 
 void AT8AICharacter::Die()
 {
