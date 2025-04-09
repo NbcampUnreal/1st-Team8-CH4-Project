@@ -10,8 +10,20 @@
 AItemTestCharacter::AItemTestCharacter()
 {
 	EffectComponent = CreateDefaultSubobject<UEffectComponent>(TEXT("EffectComponent"));	// * 추가 * +2줄
-	InteractAction = CreateDefaultSubobject<UInputAction>(TEXT("InteractAction"));
-	UseItemAction = CreateDefaultSubobject<UInputAction>(TEXT("UseItemAction"));
+}
+
+void AItemTestCharacter::NotifyControllerChanged()
+{
+	Super::NotifyControllerChanged();
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			UE_LOG(LogTemp, Warning, TEXT("InputMappingContext 등록 완료 (ItemTestCharacter)"));
+		}
+	}
 }
 
 void AItemTestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -25,6 +37,15 @@ void AItemTestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+	}
+	UE_LOG(LogTemp, Warning, TEXT(">> SetupPlayerInputComponent 실행됨"));
+	if (InteractAction)
+	{
+		UE_LOG(LogTemp, Warning, TEXT(">> InteractAction 유효함: %s"), *InteractAction->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT(">> InteractAction 애셋이 없음!"));
 	}
 }
 
@@ -46,7 +67,7 @@ void AItemTestCharacter::PickupItem(ABaseItem* Item)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Picking up item: %s"), *GetNameSafe(EquippedItem));
 		EquippedItem->SetOwner(this);
-		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
+		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("RightHand"));
 		EquippedItem->SetActorHiddenInGame(false);
 		EquippedItem->SetActorEnableCollision(false);
 	}

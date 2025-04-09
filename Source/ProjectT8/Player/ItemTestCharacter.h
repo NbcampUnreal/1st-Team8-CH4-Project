@@ -13,6 +13,7 @@ class PROJECTT8_API AItemTestCharacter : public ACharacterBase
 public:
 	AItemTestCharacter();
 
+	void NotifyControllerChanged();
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))//* √ﬂ∞° * +4¡Ÿ
