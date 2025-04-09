@@ -32,12 +32,16 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
+	UPROPERTY(EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> StunEffectClass;
 
 	void InitAbilityActorInfo();
-	void ApplyGameplayDamage(ACharacterBase* Target);
+	void ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
 	void OnAttackHit();
 	void DealDamageToActors(const TArray<FHitResult>& HitResults);
 	void ApplyKnockback(AActor* TargetActor);
+
+	bool CanAttack() const;
 
 	// RPC
 	UFUNCTION(Server, Reliable)
@@ -47,7 +51,7 @@ public:
 	void Multicast_PlayAttackMontage();
 
 	UFUNCTION(Server, Reliable)
-	void Server_ApplyDamage(ACharacterBase* Target);
+	void Server_ApplyEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
 
 	UFUNCTION(Server, Reliable)
 	void Server_ApplyKnockback(AActor* TargetActor);
@@ -92,6 +96,9 @@ protected:
 	// Combat
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<UGameplayEffect> CurrentDamageEffect;
 
 private:
 	bool bIsRunning = false;
