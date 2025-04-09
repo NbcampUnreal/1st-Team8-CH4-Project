@@ -36,6 +36,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> StunEffectClass;
 
+	TArray<FGameplayTag> StatusEffectTags;
+	void RegisterStatusEffectDelegates();
+	UFUNCTION()
+	void OnStatusEffectTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void ShowStatusWidget(const FGameplayTag& Tag);
+	void HideStatusWidget(const FGameplayTag& Tag);
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> BurnWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* BurnWidgetInstance;
+
 	void InitAbilityActorInfo();
 	void ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
 	void OnAttackHit();

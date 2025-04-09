@@ -26,7 +26,7 @@ public:
 	virtual void Interact_Implementation(ACharacterBase* Player) override;
 	virtual void Use(ACharacterBase* Player);
 
-	UPROPERTY(EditDefaultsOnly, Category = "GAS")
+	UPROPERTY(EditAnywhere, Category = "GAS")
 	TSubclassOf<UGameplayEffect> AssociatedEffect;
 
 	UFUNCTION(BlueprintCallable)

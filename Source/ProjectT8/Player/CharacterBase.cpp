@@ -11,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Item/BaseItem.h"
 #include "Engine/OverlapResult.h"
+#include "Blueprint/UserWidget.h"
 
 // Constructor
 ACharacterBase::ACharacterBase()
@@ -58,6 +59,76 @@ UAbilitySystemComponent* ACharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void ACharacterBase::RegisterStatusEffectDelegates()
+{
+	for (const FGameplayTag& Tag : StatusEffectTags)
+	{
+		if (AbilitySystemComponent)
+		{
+			AbilitySystemComponent->RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
+				.AddUObject(this, &ACharacterBase::OnStatusEffectTagChanged);
+		}
+	}
+}
+
+void ACharacterBase::OnStatusEffectTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[태그 적용] %s"), *Tag.ToString());
+		ShowStatusWidget(Tag);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[태그 제거] %s"), *Tag.ToString());
+		HideStatusWidget(Tag);
+	}
+}
+
+void ACharacterBase::ShowStatusWidget(const FGameplayTag& Tag)
+{
+	if (!IsLocallyControlled()) return;
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Poisoned")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("독 독 독!!!"));
+	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Burning")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("불 불 불!!!"));
+		if (!BurnWidgetInstance && BurnWidgetClass)
+		{
+			BurnWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), BurnWidgetClass);
+			if (BurnWidgetInstance)
+			{
+				BurnWidgetInstance->AddToViewport();
+				UE_LOG(LogTemp, Warning, TEXT("불 위젯 생성"));
+			}
+		}
+	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Shocked")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("쇽 쇽 쇽!!!"));
+	}
+}
+
+void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
+{
+	if (!IsLocallyControlled()) return;
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Burning")))
+	{
+		if (BurnWidgetInstance)
+		{
+			BurnWidgetInstance->RemoveFromParent();
+			BurnWidgetInstance = nullptr;
+			UE_LOG(LogTemp, Warning, TEXT("불 위젯 제거"));
+		}
+	}
+}
+
 void ACharacterBase::InitAbilityActorInfo()
 {
 	if (AbilitySystemComponent)
@@ -79,8 +150,13 @@ void ACharacterBase::BeginPlay()
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	CurrentDamageEffect = StunEffectClass;
-	DrawDebugSphere(GetWorld(), GetActorLocation(), 250.0f, 16, FColor::Green, false, 1.0f);
+	StatusEffectTags = {
+		FGameplayTag::RequestGameplayTag("State.Poisoned"),
+		FGameplayTag::RequestGameplayTag("State.Burning"),
+		FGameplayTag::RequestGameplayTag("State.Shocked"),
+	};
+
+	RegisterStatusEffectDelegates();
 }
 
 // Controller & Input

@@ -21,13 +21,11 @@ ABaseItem::ABaseItem()
 
 	ItemName = "DefaultItem";
 	PrimaryActorTick.bCanEverTick = false;
-
 }
 
 void ABaseItem::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)
