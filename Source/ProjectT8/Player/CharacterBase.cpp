@@ -75,6 +75,8 @@ void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	InitAbilityActorInfo();
+
+	CurrentDamageEffect = StunEffectClass;
 }
 
 // Controller & Input
@@ -132,6 +134,13 @@ void ACharacterBase::SprintEnd()
 // Attack
 void ACharacterBase::Attack()
 {
+	if (!CanAttack()) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't Attack!!!"));
+		return;
+	}
+
+
 	if (!HasAuthority())
 	{
 		Server_Attack();
@@ -166,12 +175,18 @@ void ACharacterBase::DealDamageToActors(const TArray<FHitResult>& HitResults)
 			UE_LOG(LogTemp, Warning, TEXT("타격 대상: %s"), *TargetCharacter->GetName());
 			if (HasAuthority())
 			{
-				ApplyGameplayDamage(TargetCharacter);
+				if (CurrentDamageEffect)
+				{
+					ApplyGameplayEffectToTarget(TargetCharacter, CurrentDamageEffect);
+				}
 				ApplyKnockback(TargetCharacter);
 			}
 			else
 			{
-				Server_ApplyDamage(TargetCharacter);
+				if (CurrentDamageEffect)
+				{
+					Server_ApplyEffectToTarget(TargetCharacter, CurrentDamageEffect);
+				}
 				Server_ApplyKnockback(TargetCharacter);
 			}
 		}
@@ -192,16 +207,23 @@ void ACharacterBase::OnAttackHit()
 	}
 }
 
-void ACharacterBase::ApplyGameplayDamage(ACharacterBase* Target)
+void ACharacterBase::ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass)
 {
-	if (!DamageEffectClass || !AbilitySystemComponent || !Target) return;
+	if (!EffectClass || !AbilitySystemComponent || !Target) return;
+
 	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
 	Context.AddSourceObject(this);
-	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);
+
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(EffectClass, 1.0f, Context);
 	if (Spec.IsValid())
 	{
 		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		UE_LOG(LogTemp, Warning, TEXT("%s 에게 데미지 효과 적용"), *Target->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s 에게 이펙트 적용: %s"), *Target->GetName(), *EffectClass->GetName());
+
+		if (Target->GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned")))
+		{
+			UE_LOG(LogTemp, Warning, TEXT(">> %s 는 스턴 상태입니다!"), *Target->GetName());
+		}
 	}
 }
 
@@ -216,6 +238,11 @@ void ACharacterBase::ApplyKnockback(AActor* TargetActor)
 	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
 }
 
+bool ACharacterBase::CanAttack() const
+{
+	return !AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned"));
+}
+
 void ACharacterBase::Multicast_ApplyKnockback_Implementation(AActor* TargetActor, FVector Direction)
 {
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
@@ -225,16 +252,18 @@ void ACharacterBase::Multicast_ApplyKnockback_Implementation(AActor* TargetActor
 	TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
 }
 
-void ACharacterBase::Server_ApplyDamage_Implementation(ACharacterBase* Target)
+void ACharacterBase::Server_ApplyEffectToTarget_Implementation(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass)
 {
-	if (!HasAuthority() || !Target || !DamageEffectClass) return;
+	if (!HasAuthority() || !Target || !EffectClass) return;
+
 	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
 	Context.AddSourceObject(this);
-	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(DamageEffectClass, 1.f, Context);
+
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(EffectClass, 1.f, Context);
 	if (Spec.IsValid())
 	{
 		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		UE_LOG(LogTemp, Warning, TEXT("%s 에게 데미지 효과 적용"), *Target->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s 에게 이펙트 적용: %s"), *Target->GetName(), *EffectClass->GetName());
 	}
 }
 
