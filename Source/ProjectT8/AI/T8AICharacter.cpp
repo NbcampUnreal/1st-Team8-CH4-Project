@@ -13,6 +13,13 @@ AT8AICharacter::AT8AICharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
+	bReplicates = true;
+
 	TeamIndicator = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TeamIndicator"));
 	TeamIndicator->SetupAttachment(RootComponent);
 	TeamIndicator->SetHorizontalAlignment(EHTA_Center);
@@ -25,8 +32,9 @@ AT8AICharacter::AT8AICharacter()
 void AT8AICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	InitAbilityActorInfo();
 
-	CurrentHP = MaxHP;
+	/*CurrentHP = MaxHP;*/
 
 	GetWorldTimerManager().SetTimer(
 		DetectionTimer,
@@ -79,7 +87,7 @@ void AT8AICharacter::PerformAttackHitCheck()
 
 					if (AT8AICharacter* EnemyAI = Cast<AT8AICharacter>(HitPawn))
 					{
-						EnemyAI->ApplyDamage(20.0f);
+						ApplyGameplayDamage(EnemyAI);
 					}
 					else
 					{
@@ -208,16 +216,16 @@ void AT8AICharacter::DetectNearbyActors()
 	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
 }
 
-void AT8AICharacter::ApplyDamage(float DamageAmount)
-{
-	CurrentHP -= DamageAmount;
-	UE_LOG(LogTemp, Warning, TEXT("AI 체력 : %.1f"), CurrentHP);
-
-	if (CurrentHP <= 0.0f)
-	{
-		Die();
-	}
-}
+//void AT8AICharacter::ApplyDamage(float DamageAmount)
+//{
+//	CurrentHP -= DamageAmount;
+//	UE_LOG(LogTemp, Warning, TEXT("AI 체력 : %.1f"), CurrentHP);
+//
+//	if (CurrentHP <= 0.0f)
+//	{
+//		Die();
+//	}
+//}
 
 void AT8AICharacter::Die()
 {
@@ -271,3 +279,39 @@ void AT8AICharacter::SetTeamID(int32 NewID)
 	}
 }
 
+UAbilitySystemComponent* AT8AICharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+void AT8AICharacter::InitAbilityActorInfo()
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+}
+
+void AT8AICharacter::ApplyGameplayDamage(AActor* TargetActor)
+{
+	if (!TargetActor || !DamageEffectClass || !AbilitySystemComponent) return;
+
+	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
+	if (!TargetCharacter) return;
+
+	IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(TargetCharacter);
+	if (!AbilityInterface) return;
+
+	UAbilitySystemComponent* TargetASC = AbilityInterface->GetAbilitySystemComponent();
+	if (!TargetASC) return;
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	Context.AddSourceObject(this);
+
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);
+	if (Spec.IsValid())
+	{
+		TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		UE_LOG(LogTemp, Warning, TEXT("AI가 %s에게 데미지 이펙트 적용"), *TargetActor->GetName());
+	}
+}
