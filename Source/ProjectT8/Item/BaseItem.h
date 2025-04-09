@@ -24,7 +24,17 @@ class PROJECTT8_API ABaseItem : public AActor, public IInteractable
 public:	
 	ABaseItem();
 	virtual void Interact_Implementation(ACharacterBase* Player) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(Server, Reliable)
+	void Server_Use(ACharacterBase* Player);
 	virtual void Use(ACharacterBase* Player);
+	UStaticMeshComponent* GetItemMesh() const { return ItemMesh; }
+
+	UPROPERTY(ReplicatedUsing = OnRep_IsPickedUp)
+	bool bIsPickedUp;
+	UFUNCTION()
+	void OnRep_IsPickedUp();
 
 protected:
 	virtual void BeginPlay() override;

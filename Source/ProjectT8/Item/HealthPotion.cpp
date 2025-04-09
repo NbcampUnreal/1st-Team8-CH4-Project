@@ -7,15 +7,28 @@ AHealthPotion::AHealthPotion()
 
 void AHealthPotion::Use(ACharacterBase* Player)
 {
-    if (Player)
+    if (HasAuthority())
     {
-        UEffectComponent* EffectComp = Player->FindComponentByClass<UEffectComponent>();
-        if (EffectComp)
+        if (Player)
         {
-            FEffectParams Params;
-			Params.Value = HealthRestore;
-            EffectComp->ApplyEffect(EEffectType::Heal, Params);
+            UEffectComponent* EffectComp = Player->FindComponentByClass<UEffectComponent>();
+            if (EffectComp)
+            {
+                FEffectParams Params;
+                Params.Value = HealthRestore;
+                EffectComp->ApplyEffect(EEffectType::Heal, Params);
+            }
+            if (AItemTestCharacter* TestPlayer = Cast<AItemTestCharacter>(Player))
+            {
+                TestPlayer->SetEquippedItem(nullptr);
+            }
+            
         }
         Destroy();
     }
+    else
+    {
+        Server_Use(Player);
+    }
+
 }

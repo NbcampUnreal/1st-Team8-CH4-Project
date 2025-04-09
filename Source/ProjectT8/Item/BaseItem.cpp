@@ -1,10 +1,13 @@
 #include "BaseItem.h"
 #include "Player/CharacterBase.h"
+#include "Net/UnrealNetwork.h"
 
 
 ABaseItem::ABaseItem()
 {
 	bReplicates = true;
+	bIsPickedUp = false;
+	SetReplicates(true);
 	SetReplicateMovement(true);
 
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
@@ -41,7 +44,31 @@ void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 	}
 }
 
+void ABaseItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ABaseItem, bIsPickedUp);
+}
+
 void ABaseItem::Use(ACharacterBase* Player)
 {
-	// 기본 사용 로직, 파생 클래스에서 오버라이드
+
+}
+void ABaseItem::Server_Use_Implementation(ACharacterBase* Player)
+{
+	Use(Player);
+}
+
+void ABaseItem::OnRep_IsPickedUp()
+{
+	if (bIsPickedUp)
+	{
+		SetActorHiddenInGame(true);
+		SetActorEnableCollision(false);
+	}
+	else
+	{
+		SetActorHiddenInGame(false);
+		SetActorEnableCollision(true);
+	}
 }

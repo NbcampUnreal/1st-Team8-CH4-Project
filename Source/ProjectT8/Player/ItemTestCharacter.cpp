@@ -67,9 +67,15 @@ void AItemTestCharacter::PickupItem(ABaseItem* Item)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Picking up item: %s"), *GetNameSafe(EquippedItem));
 		EquippedItem->SetOwner(this);
-		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("RightHand"));
-		EquippedItem->SetActorHiddenInGame(false);
+
 		EquippedItem->SetActorEnableCollision(false);
+		EquippedItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		EquippedItem->GetItemMesh()->SetSimulatePhysics(false);
+		if (HasAuthority())
+		{
+			EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("RightHand"));
+		}
+
 	}
 }
 
@@ -110,13 +116,22 @@ void AItemTestCharacter::TryInteract()
 
 void AItemTestCharacter::UseItem()
 {
-	if (EquippedItem)
+	if (HasAuthority())
 	{
-		UE_LOG(LogTemp, Log, TEXT("UseItem triggered"));
-		EquippedItem->Use(this);
+		if (EquippedItem)
+		{
+			EquippedItem->Use(this);
+		}
+	}
+	else 
+	{
+		Server_UseItem();
 	}
 }
-
+void AItemTestCharacter::Server_UseItem_Implementation()
+{
+	UseItem();
+}
 void AItemTestCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

@@ -5,7 +5,7 @@
 #include "ItemTestCharacter.generated.h"
 
 class ABaseItem; //* 추가 *
-UCLASS()
+UCLASS(config = Game)
 class PROJECTT8_API AItemTestCharacter : public ACharacterBase
 {
 	GENERATED_BODY()
@@ -23,6 +23,8 @@ public:
 	UInputAction* UseItemAction;
 	
 	void UseItem();// * 추가 * 하위 코드 전부
+	UFUNCTION(Server, Reliable)
+	void Server_UseItem();
 
 	UFUNCTION(Server, Reliable)
 	void Server_PickupItem(ABaseItem* Item);
@@ -43,6 +45,7 @@ protected:
 	ABaseItem* EquippedItem;
 
 public:
+	void SetEquippedItem(ABaseItem* NewItem) {	EquippedItem = NewItem;	}
 	void ModifyHealth(float Amount);
 
 private:
