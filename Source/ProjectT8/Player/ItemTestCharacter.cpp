@@ -19,8 +19,8 @@ void AItemTestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AItemTestCharacter::TryInteract);// * 추가 *
-		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, this, &AItemTestCharacter::UseItem);// * 추가 *
+		//EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AItemTestCharacter::TryInteract);// * 추가 *
+		//EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, this, &AItemTestCharacter::UseItem);// * 추가 *
 	}
 	else
 	{
@@ -52,10 +52,10 @@ void AItemTestCharacter::PickupItem(ABaseItem* Item)
 	}
 }
 
-void AItemTestCharacter::Server_PickupItem_Implementation(ABaseItem* Item)
-{
-	PickupItem(Item);
-}
+//void AItemTestCharacter::Server_PickupItem_Implementation(ABaseItem* Item)
+//{
+//	PickupItem(Item);
+//}
 
 void AItemTestCharacter::TryInteract()
 {
@@ -103,10 +103,10 @@ void AItemTestCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(AItemTestCharacter, EquippedItem);
 }
 
-void AItemTestCharacter::Server_Interact_Implementation(AActor* InteractableActor)
-{
-	if (InteractableActor && InteractableActor->Implements<UInteractable>())
-	{
-		IInteractable::Execute_Interact(InteractableActor, this);
-	}
-}
+//void AItemTestCharacter::Server_Interact_Implementation(AActor* InteractableActor)
+//{
+//	if (InteractableActor && InteractableActor->Implements<UInteractable>())
+//	{
+//		IInteractable::Execute_Interact(InteractableActor, this);
+//	}
+//}

@@ -21,23 +21,18 @@ ABaseItem::ABaseItem()
 
 	ItemName = "DefaultItem";
 	PrimaryActorTick.bCanEverTick = false;
-
 }
 
 void ABaseItem::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 {
-	if (AItemTestCharacter* TestPlayer = Cast<AItemTestCharacter>(Player)) {
-
-		if (TestPlayer && !GetOwner())
-		{
-			TestPlayer->PickupItem(this);
-		}
+	if (Player && !GetOwner())
+	{
+		Player->PickupItem(this);
 	}
 }
 
