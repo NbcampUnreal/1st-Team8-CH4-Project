@@ -9,7 +9,9 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
-				"Engine"
+				"Engine",
+				"AIModule",
+				"GameplayAbilities"
 			]
 		}
 	],
@@ -31,6 +33,11 @@
 		},
 		{
 			"Name": "OnlineSubsystemSteam",
+
+			"Enabled": true
+		},
+    {
+			"Name": "GameplayAbilities",
 			"Enabled": true
 		}
 	]
