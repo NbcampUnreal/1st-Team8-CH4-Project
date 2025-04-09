@@ -1,6 +1,7 @@
 #include "Player/EffectComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/CharacterBase.h"
+#include "Player/ItemTestCharacter.h"
 #include "TimerManager.h"
 #include "Blueprint/UserWidget.h"
 
@@ -133,7 +134,7 @@ void UEffectComponent::ApplyCloneEffect(float Duration)
 
 void UEffectComponent::ApplyHealEffect(float Amount)
 {
-    if (ACharacterBase* Char = Cast<ACharacterBase>(GetOwner()))
+    if (AItemTestCharacter* Char = Cast<AItemTestCharacter>(GetOwner()))//test MainCharacter·Î º¯°æ ù±
     {
         Char->ModifyHealth(Amount);
         UE_LOG(LogTemp, Warning, TEXT("Heal effect applied: +%f HP"), Amount);

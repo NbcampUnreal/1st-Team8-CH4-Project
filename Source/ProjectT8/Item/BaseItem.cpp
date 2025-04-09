@@ -4,6 +4,9 @@
 
 ABaseItem::ABaseItem()
 {
+	bReplicates = true;
+	SetReplicateMovement(true);
+
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	RootComponent = RootComp;
 
@@ -29,9 +32,12 @@ void ABaseItem::BeginPlay()
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 {
-	if (Player)
-	{
-		Player->PickupItem(this);
+	if (AItemTestCharacter* TestPlayer = Cast<AItemTestCharacter>(Player)) {
+
+		if (TestPlayer && !GetOwner())
+		{
+			TestPlayer->PickupItem(this);
+		}
 	}
 }
 

@@ -3,6 +3,8 @@
 #include "GameFramework/Actor.h"
 #include "Interactable.h"
 #include "Components/SphereComponent.h"
+#include "Player/CharacterBase.h"
+#include "Player/ItemTestCharacter.h"
 #include "BaseItem.generated.h"
 
 UENUM(BlueprintType)
@@ -12,7 +14,8 @@ enum class EItemType : uint8
 	Throwable,
 	Consumable
 };
-class ACharacterBase;
+class AItemTestCharacter;
+
 UCLASS()
 class PROJECTT8_API ABaseItem : public AActor, public IInteractable
 {
