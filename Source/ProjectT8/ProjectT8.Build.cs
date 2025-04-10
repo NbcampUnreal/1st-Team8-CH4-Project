@@ -19,7 +19,8 @@ public class ProjectT8 : ModuleRules
 			"AdvancedSessions",
 			"OnlineSubsystem",
 			"OnlineSubsystemUtils",
-			"OnlineSubsystemSteam"
+			"OnlineSubsystemSteam",
+            "Networking"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
