@@ -12,6 +12,9 @@
 #include "Item/BaseItem.h"
 #include "Engine/OverlapResult.h"
 #include "Blueprint/UserWidget.h"
+#include "CombatComponent.h"
+#include "GAS/CharacterAttributeSet.h"
+
 
 // Constructor
 ACharacterBase::ACharacterBase()
@@ -22,11 +25,11 @@ ACharacterBase::ACharacterBase()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
-	bReplicates = true;
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 
-	// Capsule
+	SetReplicates(true);
+	SetReplicateMovement(true);
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -57,6 +60,46 @@ ACharacterBase::ACharacterBase()
 UAbilitySystemComponent* ACharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void ACharacterBase::InitAbilityActorInfo()
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+	if (CombatComponent)
+	{
+		CombatComponent->Init(this);
+	}
+}
+
+void ACharacterBase::BeginPlay()
+{
+	Super::BeginPlay();
+	InitAbilityActorInfo();
+
+	StatusEffectTags = {
+		FGameplayTag::RequestGameplayTag("State.Poisoned"),
+		FGameplayTag::RequestGameplayTag("State.Burning"),
+		FGameplayTag::RequestGameplayTag("State.Shocked"),
+	};
+
+	RegisterStatusEffectDelegates();
+}
+
+void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACharacterBase::Move);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ACharacterBase::SprintStart);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ACharacterBase::SprintEnd);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ACharacterBase::Attack);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ACharacterBase::TryInteract);
+		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, this, &ACharacterBase::UseItem);
+	}
 }
 
 void ACharacterBase::RegisterStatusEffectDelegates()
@@ -129,35 +172,18 @@ void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
 	}
 }
 
-void ACharacterBase::InitAbilityActorInfo()
-{
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	}
-}
+
 
 void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
 	DOREPLIFETIME(ACharacterBase, EquippedItem);
+	DOREPLIFETIME(ACharacterBase, CombatComponent);
 }
 
 // BeginPlay
-void ACharacterBase::BeginPlay()
-{
-	Super::BeginPlay();
-	InitAbilityActorInfo();
 
-	StatusEffectTags = {
-		FGameplayTag::RequestGameplayTag("State.Poisoned"),
-		FGameplayTag::RequestGameplayTag("State.Burning"),
-		FGameplayTag::RequestGameplayTag("State.Shocked"),
-	};
-
-	RegisterStatusEffectDelegates();
-}
 
 // Controller & Input
 void ACharacterBase::NotifyControllerChanged()
@@ -173,19 +199,7 @@ void ACharacterBase::NotifyControllerChanged()
 	}
 }
 
-void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACharacterBase::Move);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ACharacterBase::SprintStart);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ACharacterBase::SprintEnd);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ACharacterBase::Attack);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ACharacterBase::TryInteract);
-		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, this, &ACharacterBase::UseItem);
-	}
-}
+
 
 void ACharacterBase::Move(const FInputActionValue& Value)
 {
@@ -216,148 +230,10 @@ void ACharacterBase::SprintEnd()
 // Attack
 void ACharacterBase::Attack()
 {
-	if (!CanAttack()) 
+	if (CombatComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Can't Attack!!!"));
-		return;
+		CombatComponent->Attack();
 	}
-
-
-	if (!HasAuthority())
-	{
-		Server_Attack();
-		return;
-	}
-	Multicast_PlayAttackMontage();
-}
-
-void ACharacterBase::Server_Attack_Implementation()
-{
-	Multicast_PlayAttackMontage();
-}
-
-void ACharacterBase::Multicast_PlayAttackMontage_Implementation()
-{
-	if (!AttackMontage) return;
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && !AnimInstance->Montage_IsPlaying(AttackMontage))
-	{
-		AnimInstance->Montage_Play(AttackMontage);
-	}
-}
-
-// Damage & Knockback
-void ACharacterBase::DealDamageToActors(const TArray<FHitResult>& HitResults)
-{
-	for (const FHitResult& Hit : HitResults)
-	{
-		ACharacterBase* TargetCharacter = Cast<ACharacterBase>(Hit.GetActor());
-		if (TargetCharacter && TargetCharacter != this)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("타격 대상: %s"), *TargetCharacter->GetName());
-			if (HasAuthority())
-			{
-				if (CurrentDamageEffect)
-				{
-					ApplyGameplayEffectToTarget(TargetCharacter, CurrentDamageEffect);
-				}
-				ApplyKnockback(TargetCharacter);
-			}
-			else
-			{
-				if (CurrentDamageEffect)
-				{
-					Server_ApplyEffectToTarget(TargetCharacter, CurrentDamageEffect);
-				}
-				Server_ApplyKnockback(TargetCharacter);
-			}
-		}
-	}
-}
-
-void ACharacterBase::OnAttackHit()
-{
-	FVector Start = GetActorLocation();
-	FVector Forward = GetActorForwardVector();
-	FVector End = Start + Forward * 150.f;
-	TArray<FHitResult> HitResults;
-	FCollisionShape Sphere = FCollisionShape::MakeSphere(60.f);
-	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_Pawn, Sphere);
-	if (bHit)
-	{
-		DealDamageToActors(HitResults);
-	}
-}
-
-void ACharacterBase::ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass)
-{
-	if (!EffectClass || !AbilitySystemComponent || !Target) return;
-
-	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
-	Context.AddSourceObject(this);
-
-	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(EffectClass, 1.0f, Context);
-	if (Spec.IsValid())
-	{
-		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		UE_LOG(LogTemp, Warning, TEXT("%s 에게 이펙트 적용: %s"), *Target->GetName(), *EffectClass->GetName());
-
-		if (Target->GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned")))
-		{
-			UE_LOG(LogTemp, Warning, TEXT(">> %s 는 스턴 상태입니다!"), *Target->GetName());
-		}
-	}
-}
-
-void ACharacterBase::ApplyKnockback(AActor* TargetActor)
-{
-	if (!HasAuthority()) return;
-	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
-	if (!TargetCharacter) return;
-	FVector KnockbackDir = (TargetCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-	KnockbackDir.Z = 0.5f;
-	KnockbackDir.Normalize();
-	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
-}
-
-bool ACharacterBase::CanAttack() const
-{
-	return !AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned"));
-}
-
-void ACharacterBase::Multicast_ApplyKnockback_Implementation(AActor* TargetActor, FVector Direction)
-{
-	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
-	if (!TargetCharacter) return;
-	const float KnockbackStrength = 800.f;
-	FVector KnockbackForce = Direction * KnockbackStrength;
-	TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
-}
-
-void ACharacterBase::Server_ApplyEffectToTarget_Implementation(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass)
-{
-	if (!HasAuthority() || !Target || !EffectClass) return;
-
-	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
-	Context.AddSourceObject(this);
-
-	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(EffectClass, 1.f, Context);
-	if (Spec.IsValid())
-	{
-		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		UE_LOG(LogTemp, Warning, TEXT("%s 에게 이펙트 적용: %s"), *Target->GetName(), *EffectClass->GetName());
-	}
-}
-
-void ACharacterBase::Server_ApplyKnockback_Implementation(AActor* TargetActor)
-{
-	if (!HasAuthority()) return;
-	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
-	if (!TargetCharacter) return;
-	FVector KnockbackDir = (TargetCharacter->GetActorLocation() - GetActorLocation());
-	KnockbackDir.Z = 0.5f;
-	KnockbackDir.Normalize();
-	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
 }
 
 void ACharacterBase::PickupItem(ABaseItem* Item)
@@ -377,8 +253,10 @@ void ACharacterBase::PickupItem(ABaseItem* Item)
 		EquippedItem->SetActorHiddenInGame(false);
 		EquippedItem->SetActorEnableCollision(false);
 
-		// 작업 필요
-		CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		if (CombatComponent)
+		{
+			CombatComponent->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		}
 	}
 }
 
@@ -414,12 +292,10 @@ void ACharacterBase::TryInteract()
 			{
 				if (OverlappedActor->Implements<UInteractable>())
 				{
-					UE_LOG(LogTemp, Display, TEXT("check"));
 					IInteractable::Execute_Interact(OverlappedActor, this);
 				}
 				else
 				{	
-					UE_LOG(LogTemp, Display, TEXT("server check"));
 					Server_Interact(OverlappedActor);
 				}
 			}

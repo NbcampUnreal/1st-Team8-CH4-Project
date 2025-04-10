@@ -21,5 +21,5 @@ protected:
 	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditAnywhere, Category = "AI")
-	float AttackDelay = 1.0f;
+	float AttackDelay = 1.3f;
 };

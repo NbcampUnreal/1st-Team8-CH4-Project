@@ -79,8 +79,7 @@ void AT8AICharacter::Tick(float DeltaTime)
 void AT8AICharacter::PerformAttackHitCheck()
 {
 	FVector Start = GetActorLocation();
-	FVector Forward = GetActorForwardVector();
-	FVector End = Start + Forward * 100.0f;
+	FVector End = Start + GetActorLocation() * 100.0f;
 
 	FCollisionShape Shape = FCollisionShape::MakeSphere(50.0f);
 	TArray<FHitResult> HitResults;
