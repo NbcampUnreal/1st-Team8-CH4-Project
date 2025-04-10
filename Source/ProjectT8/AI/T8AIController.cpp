@@ -8,7 +8,6 @@
 
 AT8AIController::AT8AIController()
 {
-	
 }
 
 void AT8AIController::BeginPlay()
@@ -28,7 +27,7 @@ void AT8AIController::Tick(float DeltaTime)
 	AT8AICharacter* T8Char = Cast<AT8AICharacter>(GetPawn());
 	if (T8Char && T8Char->bIsAttacking)
 	{
-		StopMovement();
+		//StopMovement();
 	}
 }
 

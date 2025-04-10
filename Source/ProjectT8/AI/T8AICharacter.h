@@ -54,8 +54,8 @@ public:
 
 	FTimerHandle DetectionTimer;
 
-	UFUNCTION()
-	void DetectNearbyActors();
+	/*UFUNCTION()
+	void DetectNearbyActors();*/
 
 	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float MaxHP = 100.0f;
@@ -65,12 +65,12 @@ public:
 	void ApplyDamage(float DamageAmount);*/
 	void Die();
 
-	UPROPERTY()
+	/*UPROPERTY()
 	AActor* CurrentTarget = nullptr;
 	float TargetTrackTime = 0.0f;
 	AActor* PotentialTarget = nullptr;
 	float PotentialTargetTime = 0.0f;
-	const float TargetStickTime = 2.0f;
+	const float TargetStickTime = 2.0f;*/
 
 	void InitAbilityActorInfo();
 	void ApplyGameplayDamage(AActor* TargetActor);
