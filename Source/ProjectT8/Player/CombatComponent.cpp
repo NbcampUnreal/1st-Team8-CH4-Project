@@ -16,7 +16,7 @@ void UCombatComponent::Init(ACharacterBase* InOwner)
 
 void UCombatComponent::Attack()
 {
-	if (!OwnerCharacter || !OwnerCharacter->CanAttack()) return;
+	if (!OwnerCharacter || !CanAttack()) return;
 
 	if (!OwnerCharacter->HasAuthority())
 	{
@@ -48,6 +48,12 @@ void UCombatComponent::HandleAttackNotify()
 	OnAttackHit();
 }
 
+bool UCombatComponent::CanAttack() const
+{
+	
+	return !OwnerCharacter->GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned"));
+}
+
 void UCombatComponent::OnAttackHit()
 {
 	if (!OwnerCharacter) return;
@@ -58,7 +64,10 @@ void UCombatComponent::OnAttackHit()
 	TArray<FHitResult> HitResults;
 	FCollisionShape Sphere = FCollisionShape::MakeSphere(60.f);
 
-	bool bHit = OwnerCharacter->GetWorld()->SweepMultiByChannel(
+	UWorld* World = OwnerCharacter->GetWorld();
+	if (!World) return;
+
+	bool bHit = World->SweepMultiByChannel(
 		HitResults, Start, End, FQuat::Identity, ECC_Pawn, Sphere);
 
 	if (bHit)
@@ -78,17 +87,17 @@ void UCombatComponent::DealDamageToActors(const TArray<FHitResult>& HitResults)
 
 			if (OwnerCharacter->HasAuthority())
 			{
-				if (OwnerCharacter->CurrentDamageEffect)
+				if (CurrentDamageEffect)
 				{
-					ApplyGameplayEffectToTarget(TargetCharacter, OwnerCharacter->CurrentDamageEffect);
+					ApplyGameplayEffectToTarget(TargetCharacter, CurrentDamageEffect);
 				}
 				ApplyKnockback(TargetCharacter);
 			}
 			else
 			{
-				if (OwnerCharacter->CurrentDamageEffect)
+				if (CurrentDamageEffect)
 				{
-					Server_ApplyEffectToTarget(TargetCharacter, OwnerCharacter->CurrentDamageEffect);
+					Server_ApplyEffectToTarget(TargetCharacter, CurrentDamageEffect);
 				}
 				Server_ApplyKnockback(TargetCharacter);
 			}
@@ -131,7 +140,6 @@ void UCombatComponent::Multicast_ApplyKnockback_Implementation(AActor* TargetAct
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
 	if (!TargetCharacter) return;
 
-	const float KnockbackStrength = 800.f;
 	FVector knockbackForce = Direction * KnockbackStrength;
 	TargetCharacter->LaunchCharacter(knockbackForce, true, true);
 }

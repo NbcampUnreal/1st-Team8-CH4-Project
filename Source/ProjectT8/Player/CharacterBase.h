@@ -62,8 +62,6 @@ public:
 
 	void InitAbilityActorInfo();
 
-	bool CanAttack() const;
-
 	// Item
 	UPROPERTY(Replicated)
 	ABaseItem* EquippedItem;
@@ -86,10 +84,6 @@ public:
 	// Combat
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	TSubclassOf<UGameplayEffect> CurrentDamageEffect;
-
 protected:
 	// Input
 	virtual void BeginPlay() override;

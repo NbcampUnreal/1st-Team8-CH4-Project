@@ -236,11 +236,6 @@ void ACharacterBase::Attack()
 	}
 }
 
-bool ACharacterBase::CanAttack() const
-{
-	return !AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned"));
-}
-
 void ACharacterBase::PickupItem(ABaseItem* Item)
 {
 	if (EquippedItem)
@@ -258,8 +253,10 @@ void ACharacterBase::PickupItem(ABaseItem* Item)
 		EquippedItem->SetActorHiddenInGame(false);
 		EquippedItem->SetActorEnableCollision(false);
 
-		// 작업 필요
-		CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		if (CombatComponent)
+		{
+			CombatComponent->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		}
 	}
 }
 
