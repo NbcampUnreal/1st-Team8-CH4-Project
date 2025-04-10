@@ -27,7 +27,8 @@ ACharacterBase::ACharacterBase()
 	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 
-	bReplicates = true;
+	SetReplicates(true);
+	SetReplicateMovement(true);
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -178,6 +179,7 @@ void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
 	DOREPLIFETIME(ACharacterBase, EquippedItem);
+	DOREPLIFETIME(ACharacterBase, CombatComponent);
 }
 
 // BeginPlay
@@ -239,41 +241,6 @@ bool ACharacterBase::CanAttack() const
 	return !AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned"));
 }
 
-void ACharacterBase::Multicast_ApplyKnockback_Implementation(AActor* TargetActor, FVector Direction)
-{
-	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
-	if (!TargetCharacter) return;
-	const float KnockbackStrength = 800.f;
-	FVector KnockbackForce = Direction * KnockbackStrength;
-	TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
-}
-
-void ACharacterBase::Server_ApplyEffectToTarget_Implementation(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass)
-{
-	if (!HasAuthority() || !Target || !EffectClass) return;
-
-	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
-	Context.AddSourceObject(this);
-
-	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(EffectClass, 1.f, Context);
-	if (Spec.IsValid())
-	{
-		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		UE_LOG(LogTemp, Warning, TEXT("%s 에게 이펙트 적용: %s"), *Target->GetName(), *EffectClass->GetName());
-	}
-}
-
-void ACharacterBase::Server_ApplyKnockback_Implementation(AActor* TargetActor)
-{
-	if (!HasAuthority()) return;
-	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
-	if (!TargetCharacter) return;
-	FVector KnockbackDir = (TargetCharacter->GetActorLocation() - GetActorLocation());
-	KnockbackDir.Z = 0.5f;
-	KnockbackDir.Normalize();
-	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
-}
-
 void ACharacterBase::PickupItem(ABaseItem* Item)
 {
 	if (EquippedItem)
@@ -328,12 +295,10 @@ void ACharacterBase::TryInteract()
 			{
 				if (OverlappedActor->Implements<UInteractable>())
 				{
-					UE_LOG(LogTemp, Display, TEXT("check"));
 					IInteractable::Execute_Interact(OverlappedActor, this);
 				}
 				else
 				{	
-					UE_LOG(LogTemp, Display, TEXT("server check"));
 					Server_Interact(OverlappedActor);
 				}
 			}

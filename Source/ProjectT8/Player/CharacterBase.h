@@ -35,8 +35,11 @@ public:
 	TObjectPtr<class UCharacterAttributeSet> AttributeSet;
 
 	// Combat
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", Replicated)
 	TObjectPtr<class UCombatComponent> CombatComponent;
+
+	UFUNCTION(BlueprintCallable)
+	UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
@@ -58,28 +61,8 @@ public:
 	UUserWidget* BurnWidgetInstance;
 
 	void InitAbilityActorInfo();
-	void ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
-	void OnAttackHit();
-	void DealDamageToActors(const TArray<FHitResult>& HitResults);
-	void ApplyKnockback(AActor* TargetActor);
 
 	bool CanAttack() const;
-
-	// RPC
-	UFUNCTION(Server, Reliable)
-	void Server_Attack();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayAttackMontage();
-
-	UFUNCTION(Server, Reliable)
-	void Server_ApplyEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
-
-	UFUNCTION(Server, Reliable)
-	void Server_ApplyKnockback(AActor* TargetActor);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction);
 
 	// Item
 	UPROPERTY(Replicated)

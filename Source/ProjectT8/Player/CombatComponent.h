@@ -22,15 +22,23 @@ public:
 	void OnAttackHit();
 	void DealDamageToActors(const TArray<FHitResult>& HitResults);
 
-	void ApplyKnockback(AActor* TargetActor);
 	void ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
-
-	void Server_Attack();
+	void ApplyKnockback(AActor* TargetActor);
+	
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayAttackMontage();
-
-	void Server_ApplyEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
-	void Server_ApplyKnockback(AActor* TargetActor);
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction);
+
+	UFUNCTION(Server, Reliable)
+	void Server_Attack();
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyKnockback(AActor* TargetActor);
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
+
+	UFUNCTION(BlueprintCallable)
+	void HandleAttackNotify();
 
 private:
 	UPROPERTY()

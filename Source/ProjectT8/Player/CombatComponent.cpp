@@ -1,5 +1,7 @@
-#include "Player/CombatComponent.h"
+ï»¿#include "Player/CombatComponent.h"
 #include "CharacterBase.h"
+#include "AbilitySystemComponent.h"
+#include "Net/UnrealNetwork.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -25,12 +27,12 @@ void UCombatComponent::Attack()
 	Multicast_PlayAttackMontage();
 }
 
-void UCombatComponent::Server_Attack()
+void UCombatComponent::Server_Attack_Implementation()
 {
 	Multicast_PlayAttackMontage();
 }
 
-void UCombatComponent::Multicast_PlayAttackMontage()
+void UCombatComponent::Multicast_PlayAttackMontage_Implementation()
 {
 	if (!OwnerCharacter || !OwnerCharacter->AttackMontage) return;
 
@@ -39,6 +41,11 @@ void UCombatComponent::Multicast_PlayAttackMontage()
 	{
 		AnimInstance->Montage_Play(OwnerCharacter->AttackMontage);
 	}
+}
+
+void UCombatComponent::HandleAttackNotify()
+{
+	OnAttackHit();
 }
 
 void UCombatComponent::OnAttackHit()
@@ -67,7 +74,7 @@ void UCombatComponent::DealDamageToActors(const TArray<FHitResult>& HitResults)
 		ACharacterBase* TargetCharacter = Cast<ACharacterBase>(Hit.GetActor());
 		if (TargetCharacter && TargetCharacter != OwnerCharacter)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Å¸°Ý ´ë»ó: %s"), *TargetCharacter->GetName());
+			UE_LOG(LogTemp, Warning, TEXT("íƒ€ê²© ëŒ€ìƒ: %s"), *TargetCharacter->GetName());
 
 			if (OwnerCharacter->HasAuthority())
 			{
@@ -102,7 +109,7 @@ void UCombatComponent::ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubc
 	if (Spec.IsValid())
 	{
 		Target->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		UE_LOG(LogTemp, Warning, TEXT("%s ¿¡°Ô ÀÌÆåÆ® Àû¿ë: %s"), *Target->GetName(), *EffectClass->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s ì—ê²Œ ì´íŽ™íŠ¸ ì ìš©: %s"), *Target->GetName(), *EffectClass->GetName());
 	}
 }
 
@@ -119,17 +126,7 @@ void UCombatComponent::ApplyKnockback(AActor* TargetActor)
 	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
 }
 
-void UCombatComponent::Server_ApplyEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass)
-{
-	ApplyGameplayEffectToTarget(Target, EffectClass);
-}
-
-void UCombatComponent::Server_ApplyKnockback(AActor* TargetActor)
-{
-	ApplyKnockback(TargetActor);
-}
-
-void UCombatComponent::Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction)
+void UCombatComponent::Multicast_ApplyKnockback_Implementation(AActor* TargetActor, FVector Direction)
 {
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
 	if (!TargetCharacter) return;
@@ -137,4 +134,14 @@ void UCombatComponent::Multicast_ApplyKnockback(AActor* TargetActor, FVector Dir
 	const float KnockbackStrength = 800.f;
 	FVector knockbackForce = Direction * KnockbackStrength;
 	TargetCharacter->LaunchCharacter(knockbackForce, true, true);
+}
+
+void UCombatComponent::Server_ApplyEffectToTarget_Implementation(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass)
+{
+	ApplyGameplayEffectToTarget(Target, EffectClass);
+}
+
+void UCombatComponent::Server_ApplyKnockback_Implementation(AActor* TargetActor)
+{
+	ApplyKnockback(TargetActor);
 }
