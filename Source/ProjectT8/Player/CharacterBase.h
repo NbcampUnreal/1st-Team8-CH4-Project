@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "GAS/CharacterAttributeSet.h"
 #include "CharacterBase.generated.h"
 
 class USpringArmComponent;
@@ -11,6 +10,10 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class ABaseItem;
+class UCombatComponent;
+class UAbilitySystemComponent;
+class UCharacterAttributeSet;
+class UGameplayEffect;
 struct FInputActionValue;
 
 UCLASS()
@@ -30,6 +33,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<class UCharacterAttributeSet> AttributeSet;
+
+	// Combat
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	TObjectPtr<class UCombatComponent> CombatComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
@@ -93,6 +100,13 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_Interact(AActor* InteractableActor);
 
+	// Combat
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<UGameplayEffect> CurrentDamageEffect;
+
 protected:
 	// Input
 	virtual void BeginPlay() override;
@@ -132,12 +146,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	UCameraComponent* FollowCamera;
 
-	// Combat
-	UPROPERTY(EditDefaultsOnly, Category = "Combat")
-	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	TSubclassOf<UGameplayEffect> CurrentDamageEffect;
+	
 
 private:
 	bool bIsRunning = false;
