@@ -1,5 +1,5 @@
 
 
 
-#include "GameFramework/LobbyGameMode.h"
+#include "LobbyGameMode.h"
 

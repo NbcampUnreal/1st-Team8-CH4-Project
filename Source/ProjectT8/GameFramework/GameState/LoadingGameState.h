@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/CustomGameState.h"
+#include "GameFramework/Common/CustomGameState.h"
 #include "LoadingGameState.generated.h"
 
 /**

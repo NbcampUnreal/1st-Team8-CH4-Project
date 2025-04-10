@@ -1,7 +1,7 @@
 
 
 
-#include "GameFramework/CustomGameState.h"
+#include "CustomGameState.h"
 
 void ACustomGameState::SetGamePhase(EGamePhase _NewPhase)
 {
