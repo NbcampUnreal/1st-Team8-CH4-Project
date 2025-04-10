@@ -43,7 +43,7 @@ public:
 	void Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction);
 
 	UPROPERTY(EditDefaultsOnly)
-	const float KnockbackStrength = 800.f;
+	float KnockbackStrength = 800.f;
 
 private:
 	UPROPERTY()
