@@ -21,11 +21,11 @@ public:
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	//UInputAction* UseItemAction;
 	
-	void UseItem();// * 추가 * 하위 코드 전부
+	//void UseItem();// * 추가 * 하위 코드 전부
 
-	/*UFUNCTION(Server, Reliable)
-	void Server_PickupItem(ABaseItem* Item);*/
-	void PickupItem(ABaseItem* Item);
+	///*UFUNCTION(Server, Reliable)
+	//void Server_PickupItem(ABaseItem* Item);*/
+	//void PickupItem(ABaseItem* Item);
 
 	/*UFUNCTION(Server, Reliable)
 	void Server_Interact(AActor* InteractableActor);*/
@@ -33,7 +33,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	UEffectComponent* GetEffectComponent() const { return EffectComponent; }
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	// void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Effect, meta = (AllowPrivateAccess = "true"))

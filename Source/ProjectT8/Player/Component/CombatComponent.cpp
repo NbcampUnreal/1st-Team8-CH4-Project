@@ -1,5 +1,5 @@
-﻿#include "Player/CombatComponent.h"
-#include "CharacterBase.h"
+﻿#include "Player/Component/CombatComponent.h"
+#include "Player/CharacterBase.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 

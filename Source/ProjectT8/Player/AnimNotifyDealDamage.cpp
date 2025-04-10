@@ -1,6 +1,6 @@
 #include "Player/AnimNotifyDealDamage.h"
 #include "CharacterBase.h"
-#include "Player/CombatComponent.h"
+#include "Player/Component/CombatComponent.h"
 
 void UAnimNotifyDealDamage::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {

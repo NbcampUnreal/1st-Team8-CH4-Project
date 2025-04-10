@@ -1,5 +1,6 @@
 #include "BaseItem.h"
 #include "Player/CharacterBase.h"
+#include "Player/Component/ItemComponent.h"
 
 
 ABaseItem::ABaseItem()
@@ -30,9 +31,14 @@ void ABaseItem::BeginPlay()
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 {
+	if (!HasAuthority()) return;
+	
 	if (Player && !GetOwner())
 	{
-		Player->PickupItem(this);
+		if (UItemComponent* ItemComp = Player->ItemComponent)
+		{
+			ItemComp->TryPickUpItem(this);
+		}
 	}
 }
 
