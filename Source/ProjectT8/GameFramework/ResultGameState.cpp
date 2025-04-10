@@ -1,5 +1,0 @@
-
-
-
-#include "GameFramework/ResultGameState.h"
-
