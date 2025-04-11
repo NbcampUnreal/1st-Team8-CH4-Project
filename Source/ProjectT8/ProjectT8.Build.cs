@@ -20,7 +20,10 @@ public class ProjectT8 : ModuleRules
 			"OnlineSubsystem",
 			"OnlineSubsystemUtils",
 			"OnlineSubsystemSteam",
-            "Networking"
+            "Networking",
+			"GameplayAbilities",
+			"GameplayTags",
+			"GameplayTasks"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

@@ -3,13 +3,17 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "GAS/CharacterAttributeSet.h"
 #include "CharacterBase.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class ABaseItem;
+class UCombatComponent;
+class UAbilitySystemComponent;
+class UCharacterAttributeSet;
+class UGameplayEffect;
 struct FInputActionValue;
 
 UCLASS()
@@ -30,31 +34,56 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<class UCharacterAttributeSet> AttributeSet;
 
+	// Combat
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", Replicated)
+	TObjectPtr<class UCombatComponent> CombatComponent;
+
+	UFUNCTION(BlueprintCallable)
+	UCombatComponent* GetCombatComponent() const { return CombatComponent; }
+
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
+	UPROPERTY(EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> StunEffectClass;
+
+	TArray<FGameplayTag> StatusEffectTags;
+	void RegisterStatusEffectDelegates();
+	UFUNCTION()
+	void OnStatusEffectTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void ShowStatusWidget(const FGameplayTag& Tag);
+	void HideStatusWidget(const FGameplayTag& Tag);
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> BurnWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* BurnWidgetInstance;
 
 	void InitAbilityActorInfo();
-	void ApplyGameplayDamage(ACharacterBase* Target);
-	void OnAttackHit();
-	void DealDamageToActors(const TArray<FHitResult>& HitResults);
-	void ApplyKnockback(AActor* TargetActor);
 
-	// RPC
+	// Item
+	UPROPERTY(Replicated)
+	ABaseItem* EquippedItem;
+
+	UFUNCTION(BlueprintCallable)
+	void PickupItem(ABaseItem* Item);
+
+	UFUNCTION(BlueprintCallable)
+	void UseItem();
+
+	UFUNCTION(BlueprintCallable)
+	void TryInteract();
+
 	UFUNCTION(Server, Reliable)
-	void Server_Attack();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayAttackMontage();
+	void Server_PickupItem(ABaseItem* Item);
 
 	UFUNCTION(Server, Reliable)
-	void Server_ApplyDamage(ACharacterBase* Target);
+	void Server_Interact(AActor* InteractableActor);
 
-	UFUNCTION(Server, Reliable)
-	void Server_ApplyKnockback(AActor* TargetActor);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction);
-
+	// Combat
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	UAnimMontage* AttackMontage;
 protected:
 	// Input
 	virtual void BeginPlay() override;
@@ -81,6 +110,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* AttackAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* InteractAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* UseItemAction;
+
 
 	// Camera
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
@@ -89,9 +123,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	UCameraComponent* FollowCamera;
 
-	// Combat
-	UPROPERTY(EditDefaultsOnly, Category = "Combat")
-	UAnimMontage* AttackMontage;
+	
 
 private:
 	bool bIsRunning = false;
