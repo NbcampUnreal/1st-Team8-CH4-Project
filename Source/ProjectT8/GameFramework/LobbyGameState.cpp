@@ -145,8 +145,7 @@ void ALobbyGameState::CycleMapChoice()
 {
     if (!HasAuthority()) return;
 
-    // 예시: 사용할 수 있는 맵 목록
-    static const TArray<FString> MapList = { TEXT("Map1"), TEXT("Map2"), TEXT("Map3") };
+    static const TArray<FString> MapList = { TEXT("Map1"), TEXT("Map2"), TEXT("Map3") };///////////////////이거 바꿔야됨
     int32 CurrentIndex = MapList.IndexOfByKey(SelectedMap);
     if (CurrentIndex == INDEX_NONE)
     {
@@ -186,7 +185,12 @@ void ALobbyGameState::RemovePlayerFromSlot(APlayerState* LeavingPlayer)
             Slots[i].bIsAI = false;
             Slots[i].DisplayName = TEXT("");
             OnSlotsUpdated.Broadcast();
-            return;
+            break;
         }
+    }
+
+    if (APlayerController* PC = Cast<APlayerController>(LeavingPlayer->GetOwner()))
+    {
+        PC->ClientReturnToMainMenuWithTextReason(FText::FromString(TEXT("You have been kicked from the session.")));
     }
 }

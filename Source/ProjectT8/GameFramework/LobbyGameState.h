@@ -57,51 +57,28 @@ class PROJECTT8_API ALobbyGameState : public AGameState
 public:
     ALobbyGameState();
 
-    /** 최대 8개의 로비 슬롯 정보 (서버에서 관리되고 클라이언트에 복제됨) */
     UPROPERTY(ReplicatedUsing = OnRep_Slots, BlueprintReadOnly, Category = "Lobby")
     TArray<FSlotInfo> Slots;
-
-    /** 현재 팀 구성 모드 */
     UPROPERTY(ReplicatedUsing = OnRep_TeamSetup, BlueprintReadOnly, Category = "Lobby")
     ETeamSetup TeamSetup;
-
-    /** 선택된 맵 이름 */
     UPROPERTY(ReplicatedUsing = OnRep_SelectedMap, BlueprintReadOnly, Category = "Lobby")
     FString SelectedMap;
 
-    /** 슬롯 정보 변경 이벤트 */
+    // 이벤트 delegate
     UPROPERTY(BlueprintAssignable, Category = "Lobby")
     FOnSlotsUpdated OnSlotsUpdated;
-
-    /** 팀 구성 변경 이벤트 */
     UPROPERTY(BlueprintAssignable, Category = "Lobby")
     FOnTeamModeChanged OnTeamModeChanged;
-
-    /** 맵 선택 변경 이벤트 */
     UPROPERTY(BlueprintAssignable, Category = "Lobby")
     FOnSelectedMapChanged OnSelectedMapChanged;
 
     // --- 서버측 함수 (호스트 전용) ---
-
-    /** 빈 슬롯에 AI 플레이어 추가 */
     void AddAIToSlot(int32 SlotIndex);
-
-    /** 슬롯에 있는 유저/AI 플레이어 제거 */
     void RemoveSlotOccupant(int32 SlotIndex);
-
-    /** 플레이어 슬롯 변경 (빈 슬롯을 클릭하면 이동 요청) */
     void MovePlayerToSlot(APlayerState* Player, int32 NewSlotIndex);
-
-    /** 팀 구성 모드 변경 */
     void SetTeamSetup(ETeamSetup NewSetup);
-
-    /** 맵 선택 변경 */
     void CycleMapChoice();
-
-    /** 새 플레이어를 빈 슬롯에 할당 (예: PostLogin 호출) */
     void AssignPlayerToSlot(APlayerState* NewPlayer);
-
-    /** 플레이어가 로비를 떠날 때 슬롯에서 제거 */
     void RemovePlayerFromSlot(APlayerState* LeavingPlayer);
 
 protected:
@@ -111,15 +88,10 @@ protected:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    /** 슬롯 정보 복제 시 호출 */
     UFUNCTION()
     void OnRep_Slots();
-
-    /** 팀 구성 모드 복제 시 호출 */
     UFUNCTION()
     void OnRep_TeamSetup();
-
-    /** 맵 선택 복제 시 호출 */
     UFUNCTION()
     void OnRep_SelectedMap();
 };
