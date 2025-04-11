@@ -1,4 +1,4 @@
-
+ï»¿
 
 #pragma once
 
@@ -21,7 +21,7 @@ public:
     void StartGame();
 
 protected:
-    // ÇÊ¿äÇÑ °æ¿ì, ÀüÈ¯µÉ ¸ÅÄ¡ ¸ÊÀÇ ÀÌ¸§À» ¼³Á¤
+    // í•„ìš”í•œ ê²½ìš°, ì „í™˜ë  ë§¤ì¹˜ ë§µì˜ ì´ë¦„ì„ ì„¤ì •
     UPROPERTY(EditDefaultsOnly, Category = "Lobby")
     FName MatchMapName;
 };

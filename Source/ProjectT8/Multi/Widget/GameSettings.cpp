@@ -1,7 +1,7 @@
 #include "GameSettings.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
-#include "GameFramework/LobbyGameState.h"
+#include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 

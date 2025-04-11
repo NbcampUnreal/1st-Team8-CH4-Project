@@ -2,7 +2,7 @@
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 #include "Components/Button.h"
-#include "GameFramework/LobbyGameState.h"
+#include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
