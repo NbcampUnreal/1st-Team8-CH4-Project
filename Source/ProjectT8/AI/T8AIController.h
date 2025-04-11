@@ -19,6 +19,9 @@ class PROJECTT8_API AT8AIController : public AAIController
 public:
 	AT8AIController();
 
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	AActor* GetTargetPlayer() const;
+
 protected:
 	virtual void BeginPlay() override;
 

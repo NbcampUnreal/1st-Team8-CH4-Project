@@ -13,6 +13,13 @@ AT8AICharacter::AT8AICharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
+	bReplicates = true;
+
 	TeamIndicator = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TeamIndicator"));
 	TeamIndicator->SetupAttachment(RootComponent);
 	TeamIndicator->SetHorizontalAlignment(EHTA_Center);
@@ -25,16 +32,27 @@ AT8AICharacter::AT8AICharacter()
 void AT8AICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	InitAbilityActorInfo();
 
-	CurrentHP = MaxHP;
+	if (InitEffectClass && AbilitySystemComponent)
+	{
+		FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+		Context.AddSourceObject(this);
+		FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(InitEffectClass, 1.0f, Context);
+		if (Spec.IsValid())
+		{
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+			UE_LOG(LogTemp, Warning, TEXT("초기화 이펙트 적용 완료"));
+		}
+	}
 
-	GetWorldTimerManager().SetTimer(
+	/*GetWorldTimerManager().SetTimer(
 		DetectionTimer,
 		this,
 		&AT8AICharacter::DetectNearbyActors,
 		1.0f,
 		true
-	);
+	);*/
 }
 
 void AT8AICharacter::Tick(float DeltaTime)
@@ -61,13 +79,16 @@ void AT8AICharacter::Tick(float DeltaTime)
 void AT8AICharacter::PerformAttackHitCheck()
 {
 	FVector Start = GetActorLocation();
-	FVector End = Start + GetActorLocation() * 100.0f;
+	FVector Forward = GetActorForwardVector();
+	FVector End = Start + Forward * 100.0f;
 
 	FCollisionShape Shape = FCollisionShape::MakeSphere(50.0f);
 	TArray<FHitResult> HitResults;
 
 	if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_Pawn, Shape))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PerformAttackHitCheck"));
+
 		for (const FHitResult& Hit : HitResults)
 		{
 			AActor* HitActor = Hit.GetActor();
@@ -79,7 +100,7 @@ void AT8AICharacter::PerformAttackHitCheck()
 
 					if (AT8AICharacter* EnemyAI = Cast<AT8AICharacter>(HitPawn))
 					{
-						EnemyAI->ApplyDamage(20.0f);
+						ApplyGameplayDamage(EnemyAI);
 					}
 					else
 					{
@@ -108,116 +129,105 @@ void AT8AICharacter::ResetCanAttack()
 	}
 }
 
-void AT8AICharacter::DetectNearbyActors()
-{
-	const float DetectionRadius = 1000.0f;
-	const FVector Center = GetActorLocation();
-
-	TArray<FHitResult> HitResults;
-	FCollisionShape Sphere = FCollisionShape::MakeSphere(DetectionRadius);
-
-	bool bHit = GetWorld()->SweepMultiByChannel(
-		HitResults,
-		Center,
-		Center + FVector(0, 0, 1),
-		FQuat::Identity,
-		ECC_Pawn,
-		Sphere
-	);
-
-	AActor* Closest = nullptr;
-	float ClosestDist = TNumericLimits<float>::Max();
-
-	if (bHit)
-	{
-		for (const FHitResult& Hit : HitResults)
-		{
-			AActor* Detected = Hit.GetActor();
-			if (Detected && Detected != this && IsEnemy(Detected))
-			{
-				float Dist = FVector::Dist(Detected->GetActorLocation(), GetActorLocation());
-				if (Dist < ClosestDist)
-				{
-					Closest = Detected;
-					ClosestDist = Dist;
-				}
-			}
-		}
-	}
-
-	if (CurrentTarget == nullptr)
-	{
-		CurrentTarget = Closest;
-		TargetTrackTime = 0.0f;
-	}
-	else if (Closest == CurrentTarget)
-	{
-		TargetTrackTime += 1.0f;
-		PotentialTarget = nullptr;
-		PotentialTargetTime = 0.0f;
-	}
-	else
-	{
-		if (PotentialTarget == Closest)
-		{
-			PotentialTargetTime += 1.0f;
-			if (PotentialTargetTime >= TargetStickTime)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("타겟 전환 조건 충족! 기존: %s -> 새로운: %s"),
-					*GetNameSafe(CurrentTarget), *GetNameSafe(PotentialTarget));
-
-				CurrentTarget = PotentialTarget;
-				TargetTrackTime = 0.0f;
-				PotentialTarget = nullptr;
-				PotentialTargetTime = 0.0f;
-
-				if (AAIController* AICon = Cast<AAIController>(GetController()))
-				{
-					if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
-					{
-						BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
-					}
-
-					AICon->StopMovement();
-					if (AICon->BrainComponent)
-					{
-						AICon->BrainComponent->RestartLogic();
-					}
-				}
-
-				UE_LOG(LogTemp, Warning, TEXT("목표 전환 : %s"), *GetNameSafe(CurrentTarget));
-			}
-		}
-		else
-		{
-			PotentialTarget = Closest;
-			PotentialTargetTime = 0.0f;
-		}
-	}
-	if (CurrentTarget)
-	{
-		if (AAIController* AICon = Cast<AAIController>(GetController()))
-		{
-			if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
-			{
-				BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
-			}
-		}
-	}
-
-	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
-}
-
-void AT8AICharacter::ApplyDamage(float DamageAmount)
-{
-	CurrentHP -= DamageAmount;
-	UE_LOG(LogTemp, Warning, TEXT("AI 체력 : %.1f"), CurrentHP);
-
-	if (CurrentHP <= 0.0f)
-	{
-		Die();
-	}
-}
+//void AT8AICharacter::DetectNearbyActors()
+//{
+//	const float DetectionRadius = 1000.0f;
+//	const FVector Center = GetActorLocation();
+//
+//	TArray<FHitResult> HitResults;
+//	FCollisionShape Sphere = FCollisionShape::MakeSphere(DetectionRadius);
+//
+//	bool bHit = GetWorld()->SweepMultiByChannel(
+//		HitResults,
+//		Center,
+//		Center + FVector(0, 0, 1),
+//		FQuat::Identity,
+//		ECC_Pawn,
+//		Sphere
+//	);
+//
+//	AActor* Closest = nullptr;
+//	float ClosestDist = TNumericLimits<float>::Max();
+//
+//	if (bHit)
+//	{
+//		for (const FHitResult& Hit : HitResults)
+//		{
+//			AActor* Detected = Hit.GetActor();
+//			if (Detected && Detected != this && IsEnemy(Detected))
+//			{
+//				float Dist = FVector::Dist(Detected->GetActorLocation(), GetActorLocation());
+//				if (Dist < ClosestDist)
+//				{
+//					Closest = Detected;
+//					ClosestDist = Dist;
+//				}
+//			}
+//		}
+//	}
+//
+//	if (CurrentTarget == nullptr)
+//	{
+//		CurrentTarget = Closest;
+//		TargetTrackTime = 0.0f;
+//	}
+//	else if (Closest == CurrentTarget)
+//	{
+//		TargetTrackTime += 1.0f;
+//		PotentialTarget = nullptr;
+//		PotentialTargetTime = 0.0f;
+//	}
+//	else
+//	{
+//		if (PotentialTarget == Closest)
+//		{
+//			PotentialTargetTime += 1.0f;
+//			if (PotentialTargetTime >= TargetStickTime)
+//			{
+//				UE_LOG(LogTemp, Warning, TEXT("타겟 전환 조건 충족! 기존: %s -> 새로운: %s"),
+//					*GetNameSafe(CurrentTarget), *GetNameSafe(PotentialTarget));
+//
+//				CurrentTarget = PotentialTarget;
+//				TargetTrackTime = 0.0f;
+//				PotentialTarget = nullptr;
+//				PotentialTargetTime = 0.0f;
+//
+//				if (AAIController* AICon = Cast<AAIController>(GetController()))
+//				{
+//					if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+//					{
+//						BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
+//					}
+//
+//					AICon->StopMovement();
+//					if (AICon->BrainComponent)
+//					{
+//						AICon->BrainComponent->RestartLogic();
+//					}
+//				}
+//
+//				UE_LOG(LogTemp, Warning, TEXT("목표 전환 : %s"), *GetNameSafe(CurrentTarget));
+//			}
+//		}
+//		else
+//		{
+//			PotentialTarget = Closest;
+//			PotentialTargetTime = 0.0f;
+//		}
+//	}
+//	if (CurrentTarget)
+//	{
+//		if (AAIController* AICon = Cast<AAIController>(GetController()))
+//		{
+//			if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+//			{
+//				BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
+//			}
+//		}
+//	}
+//
+//	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
+//}
 
 void AT8AICharacter::Die()
 {
@@ -271,3 +281,39 @@ void AT8AICharacter::SetTeamID(int32 NewID)
 	}
 }
 
+UAbilitySystemComponent* AT8AICharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+void AT8AICharacter::InitAbilityActorInfo()
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+}
+
+void AT8AICharacter::ApplyGameplayDamage(AActor* TargetActor)
+{
+	if (!TargetActor || !DamageEffectClass || !AbilitySystemComponent) return;
+
+	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
+	if (!TargetCharacter) return;
+
+	IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(TargetCharacter);
+	if (!AbilityInterface) return;
+
+	UAbilitySystemComponent* TargetASC = AbilityInterface->GetAbilitySystemComponent();
+	if (!TargetASC) return;
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	Context.AddSourceObject(this);
+
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);
+	if (Spec.IsValid())
+	{
+		TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		UE_LOG(LogTemp, Warning, TEXT("AI가 %s에게 데미지 이펙트 적용"), *TargetActor->GetName());
+	}
+}
