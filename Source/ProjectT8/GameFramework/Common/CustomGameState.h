@@ -1,15 +1,12 @@
-
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+
 #include "Global/Enums/GamePhaseEnum.h"
+
 #include "CustomGameState.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class PROJECTT8_API ACustomGameState : public AGameState
 {
