@@ -7,7 +7,24 @@ public class ProjectT8 : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		CppStandard = CppStandardVersion.Cpp20;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "OnlineSubsystem", "OnlineSubsystemSteam", "AssetRegistry", "GameplayAbilities", "GameplayTags", "GameplayTasks","UMG" });
+		PublicDependencyModuleNames.AddRange(new string[] { 
+			"Core",
+			"CoreUObject",
+			"Engine",
+			"InputCore",
+			"EnhancedInput",
+			"AssetRegistry",
+			"UMG",
+			"AdvancedSteamSessions",
+			"AdvancedSessions",
+			"OnlineSubsystem",
+			"OnlineSubsystemUtils",
+			"OnlineSubsystemSteam",
+            "Networking",
+			"GameplayAbilities",
+			"GameplayTags",
+			"GameplayTasks"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
