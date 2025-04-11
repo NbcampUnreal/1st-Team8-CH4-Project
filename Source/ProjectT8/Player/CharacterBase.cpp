@@ -269,7 +269,14 @@ void ACharacterBase::TryInteract()
 			{
 				if (OverlappedActor->Implements<UInteractable>())
 				{
-					IInteractable::Execute_Interact(OverlappedActor, this);
+					if (!HasAuthority())
+					{
+						Server_Interact(OverlappedActor);
+					}	
+					else 
+					{
+						IInteractable::Execute_Interact(OverlappedActor, this);
+					}
 				}
 			}
 		}
@@ -282,8 +289,5 @@ void ACharacterBase::TryInteract()
 
 void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
 {
-	if (InteractableActor && InteractableActor->Implements<UInteractable>())
-	{
-		IInteractable::Execute_Interact(InteractableActor, this);
-	}
+	IInteractable::Execute_Interact(InteractableActor, this);
 }
