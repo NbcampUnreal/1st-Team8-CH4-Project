@@ -8,6 +8,7 @@
 #include "UIManager.generated.h"
 
 class UUserWidget;
+class UPhaseWidgetDataAsset;
 
 UCLASS()
 class PROJECTT8_API UUIManager : public UGameInstanceSubsystem
@@ -21,11 +22,14 @@ public:
 	void ShowUI(EGamePhase Phase);
 
 private:
-    UPROPERTY()
-    UUserWidget* CurWidget = nullptr;
+	UPROPERTY()
+	UPhaseWidgetDataAsset* WidgetDataAsset;
 
     UPROPERTY()
     TMap<EGamePhase, TSubclassOf<UUserWidget>> PhaseWidgetMap;
+
+	UPROPERTY()
+	UUserWidget* CurWidget = nullptr;
 
     void HideCurUI();
 };
