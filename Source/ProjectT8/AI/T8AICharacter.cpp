@@ -46,13 +46,13 @@ void AT8AICharacter::BeginPlay()
 		}
 	}
 
-	GetWorldTimerManager().SetTimer(
+	/*GetWorldTimerManager().SetTimer(
 		DetectionTimer,
 		this,
 		&AT8AICharacter::DetectNearbyActors,
 		1.0f,
 		true
-	);
+	);*/
 }
 
 void AT8AICharacter::Tick(float DeltaTime)
@@ -129,105 +129,105 @@ void AT8AICharacter::ResetCanAttack()
 	}
 }
 
-void AT8AICharacter::DetectNearbyActors()
-{
-	const float DetectionRadius = 1000.0f;
-	const FVector Center = GetActorLocation();
-
-	TArray<FHitResult> HitResults;
-	FCollisionShape Sphere = FCollisionShape::MakeSphere(DetectionRadius);
-
-	bool bHit = GetWorld()->SweepMultiByChannel(
-		HitResults,
-		Center,
-		Center + FVector(0, 0, 1),
-		FQuat::Identity,
-		ECC_Pawn,
-		Sphere
-	);
-
-	AActor* Closest = nullptr;
-	float ClosestDist = TNumericLimits<float>::Max();
-
-	if (bHit)
-	{
-		for (const FHitResult& Hit : HitResults)
-		{
-			AActor* Detected = Hit.GetActor();
-			if (Detected && Detected != this && IsEnemy(Detected))
-			{
-				float Dist = FVector::Dist(Detected->GetActorLocation(), GetActorLocation());
-				if (Dist < ClosestDist)
-				{
-					Closest = Detected;
-					ClosestDist = Dist;
-				}
-			}
-		}
-	}
-
-	if (CurrentTarget == nullptr)
-	{
-		CurrentTarget = Closest;
-		TargetTrackTime = 0.0f;
-	}
-	else if (Closest == CurrentTarget)
-	{
-		TargetTrackTime += 1.0f;
-		PotentialTarget = nullptr;
-		PotentialTargetTime = 0.0f;
-	}
-	else
-	{
-		if (PotentialTarget == Closest)
-		{
-			PotentialTargetTime += 1.0f;
-			if (PotentialTargetTime >= TargetStickTime)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("타겟 전환 조건 충족! 기존: %s -> 새로운: %s"),
-					*GetNameSafe(CurrentTarget), *GetNameSafe(PotentialTarget));
-
-				CurrentTarget = PotentialTarget;
-				TargetTrackTime = 0.0f;
-				PotentialTarget = nullptr;
-				PotentialTargetTime = 0.0f;
-
-				if (AAIController* AICon = Cast<AAIController>(GetController()))
-				{
-					if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
-					{
-						BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
-					}
-
-					AICon->StopMovement();
-					if (AICon->BrainComponent)
-					{
-						AICon->BrainComponent->RestartLogic();
-					}
-				}
-
-				UE_LOG(LogTemp, Warning, TEXT("목표 전환 : %s"), *GetNameSafe(CurrentTarget));
-			}
-		}
-		else
-		{
-			PotentialTarget = Closest;
-			PotentialTargetTime = 0.0f;
-		}
-	}
-	if (CurrentTarget)
-	{
-		if (AAIController* AICon = Cast<AAIController>(GetController()))
-		{
-			if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
-			{
-				BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
-			}
-		}
-	}
-
-	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
-}
+//void AT8AICharacter::DetectNearbyActors()
+//{
+//	const float DetectionRadius = 1000.0f;
+//	const FVector Center = GetActorLocation();
+//
+//	TArray<FHitResult> HitResults;
+//	FCollisionShape Sphere = FCollisionShape::MakeSphere(DetectionRadius);
+//
+//	bool bHit = GetWorld()->SweepMultiByChannel(
+//		HitResults,
+//		Center,
+//		Center + FVector(0, 0, 1),
+//		FQuat::Identity,
+//		ECC_Pawn,
+//		Sphere
+//	);
+//
+//	AActor* Closest = nullptr;
+//	float ClosestDist = TNumericLimits<float>::Max();
+//
+//	if (bHit)
+//	{
+//		for (const FHitResult& Hit : HitResults)
+//		{
+//			AActor* Detected = Hit.GetActor();
+//			if (Detected && Detected != this && IsEnemy(Detected))
+//			{
+//				float Dist = FVector::Dist(Detected->GetActorLocation(), GetActorLocation());
+//				if (Dist < ClosestDist)
+//				{
+//					Closest = Detected;
+//					ClosestDist = Dist;
+//				}
+//			}
+//		}
+//	}
+//
+//	if (CurrentTarget == nullptr)
+//	{
+//		CurrentTarget = Closest;
+//		TargetTrackTime = 0.0f;
+//	}
+//	else if (Closest == CurrentTarget)
+//	{
+//		TargetTrackTime += 1.0f;
+//		PotentialTarget = nullptr;
+//		PotentialTargetTime = 0.0f;
+//	}
+//	else
+//	{
+//		if (PotentialTarget == Closest)
+//		{
+//			PotentialTargetTime += 1.0f;
+//			if (PotentialTargetTime >= TargetStickTime)
+//			{
+//				UE_LOG(LogTemp, Warning, TEXT("타겟 전환 조건 충족! 기존: %s -> 새로운: %s"),
+//					*GetNameSafe(CurrentTarget), *GetNameSafe(PotentialTarget));
+//
+//				CurrentTarget = PotentialTarget;
+//				TargetTrackTime = 0.0f;
+//				PotentialTarget = nullptr;
+//				PotentialTargetTime = 0.0f;
+//
+//				if (AAIController* AICon = Cast<AAIController>(GetController()))
+//				{
+//					if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+//					{
+//						BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
+//					}
+//
+//					AICon->StopMovement();
+//					if (AICon->BrainComponent)
+//					{
+//						AICon->BrainComponent->RestartLogic();
+//					}
+//				}
+//
+//				UE_LOG(LogTemp, Warning, TEXT("목표 전환 : %s"), *GetNameSafe(CurrentTarget));
+//			}
+//		}
+//		else
+//		{
+//			PotentialTarget = Closest;
+//			PotentialTargetTime = 0.0f;
+//		}
+//	}
+//	if (CurrentTarget)
+//	{
+//		if (AAIController* AICon = Cast<AAIController>(GetController()))
+//		{
+//			if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+//			{
+//				BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
+//			}
+//		}
+//	}
+//
+//	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
+//}
 
 void AT8AICharacter::Die()
 {
