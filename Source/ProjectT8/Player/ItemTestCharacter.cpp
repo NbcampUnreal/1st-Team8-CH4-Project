@@ -35,22 +35,22 @@ void AItemTestCharacter::ModifyHealth(float Amount)	// * 추가 * 하위 코드 전부
 	UE_LOG(LogTemp, Log, TEXT("Character Health: %f"), Health);
 }
 
-void AItemTestCharacter::PickupItem(ABaseItem* Item)
-{
-	if (EquippedItem)
-	{
-		EquippedItem->Destroy();
-	}
-	EquippedItem = Item;
-	if (EquippedItem)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Picking up item: %s"), *GetNameSafe(EquippedItem));
-		EquippedItem->SetOwner(this);
-		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-		EquippedItem->SetActorHiddenInGame(false);
-		EquippedItem->SetActorEnableCollision(false);
-	}
-}
+//void AItemTestCharacter::PickupItem(ABaseItem* Item)
+//{
+//	/*if (EquippedItem)
+//	{
+//		EquippedItem->Destroy();
+//	}
+//	EquippedItem = Item;
+//	if (EquippedItem)
+//	{
+//		UE_LOG(LogTemp, Log, TEXT("Picking up item: %s"), *GetNameSafe(EquippedItem));
+//		EquippedItem->SetOwner(this);
+//		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
+//		EquippedItem->SetActorHiddenInGame(false);
+//		EquippedItem->SetActorEnableCollision(false);
+//	}*/
+//}
 
 //void AItemTestCharacter::Server_PickupItem_Implementation(ABaseItem* Item)
 //{
@@ -87,21 +87,21 @@ void AItemTestCharacter::TryInteract()
 	}
 }
 
-void AItemTestCharacter::UseItem()
-{
-	if (EquippedItem)
-	{
-		UE_LOG(LogTemp, Log, TEXT("UseItem triggered"));
-		EquippedItem->Use(this);
-	}
-}
+//void AItemTestCharacter::UseItem()
+//{
+//	if (EquippedItem)
+//	{
+//		UE_LOG(LogTemp, Log, TEXT("UseItem triggered"));
+//		EquippedItem->Use(this);
+//	}
+//}
 
-void AItemTestCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AItemTestCharacter, EquippedItem);
-}
+//void AItemTestCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+//{
+//	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+//
+//	DOREPLIFETIME(AItemTestCharacter, EquippedItem);
+//}
 
 //void AItemTestCharacter::Server_Interact_Implementation(AActor* InteractableActor)
 //{
