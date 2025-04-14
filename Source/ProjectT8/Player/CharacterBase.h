@@ -14,6 +14,7 @@ class UCombatComponent;
 class UAbilitySystemComponent;
 class UCharacterAttributeSet;
 class UGameplayEffect;
+class UItemComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -41,6 +42,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item", Replicated)
+	TObjectPtr<class UItemComponent> ItemComponent;
+
+	UFUNCTION(BlueprintCallable)
+	UItemComponent* GetItemComponent() const { return ItemComponent; }
+
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
@@ -62,21 +69,11 @@ public:
 
 	void InitAbilityActorInfo();
 
-	// Item
-	UPROPERTY(Replicated)
-	ABaseItem* EquippedItem;
-
-	UFUNCTION(BlueprintCallable)
-	void PickupItem(ABaseItem* Item);
-
 	UFUNCTION(BlueprintCallable)
 	void UseItem();
 
 	UFUNCTION(BlueprintCallable)
 	void TryInteract();
-
-	UFUNCTION(Server, Reliable)
-	void Server_PickupItem(ABaseItem* Item);
 
 	UFUNCTION(Server, Reliable)
 	void Server_Interact(AActor* InteractableActor);

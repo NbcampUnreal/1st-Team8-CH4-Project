@@ -12,8 +12,9 @@
 #include "Item/BaseItem.h"
 #include "Engine/OverlapResult.h"
 #include "Blueprint/UserWidget.h"
-#include "CombatComponent.h"
+#include "Component/CombatComponent.h"
 #include "GAS/CharacterAttributeSet.h"
+#include "Component/ItemComponent.h"
 
 
 // Constructor
@@ -26,6 +27,7 @@ ACharacterBase::ACharacterBase()
 
 	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	ItemComponent = CreateDefaultSubobject<UItemComponent>(TEXT("ItemComponent"));
 
 	SetReplicates(true);
 	SetReplicateMovement(true);
@@ -71,6 +73,10 @@ void ACharacterBase::InitAbilityActorInfo()
 	if (CombatComponent)
 	{
 		CombatComponent->Init(this);
+	}
+	if (ItemComponent)
+	{
+		ItemComponent->Init(this);
 	}
 }
 
@@ -178,8 +184,8 @@ void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
-	DOREPLIFETIME(ACharacterBase, EquippedItem);
 	DOREPLIFETIME(ACharacterBase, CombatComponent);
+	DOREPLIFETIME(ACharacterBase, ItemComponent);
 }
 
 // BeginPlay
@@ -236,40 +242,11 @@ void ACharacterBase::Attack()
 	}
 }
 
-void ACharacterBase::PickupItem(ABaseItem* Item)
-{
-	if (EquippedItem)
-	{
-		EquippedItem->Destroy();
-	}
-
-	EquippedItem = Item;
-
-	if (EquippedItem)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Picking up item: %s"), *GetNameSafe(EquippedItem));
-		EquippedItem->SetOwner(this);
-		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-		EquippedItem->SetActorHiddenInGame(false);
-		EquippedItem->SetActorEnableCollision(false);
-
-		if (CombatComponent)
-		{
-			CombatComponent->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
-		}
-	}
-}
-
 void ACharacterBase::UseItem()
 {
-	if (EquippedItem)
+	if (ItemComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UseItem Triggered"));
-		EquippedItem->Use(this);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("EquippedItem Is Null!!!"));
+		ItemComponent->UseEquippedItem();
 	}
 }
 
@@ -286,18 +263,34 @@ void ACharacterBase::TryInteract()
 		ECC_Visibility, 
 		FCollisionShape::MakeSphere(250.f), Params))
 	{
+		// 가장 가까운 거리에 있는 Actor를 확인해서 인터렉션 진행
+		AActor* ClosestInteractable = nullptr;
+		float ClosestDistSq = TNumericLimits<float>::Max();
+
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
 			if (AActor* OverlappedActor = Overlap.GetActor())
 			{
 				if (OverlappedActor->Implements<UInteractable>())
 				{
-					IInteractable::Execute_Interact(OverlappedActor, this);
+					float DistSq = FVector::DistSquared(OverlappedActor->GetActorLocation(), GetActorLocation());
+					if (DistSq < ClosestDistSq)
+					{
+						ClosestDistSq = DistSq;
+						ClosestInteractable = OverlappedActor;
+					}
 				}
-				else
-				{	
-					Server_Interact(OverlappedActor);
-				}
+			}
+		}
+		if (ClosestInteractable)
+		{
+			if (!HasAuthority())
+			{
+				Server_Interact(ClosestInteractable);
+			}
+			else
+			{
+				IInteractable::Execute_Interact(ClosestInteractable, this);
 			}
 		}
 	}
@@ -307,15 +300,7 @@ void ACharacterBase::TryInteract()
 	}
 }
 
-void ACharacterBase::Server_PickupItem_Implementation(ABaseItem* Item)
-{
-	PickupItem(Item);
-}
-
 void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
 {
-	if (InteractableActor && InteractableActor->Implements<UInteractable>())
-	{
-		IInteractable::Execute_Interact(InteractableActor, this);
-	}
+	IInteractable::Execute_Interact(InteractableActor, this);
 }
