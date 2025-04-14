@@ -12,18 +12,15 @@ AT8PlayerState::AT8PlayerState()
 void AT8PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
     DOREPLIFETIME(AT8PlayerState, PersonaName);
     DOREPLIFETIME(AT8PlayerState, TeamNumber);
 }
 
 void AT8PlayerState::RetrieveSteamID()
 {
-    // 온라인 서브시스템(예: Steam) 가져오기
     IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get(STEAM_SUBSYSTEM);
     if (OnlineSub)
     {
-        // 온라인 아이덴티티 인터페이스 가져오기
         IOnlineIdentityPtr Identity = OnlineSub->GetIdentityInterface();
         if (Identity.IsValid())
         {

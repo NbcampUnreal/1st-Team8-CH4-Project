@@ -1,6 +1,4 @@
-﻿
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Common/CustomGameState.h"

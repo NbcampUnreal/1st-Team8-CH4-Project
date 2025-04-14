@@ -1,6 +1,4 @@
-﻿
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
@@ -19,6 +17,10 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Lobby")
     void StartGame();
+
+    // Network functions
+    virtual void PostLogin(APlayerController* NewPlayer) override;
+    virtual void Logout(AController* Exiting) override;
 
 protected:
     // 필요한 경우, 전환될 매치 맵의 이름을 설정
