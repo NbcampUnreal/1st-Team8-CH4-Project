@@ -5,7 +5,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Player/Component/CombatComponent.h"
 #include "Player/Component/ItemComponent.h"
-#include "Item/BaseItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BrainComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -39,10 +38,7 @@ AT8AICharacter::AT8AICharacter()
 void AT8AICharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
 	InitAbilityActorInfo();
-
-	CachedAIController = Cast<AAIController>(GetController());
 
 	if (InitEffectClass && AbilitySystemComponent)
 	{
@@ -75,15 +71,6 @@ void AT8AICharacter::Tick(float DeltaTime)
 
 			TeamIndicator->SetWorldRotation(LookRotation);
 		}
-	}
-
-	if (!CachedAIController) return;
-
-	bool bHasWeapon = (ItemComponent && ItemComponent->GetEquippedItem() != nullptr);
-
-	if (UBlackboardComponent* BB = CachedAIController->GetBlackboardComponent())
-	{
-		BB->SetValueAsBool(TEXT("HasWeapon"), bHasWeapon);
 	}
 }
 
