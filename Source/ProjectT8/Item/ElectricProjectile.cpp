@@ -6,11 +6,6 @@
 
 AElectricProjectile::AElectricProjectile()
 {
-    if (MovementComp)
-    {
-        MovementComp->InitialSpeed = 0.f;
-        MovementComp->MaxSpeed = 0.f;
-    }
 }
 
 void AElectricProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

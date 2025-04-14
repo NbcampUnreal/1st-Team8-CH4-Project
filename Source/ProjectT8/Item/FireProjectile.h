@@ -3,6 +3,8 @@
 #include "Item/Projectile.h"
 #include "FireProjectile.generated.h"
 
+class UGameplayEffect;
+
 UCLASS()
 class PROJECTT8_API AFireProjectile : public AProjectile
 {
@@ -11,9 +13,9 @@ public:
     AFireProjectile();
 
 protected:
-    UPROPERTY(EditAnywhere)
-    float BurnDuration = 10.0f;
+    virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 
-    UPROPERTY(EditAnywhere)
-    float DamagePerSecond = 5.0f;
+    UPROPERTY(EditDefaultsOnly, Category = "Effect")
+    TSubclassOf<UGameplayEffect> BurnEffect;
 };
