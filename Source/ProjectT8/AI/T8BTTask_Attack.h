@@ -14,12 +14,9 @@ class PROJECTT8_API UT8BTTask_Attack : public UBTTaskNode
 public:
 	UT8BTTask_Attack();
 
-protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
-	UPROPERTY(EditAnywhere, Category = "AI")
-	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditAnywhere, Category = "AI")
-	float AttackDelay = 1.3f;
+protected:
+	UPROPERTY(EditAnywhere, Category = "Blackboard")
+	struct FBlackboardKeySelector TargetKey;
 };
