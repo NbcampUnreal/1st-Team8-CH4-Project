@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/Common/T8PlayerState.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -12,8 +13,10 @@
 #include "Item/BaseItem.h"
 #include "Engine/OverlapResult.h"
 #include "Blueprint/UserWidget.h"
-#include "CombatComponent.h"
+#include "Component/CombatComponent.h"
 #include "GAS/CharacterAttributeSet.h"
+#include "Component/ItemComponent.h"
+#include "Player/Customize/CharacterAppearanceSubsystem.h"
 
 
 // Constructor
@@ -26,6 +29,7 @@ ACharacterBase::ACharacterBase()
 
 	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	ItemComponent = CreateDefaultSubobject<UItemComponent>(TEXT("ItemComponent"));
 
 	SetReplicates(true);
 	SetReplicateMovement(true);
@@ -54,6 +58,30 @@ ACharacterBase::ACharacterBase()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	bIsRunning = false;
+
+	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HeadMesh"));
+	HeadMesh->SetupAttachment(GetMesh());
+	HeadMesh->SetLeaderPoseComponent(GetMesh());
+
+	AccessoryMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("AccessoryMesh"));
+	AccessoryMesh->SetupAttachment(GetMesh());
+	AccessoryMesh->SetLeaderPoseComponent(GetMesh());
+
+	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
+	GlovesMesh->SetupAttachment(GetMesh());
+	GlovesMesh->SetLeaderPoseComponent(GetMesh());
+
+	TopMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("TopMesh"));
+	TopMesh->SetupAttachment(GetMesh());
+	TopMesh->SetLeaderPoseComponent(GetMesh());
+
+	BottomMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BottomMesh"));
+	BottomMesh->SetupAttachment(GetMesh());
+	BottomMesh->SetLeaderPoseComponent(GetMesh());
+
+	ShoesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShoesMesh"));
+	ShoesMesh->SetupAttachment(GetMesh());
+	ShoesMesh->SetLeaderPoseComponent(GetMesh());
 }
 
 // GAS
@@ -72,6 +100,64 @@ void ACharacterBase::InitAbilityActorInfo()
 	{
 		CombatComponent->Init(this);
 	}
+	if (ItemComponent)
+	{
+		ItemComponent->Init(this);
+	}
+}
+
+void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
+{
+	UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+	if (!ApperanceSybsystem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ApperanceSubsystem is null!"));
+		return;
+	}
+
+	// 각 부위별로 메시 적용 시도
+	if (USkeletalMesh* HeadSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.HeadID))
+	{
+		if (HeadMesh)
+		{
+			HeadMesh->SetSkeletalMesh(HeadSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* AccessorySkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.AccessoryID))
+	{
+		if (AccessoryMesh)
+		{
+			AccessoryMesh->SetSkeletalMesh(AccessorySkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* GlovesSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.GlovesID))
+	{
+		if (GlovesMesh)
+		{
+			GlovesMesh->SetSkeletalMesh(GlovesSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* TopSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.TopID))
+	{
+		if (TopMesh)
+		{
+			TopMesh->SetSkeletalMesh(TopSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* BottomSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.BottomID))
+	{
+		if (BottomMesh)
+		{
+			BottomMesh->SetSkeletalMesh(BottomSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* ShoesSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.ShoesID))
+	{
+		if (ShoesMesh)
+		{
+			ShoesMesh->SetSkeletalMesh(ShoesSkeletalMesh);
+		}
+	}
 }
 
 void ACharacterBase::BeginPlay()
@@ -86,6 +172,12 @@ void ACharacterBase::BeginPlay()
 	};
 
 	RegisterStatusEffectDelegates();
+
+	// PlayerState가 있을 때만 외형 적용 시도
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		ApplyApperance(PS->ApperanceData);
+	}
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -178,8 +270,8 @@ void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
-	DOREPLIFETIME(ACharacterBase, EquippedItem);
 	DOREPLIFETIME(ACharacterBase, CombatComponent);
+	DOREPLIFETIME(ACharacterBase, ItemComponent);
 }
 
 // BeginPlay
@@ -236,40 +328,11 @@ void ACharacterBase::Attack()
 	}
 }
 
-void ACharacterBase::PickupItem(ABaseItem* Item)
-{
-	if (EquippedItem)
-	{
-		EquippedItem->Destroy();
-	}
-
-	EquippedItem = Item;
-
-	if (EquippedItem)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Picking up item: %s"), *GetNameSafe(EquippedItem));
-		EquippedItem->SetOwner(this);
-		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-		EquippedItem->SetActorHiddenInGame(false);
-		EquippedItem->SetActorEnableCollision(false);
-
-		if (CombatComponent)
-		{
-			CombatComponent->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
-		}
-	}
-}
-
 void ACharacterBase::UseItem()
 {
-	if (EquippedItem)
+	if (ItemComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UseItem Triggered"));
-		EquippedItem->Use(this);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("EquippedItem Is Null!!!"));
+		ItemComponent->UseEquippedItem();
 	}
 }
 
@@ -286,18 +349,34 @@ void ACharacterBase::TryInteract()
 		ECC_Visibility, 
 		FCollisionShape::MakeSphere(250.f), Params))
 	{
+		// 가장 가까운 거리에 있는 Actor를 확인해서 인터렉션 진행
+		AActor* ClosestInteractable = nullptr;
+		float ClosestDistSq = TNumericLimits<float>::Max();
+
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
 			if (AActor* OverlappedActor = Overlap.GetActor())
 			{
 				if (OverlappedActor->Implements<UInteractable>())
 				{
-					IInteractable::Execute_Interact(OverlappedActor, this);
+					float DistSq = FVector::DistSquared(OverlappedActor->GetActorLocation(), GetActorLocation());
+					if (DistSq < ClosestDistSq)
+					{
+						ClosestDistSq = DistSq;
+						ClosestInteractable = OverlappedActor;
+					}
 				}
-				else
-				{	
-					Server_Interact(OverlappedActor);
-				}
+			}
+		}
+		if (ClosestInteractable)
+		{
+			if (!HasAuthority())
+			{
+				Server_Interact(ClosestInteractable);
+			}
+			else
+			{
+				IInteractable::Execute_Interact(ClosestInteractable, this);
 			}
 		}
 	}
@@ -307,15 +386,18 @@ void ACharacterBase::TryInteract()
 	}
 }
 
-void ACharacterBase::Server_PickupItem_Implementation(ABaseItem* Item)
-{
-	PickupItem(Item);
-}
-
 void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
 {
-	if (InteractableActor && InteractableActor->Implements<UInteractable>())
+	IInteractable::Execute_Interact(InteractableActor, this);
+}
+
+void ACharacterBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// PlayerState가 있다면 외형 적용
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
 	{
-		IInteractable::Execute_Interact(InteractableActor, this);
+		ApplyApperance(PS->ApperanceData);
 	}
 }

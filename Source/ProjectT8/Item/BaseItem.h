@@ -32,6 +32,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual TSubclassOf<UGameplayEffect> GetAssociatedGameplayEffect() const { return AssociatedEffect; }
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attachment")
+	FTransform AttachOffset;
+
+	UPROPERTY(VisibleAnywhere)
+	USphereComponent* InteractSphere;
+
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -46,6 +52,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EItemType ItemType;
 
-	UPROPERTY(VisibleAnywhere)
-	USphereComponent* InteractSphere;
+	
+
+	
 };

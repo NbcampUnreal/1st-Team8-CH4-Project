@@ -14,7 +14,9 @@ class UCombatComponent;
 class UAbilitySystemComponent;
 class UCharacterAttributeSet;
 class UGameplayEffect;
+class UItemComponent;
 struct FInputActionValue;
+struct FCharacterAppearanceData;
 
 UCLASS()
 class ACharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -41,6 +43,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item", Replicated)
+	TObjectPtr<class UItemComponent> ItemComponent;
+
+	UFUNCTION(BlueprintCallable)
+	UItemComponent* GetItemComponent() const { return ItemComponent; }
+
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
@@ -62,13 +70,6 @@ public:
 
 	void InitAbilityActorInfo();
 
-	// Item
-	UPROPERTY(Replicated)
-	ABaseItem* EquippedItem;
-
-	UFUNCTION(BlueprintCallable)
-	void PickupItem(ABaseItem* Item);
-
 	UFUNCTION(BlueprintCallable)
 	void UseItem();
 
@@ -76,19 +77,20 @@ public:
 	void TryInteract();
 
 	UFUNCTION(Server, Reliable)
-	void Server_PickupItem(ABaseItem* Item);
-
-	UFUNCTION(Server, Reliable)
 	void Server_Interact(AActor* InteractableActor);
 
 	// Combat
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;
+
+	UFUNCTION()
+	void ApplyApperance(const FCharacterAppearanceData& Data);
 protected:
 	// Input
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PossessedBy(AController* NewController) override;
 
 	void Move(const FInputActionValue& Value);
 	void SprintStart();
@@ -123,8 +125,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	UCameraComponent* FollowCamera;
 
-	
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* HeadMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* AccessoryMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* GlovesMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* TopMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* BottomMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* ShoesMesh;
 private:
 	bool bIsRunning = false;
 
