@@ -9,20 +9,20 @@ struct FCharacterAppearanceData
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FName HeadID;
+	FString HeadID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FName AccessoryID;
+	FString AccessoryID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FName GlovesID;
+	FString GlovesID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FName TopID;
+	FString TopID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FName BottomID;
+	FString BottomID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FName ShoesID;
+	FString ShoesID;
 };

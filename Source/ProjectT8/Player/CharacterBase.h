@@ -124,8 +124,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	UCameraComponent* FollowCamera;
 
-	
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* HeadMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* AccessoryMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* GlovesMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* TopMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* BottomMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* ShoesMesh;
 private:
 	bool bIsRunning = false;
 

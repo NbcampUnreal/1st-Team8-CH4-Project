@@ -11,6 +11,8 @@ class PROJECTT8_API UCharacterAppearanceSubsystem : public UGameInstanceSubsyste
 	GENERATED_BODY()
 	
 public:
+	UCharacterAppearanceSubsystem();
+
 	UPROPERTY()
 	FCharacterAppearanceData CachedAppearanceData;
 
@@ -18,4 +20,9 @@ public:
 	void SaveAppearance();
 	UFUNCTION(BlueprintCallable)
 	void LoadAppearance();
+
+	UDataTable* ItemTable;
+
+	UFUNCTION(BlueprintCallable, Category = "Data")
+	USkeletalMesh* GetCostumeMeshByID(const FString& ItemID);
 };

@@ -15,6 +15,7 @@
 #include "Component/CombatComponent.h"
 #include "GAS/CharacterAttributeSet.h"
 #include "Component/ItemComponent.h"
+#include "Player/Customize/CharacterAppearanceSubsystem.h"
 
 
 // Constructor
@@ -56,6 +57,30 @@ ACharacterBase::ACharacterBase()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	bIsRunning = false;
+
+	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HeadMesh"));
+	HeadMesh->SetupAttachment(GetMesh());
+	HeadMesh->SetLeaderPoseComponent(GetMesh());
+
+	AccessoryMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("AccessoryMesh"));
+	AccessoryMesh->SetupAttachment(GetMesh());
+	AccessoryMesh->SetLeaderPoseComponent(GetMesh());
+
+	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
+	GlovesMesh->SetupAttachment(GetMesh());
+	GlovesMesh->SetLeaderPoseComponent(GetMesh());
+
+	TopMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("TopMesh"));
+	TopMesh->SetupAttachment(GetMesh());
+	TopMesh->SetLeaderPoseComponent(GetMesh());
+
+	BottomMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BottomMesh"));
+	BottomMesh->SetupAttachment(GetMesh());
+	BottomMesh->SetLeaderPoseComponent(GetMesh());
+
+	ShoesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShoesMesh"));
+	ShoesMesh->SetupAttachment(GetMesh());
+	ShoesMesh->SetLeaderPoseComponent(GetMesh());
 }
 
 // GAS
@@ -82,10 +107,51 @@ void ACharacterBase::InitAbilityActorInfo()
 
 void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
 {
-	/*if (UStaticMesh* TopMesh = UItemTableFunctionLibrary::GetMeshByID(Data.TopID))
+	UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+	if (!ApperanceSybsystem) return;
+
+	if (USkeletalMesh* HeadSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.HeadID))
 	{
-		TopMeshComponent->SetStaticMesh(TopMesh);
-	}*/
+		if (HeadMesh)
+		{
+			HeadMesh->SetSkeletalMesh(HeadSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* AccessorySkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.AccessoryID))
+	{
+		if (AccessoryMesh)
+		{
+			AccessoryMesh->SetSkeletalMesh(AccessorySkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* GlovesSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.GlovesID))
+	{
+		if (GlovesMesh)
+		{
+			GlovesMesh->SetSkeletalMesh(GlovesSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* TopSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.TopID))
+	{
+		if (TopMesh)
+		{
+			TopMesh->SetSkeletalMesh(TopSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* BottomSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.BottomID))
+	{
+		if (BottomMesh)
+		{
+			BottomMesh->SetSkeletalMesh(BottomSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* ShoesSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.ShoesID))
+	{
+		if (ShoesMesh)
+		{
+			ShoesMesh->SetSkeletalMesh(ShoesSkeletalMesh);
+		}
+	}
 }
 
 void ACharacterBase::BeginPlay()
