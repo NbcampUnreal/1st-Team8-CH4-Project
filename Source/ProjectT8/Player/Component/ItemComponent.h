@@ -21,12 +21,15 @@ public:
 	void UseEquippedItem();
 	void DropItemToWorld();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_AttachItem(ABaseItem* Item);
+
+
 	UFUNCTION(BlueprintCallable)
 	ABaseItem* GetEquippedItem() const { return EquippedItem; }
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 private:
-	UPROPERTY(Replicated)
 	ABaseItem* EquippedItem;
 
 	UPROPERTY()

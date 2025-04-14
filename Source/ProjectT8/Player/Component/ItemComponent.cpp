@@ -27,25 +27,17 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
-	
-	EquippedItem->SetActorHiddenInGame(false);
-	EquippedItem->SetActorEnableCollision(false);
-
-	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(EquippedItem->GetRootComponent()))
-	{
-		Prim->SetSimulatePhysics(false);
-		Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
 
 	if (OwnerCharacter && OwnerCharacter->GetCombatComponent())
 	{
 		OwnerCharacter->GetCombatComponent()->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
 	}
 
-	FVector Loc = EquippedItem->GetActorLocation();
-	FString RoleStr = OwnerCharacter->HasAuthority() ? TEXT("server") : TEXT("client");
-
-	EquippedItem->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
+	if (OwnerCharacter->HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
+		Multicast_AttachItem(NewItem);
+	}
 }
 
 void UItemComponent::UseEquippedItem()
@@ -76,8 +68,24 @@ void UItemComponent::DropItemToWorld()
 	EquippedItem = nullptr;
 }
 
+void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
+{
+	if (!Item || !OwnerCharacter) return;
+
+	Item->SetActorHiddenInGame(false);
+	Item->SetActorEnableCollision(false);
+
+	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Item->GetRootComponent()))
+	{
+		Prim->SetSimulatePhysics(false);
+		Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
+	UE_LOG(LogTemp, Error, TEXT("check ehck"));
+}
+
 void UItemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UItemComponent, EquippedItem);
 }

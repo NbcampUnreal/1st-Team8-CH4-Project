@@ -263,21 +263,33 @@ void ACharacterBase::TryInteract()
 		ECC_Visibility, 
 		FCollisionShape::MakeSphere(250.f), Params))
 	{
+		AActor* ClosestInteractable = nullptr;
+		float ClosestDistSq = TNumericLimits<float>::Max();
+
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
 			if (AActor* OverlappedActor = Overlap.GetActor())
 			{
 				if (OverlappedActor->Implements<UInteractable>())
 				{
-					if (!HasAuthority())
+					float DistSq = FVector::DistSquared(OverlappedActor->GetActorLocation(), GetActorLocation());
+					if (DistSq < ClosestDistSq)
 					{
-						Server_Interact(OverlappedActor);
-					}	
-					else 
-					{
-						IInteractable::Execute_Interact(OverlappedActor, this);
+						ClosestDistSq = DistSq;
+						ClosestInteractable = OverlappedActor;
 					}
 				}
+			}
+		}
+		if (ClosestInteractable)
+		{
+			if (!HasAuthority())
+			{
+				Server_Interact(ClosestInteractable);
+			}
+			else
+			{
+				IInteractable::Execute_Interact(ClosestInteractable, this);
 			}
 		}
 	}
