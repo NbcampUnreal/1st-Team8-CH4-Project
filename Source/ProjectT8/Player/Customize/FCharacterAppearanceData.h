@@ -4,8 +4,10 @@
 #include "FCharacterAppearanceData.generated.h"
 
 USTRUCT(BlueprintType)
-class PROJECTT8_API UFCharacterAppearanceData
+struct FCharacterAppearanceData
 {
+	GENERATED_BODY()
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FName HeadID;
 
