@@ -40,12 +40,17 @@ void UCharacterAppearanceSubsystem::SaveAppearance()
 
 void UCharacterAppearanceSubsystem::LoadAppearance()
 {	
-	const FString DefaultHeadID = TEXT("Head_01");
-	const FString DefaultAccessoryID = TEXT("Accessory_01");
-	const FString DefaultGlovesID = TEXT("Gloves_01");
-	const FString DefaultTopID = TEXT("Top_01");
-	const FString DefaultBottomID = TEXT("Bottom_01");
-	const FString DefaultShoesID = TEXT("Shoes_01");
+	auto GetRandomID = [](const FString& Prefix, int32 Min, int32 Max) -> FString {
+		int32 RandomNum = FMath::RandRange(Min, Max);
+		return FString::Printf(TEXT("%s_%02d"), *Prefix, RandomNum);
+	};
+
+	const FString DefaultHeadID = GetRandomID("Head", 1, 3);
+	const FString DefaultAccessoryID = GetRandomID("Accessory", 1, 7);
+	const FString DefaultGlovesID = GetRandomID("Gloves", 1, 2);
+	const FString DefaultTopID = GetRandomID("Top", 1, 5);
+	const FString DefaultBottomID = GetRandomID("Bottom", 1, 3);
+	const FString DefaultShoesID = GetRandomID("Shoes", 1, 3);
 
 	if (UGameplayStatics::DoesSaveGameExist(SaveSlot, 0))
 	{
@@ -56,7 +61,7 @@ void UCharacterAppearanceSubsystem::LoadAppearance()
 		{
 			CachedAppearanceData = Loaded->AppearanceData;
 			
-			// 저장된 데이터가 있어도 빈 값이 있다면 기본값으로 설정
+			// 저장된 데이터가 있어도 빈 값이 있다면 랜덤 기본값으로 설정
 			if (CachedAppearanceData.HeadID.IsEmpty()) CachedAppearanceData.HeadID = DefaultHeadID;
 			if (CachedAppearanceData.AccessoryID.IsEmpty()) CachedAppearanceData.AccessoryID = DefaultAccessoryID;
 			if (CachedAppearanceData.GlovesID.IsEmpty()) CachedAppearanceData.GlovesID = DefaultGlovesID;
