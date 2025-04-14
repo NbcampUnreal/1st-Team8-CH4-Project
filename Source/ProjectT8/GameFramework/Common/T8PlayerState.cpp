@@ -18,7 +18,6 @@ AT8PlayerState::AT8PlayerState()
 void AT8PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
     DOREPLIFETIME(AT8PlayerState, PersonaName);
     DOREPLIFETIME(AT8PlayerState, TeamNumber);
     DOREPLIFETIME(AT8PlayerState, ApperanceData);
