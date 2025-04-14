@@ -80,6 +80,14 @@ void ACharacterBase::InitAbilityActorInfo()
 	}
 }
 
+void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
+{
+	/*if (UStaticMesh* TopMesh = UItemTableFunctionLibrary::GetMeshByID(Data.TopID))
+	{
+		TopMeshComponent->SetStaticMesh(TopMesh);
+	}*/
+}
+
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();

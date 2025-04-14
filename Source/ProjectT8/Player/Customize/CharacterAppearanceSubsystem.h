@@ -11,11 +11,11 @@ class PROJECTT8_API UCharacterAppearanceSubsystem : public UGameInstanceSubsyste
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY()
 	FCharacterAppearanceData CachedAppearanceData;
 
-	UPROPERTY(BlueprintCallable)
+	UFUNCTION(BlueprintCallable)
 	void SaveAppearance();
-	UPROPERTY(BlueprintCallable)
+	UFUNCTION(BlueprintCallable)
 	void LoadAppearance();
 };

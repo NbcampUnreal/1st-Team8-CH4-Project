@@ -16,6 +16,7 @@ class UCharacterAttributeSet;
 class UGameplayEffect;
 class UItemComponent;
 struct FInputActionValue;
+struct FCharacterAppearanceData;
 
 UCLASS()
 class ACharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -81,6 +82,9 @@ public:
 	// Combat
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;
+
+	UFUNCTION()
+	void ApplyApperance(const FCharacterAppearanceData& Data);
 protected:
 	// Input
 	virtual void BeginPlay() override;
