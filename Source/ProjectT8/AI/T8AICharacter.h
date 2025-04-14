@@ -70,6 +70,17 @@ public:
 	UFUNCTION()
 	void ResetCanAttack();
 
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetHealth() const;
+
+	UPROPERTY()
+	AActor* LastDamager = nullptr;
+
+	float LastDamagerSetTime = 0.f;
+
+	UPROPERTY(EditAnywhere, Category = "Targeting")
+	float LastDamagerMemoryTime = 5.0f;
+
 	FTimerHandle DetectionTimer;
 
 

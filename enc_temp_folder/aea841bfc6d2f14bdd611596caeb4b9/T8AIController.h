@@ -24,25 +24,21 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RunWeaponSearchQuery();
 
-	void RunTargetPriorityQuery();
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
 	
 
-	/*UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable)
 	void RunTargetSearchQuery();
 
 	UFUNCTION()
-	void OnEQSQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);*/
+	void OnEQSQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 
 	UFUNCTION()
 	void OnWeaponQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 
-	UFUNCTION()
-	void OnTargetPriorityQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 	
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
@@ -51,19 +47,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "EQS")
 	UEnvQuery* WeaponQueryTemplate;
 
-	/*UPROPERTY(EditDefaultsOnly, Category = "EQS")
-	UEnvQuery* TargetQueryTemplate;*/
-
 	UPROPERTY(EditDefaultsOnly, Category = "EQS")
-	UEnvQuery* PriorityTargetQueryTemplate;
-
-	UPROPERTY()
-	AActor* CurrentTarget = nullptr;
-
-	float LastTargetSetTime = 0.f;
-
-	UPROPERTY(EditAnywhere, Category = "Targeting")
-	float TargetHoldTime = 3.0f;
+	UEnvQuery* TargetQueryTemplate;
 
 private:
 

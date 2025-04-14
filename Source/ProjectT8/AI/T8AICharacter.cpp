@@ -1,4 +1,5 @@
 #include "AI/T8AICharacter.h"
+#include "AI/T8AIController.h"
 #include "AIController.h"
 #include "DrawDebugHelpers.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -84,6 +85,15 @@ void AT8AICharacter::Tick(float DeltaTime)
 	if (UBlackboardComponent* BB = CachedAIController->GetBlackboardComponent())
 	{
 		BB->SetValueAsBool(TEXT("HasWeapon"), bHasWeapon);
+	}
+
+	UBlackboardComponent* BB = CachedAIController->GetBlackboardComponent();
+	if (!bHasWeapon && BB && !BB->GetValueAsObject(TEXT("NearbyWeapon")))
+	{
+		if (AT8AIController* AICon = Cast<AT8AIController>(CachedAIController))
+		{
+			AICon->RunWeaponSearchQuery();
+		}
 	}
 }
 
@@ -233,4 +243,13 @@ void AT8AICharacter::ApplyGameplayDamage(AActor* TargetActor)
 		TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 		UE_LOG(LogTemp, Warning, TEXT("AI가 %s에게 데미지 이펙트 적용"), *TargetActor->GetName());
 	}
+}
+
+float AT8AICharacter::GetHealth() const
+{
+	if (AttributeSet)
+	{
+		return AttributeSet->GetHealth();
+	}
+	return 0.0f;
 }

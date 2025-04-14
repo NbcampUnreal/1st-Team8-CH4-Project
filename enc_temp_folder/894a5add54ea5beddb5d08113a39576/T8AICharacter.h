@@ -89,7 +89,8 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Team")
 	bool IsEnemy(AActor* OtherActor) const;
 
-	
+	UPROPERTY()
+	class AAIController* CachedAIController;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Team")
