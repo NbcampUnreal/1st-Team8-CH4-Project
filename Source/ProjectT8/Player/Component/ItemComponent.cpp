@@ -5,6 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 
+
 UItemComponent::UItemComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -82,10 +83,11 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	}
 
 	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-	UE_LOG(LogTemp, Error, TEXT("check ehck"));
+	Item->SetActorRelativeTransform(Item->AttachOffset);
 }
 
 void UItemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UItemComponent, EquippedItem);
 }

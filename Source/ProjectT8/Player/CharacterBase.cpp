@@ -263,6 +263,7 @@ void ACharacterBase::TryInteract()
 		ECC_Visibility, 
 		FCollisionShape::MakeSphere(250.f), Params))
 	{
+		// 가장 가까운 거리에 있는 Actor를 확인해서 인터렉션 진행
 		AActor* ClosestInteractable = nullptr;
 		float ClosestDistSq = TNumericLimits<float>::Max();
 
