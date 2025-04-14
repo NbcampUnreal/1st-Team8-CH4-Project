@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Blueprint/UserWidget.h"
 
 #include "Global/Enums/GamePhaseEnum.h"
 
@@ -9,7 +10,7 @@
 
 class UUserWidget;
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType, DefaultToInstanced, EditInlineNew)
 class PROJECTT8_API UPhaseWidgetItem : public UObject
 {
 	GENERATED_BODY()
