@@ -40,6 +40,13 @@ void UCharacterAppearanceSubsystem::SaveAppearance()
 
 void UCharacterAppearanceSubsystem::LoadAppearance()
 {	
+	const FString DefaultHeadID = TEXT("Head_01");
+	const FString DefaultAccessoryID = TEXT("Accessory_01");
+	const FString DefaultGlovesID = TEXT("Gloves_01");
+	const FString DefaultTopID = TEXT("Top_01");
+	const FString DefaultBottomID = TEXT("Bottom_01");
+	const FString DefaultShoesID = TEXT("Shoes_01");
+
 	if (UGameplayStatics::DoesSaveGameExist(SaveSlot, 0))
 	{
 		UCharacterAppearanceSaveGame* Loaded = Cast<UCharacterAppearanceSaveGame>(
@@ -48,18 +55,27 @@ void UCharacterAppearanceSubsystem::LoadAppearance()
 		if (Loaded)
 		{
 			CachedAppearanceData = Loaded->AppearanceData;
+			
+			// 저장된 데이터가 있어도 빈 값이 있다면 기본값으로 설정
+			if (CachedAppearanceData.HeadID.IsEmpty()) CachedAppearanceData.HeadID = DefaultHeadID;
+			if (CachedAppearanceData.AccessoryID.IsEmpty()) CachedAppearanceData.AccessoryID = DefaultAccessoryID;
+			if (CachedAppearanceData.GlovesID.IsEmpty()) CachedAppearanceData.GlovesID = DefaultGlovesID;
+			if (CachedAppearanceData.TopID.IsEmpty()) CachedAppearanceData.TopID = DefaultTopID;
+			if (CachedAppearanceData.BottomID.IsEmpty()) CachedAppearanceData.BottomID = DefaultBottomID;
+			if (CachedAppearanceData.ShoesID.IsEmpty()) CachedAppearanceData.ShoesID = DefaultShoesID;
+
 			UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 외형 정보 불러오기 완료!"));
 		}
 	}
 	else
 	{
-		CachedAppearanceData.HeadID = "Head_01";
-		CachedAppearanceData.AccessoryID = "Accessory_01";
-		CachedAppearanceData.GlovesID = "Gloves_01";
-		CachedAppearanceData.TopID = "Top_01";
-		CachedAppearanceData.BottomID = "Bottom_01";
-		CachedAppearanceData.ShoesID = "Shoes_01";
-		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보 없음!"));
+		CachedAppearanceData.HeadID = DefaultHeadID;
+		CachedAppearanceData.AccessoryID = DefaultAccessoryID;
+		CachedAppearanceData.GlovesID = DefaultGlovesID;
+		CachedAppearanceData.TopID = DefaultTopID;
+		CachedAppearanceData.BottomID = DefaultBottomID;
+		CachedAppearanceData.ShoesID = DefaultShoesID;
+		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보 없음! 기본값 설정"));
 	}
 }
 

@@ -1,4 +1,5 @@
 #include "Player/T8PlayerController.h"
+#include "GameFramework/Common/T8PlayerState.h"
 #include "Player/Customize/CharacterAppearanceSaveGame.h"
 #include "Player/Customize/CharacterAppearanceSubsystem.h"
 #include "Player/Customize/FCharacterAppearanceData.h"
@@ -8,27 +9,28 @@ void AT8PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
-	if (ApperanceSybsystem)
+	if (IsLocalController())  // 로컬 컨트롤러일 때만 실행
 	{
-		ApperanceSybsystem->LoadAppearance();
-	}
-
-	if (GetPawn())
-	{
-		ApplyAppearanceToCharacter();
+		UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+		if (ApperanceSybsystem)
+		{
+			ApperanceSybsystem->LoadAppearance();
+			UE_LOG(LogTemp, Warning, TEXT("Calling ServerSetAppearanceData from client"));
+			ServerSetAppearanceData(ApperanceSybsystem->CachedAppearanceData);
+		}
 	}
 }
 
-void AT8PlayerController::ApplyAppearanceToCharacter()
+void AT8PlayerController::ServerSetAppearanceData_Implementation(const FCharacterAppearanceData& InData)
 {
-	UCharacterAppearanceSubsystem* ApperanceSubsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
-	if (!ApperanceSubsystem) return;
-
-	ACharacterBase* MyCharacter = Cast<ACharacterBase>(GetPawn());
-	if (!MyCharacter) return;
-
-	const FCharacterAppearanceData& Data = ApperanceSubsystem->CachedAppearanceData;
-
-	MyCharacter->ApplyApperance(Data);
+	UE_LOG(LogTemp, Warning, TEXT("[Server] ServerSetAppearanceData_Implementation"));
+	
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		PS->SetAppearanceData(InData);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Server] PlayerState is null in ServerSetAppearanceData_Implementation"));
+	}
 }

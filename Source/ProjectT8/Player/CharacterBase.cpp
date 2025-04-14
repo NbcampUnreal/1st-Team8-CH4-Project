@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/Common/T8PlayerState.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -108,8 +109,13 @@ void ACharacterBase::InitAbilityActorInfo()
 void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
 {
 	UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
-	if (!ApperanceSybsystem) return;
+	if (!ApperanceSybsystem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ApperanceSubsystem is null!"));
+		return;
+	}
 
+	// 각 부위별로 메시 적용 시도
 	if (USkeletalMesh* HeadSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.HeadID))
 	{
 		if (HeadMesh)
@@ -166,6 +172,12 @@ void ACharacterBase::BeginPlay()
 	};
 
 	RegisterStatusEffectDelegates();
+
+	// PlayerState가 있을 때만 외형 적용 시도
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		ApplyApperance(PS->ApperanceData);
+	}
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -377,4 +389,15 @@ void ACharacterBase::TryInteract()
 void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
 {
 	IInteractable::Execute_Interact(InteractableActor, this);
+}
+
+void ACharacterBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// PlayerState가 있다면 외형 적용
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		ApplyApperance(PS->ApperanceData);
+	}
 }

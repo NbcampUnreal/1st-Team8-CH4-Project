@@ -90,6 +90,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PossessedBy(AController* NewController) override;
 
 	void Move(const FInputActionValue& Value);
 	void SprintStart();
