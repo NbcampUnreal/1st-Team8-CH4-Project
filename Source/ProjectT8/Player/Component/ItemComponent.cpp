@@ -1,4 +1,4 @@
-#include "ItemComponent.h"
+ï»¿#include "ItemComponent.h"
 #include "Player/CharacterBase.h"
 #include "CombatComponent.h"
 #include "Item/BaseItem.h"
@@ -27,13 +27,14 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
-	EquippedItem->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
+	
 	EquippedItem->SetActorHiddenInGame(false);
 	EquippedItem->SetActorEnableCollision(false);
 
 	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(EquippedItem->GetRootComponent()))
 	{
 		Prim->SetSimulatePhysics(false);
+		Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
 	if (OwnerCharacter && OwnerCharacter->GetCombatComponent())
@@ -41,7 +42,10 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 		OwnerCharacter->GetCombatComponent()->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("ÀåÂøÇÑ ¾ÆÀÌÅÛ: %s"), *GetNameSafe(EquippedItem));
+	FVector Loc = EquippedItem->GetActorLocation();
+	FString RoleStr = OwnerCharacter->HasAuthority() ? TEXT("server") : TEXT("client");
+
+	EquippedItem->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
 }
 
 void UItemComponent::UseEquippedItem()
@@ -49,7 +53,7 @@ void UItemComponent::UseEquippedItem()
 	if (EquippedItem)
 	{
 		EquippedItem->Use(OwnerCharacter);
-		UE_LOG(LogTemp, Warning, TEXT("»ç¿ëÇÑ ¾ÆÀÌÅÛ: %s"), *GetNameSafe(EquippedItem));
+		UE_LOG(LogTemp, Warning, TEXT("ì‚¬ìš©í•œ ì•„ì´í…œ: %s"), *GetNameSafe(EquippedItem));
 	}
 }
 

@@ -8,14 +8,15 @@ ABaseItem::ABaseItem()
 	bReplicates = true;
 	SetReplicateMovement(true);
 
-	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	RootComponent = RootComp;
-
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	ItemMesh->SetupAttachment(RootComp);
+	RootComponent = ItemMesh;
+	ItemMesh->SetSimulatePhysics(true);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	ItemMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	ItemMesh->SetCollisionObjectType(ECC_PhysicsBody);
 
 	InteractSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractSphere"));
-	InteractSphere->SetupAttachment(RootComp);
+	InteractSphere->SetupAttachment(ItemMesh);
 	InteractSphere->SetSphereRadius(200.0f);
 	InteractSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
