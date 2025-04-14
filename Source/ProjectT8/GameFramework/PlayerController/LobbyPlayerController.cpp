@@ -1,15 +1,15 @@
-#include "T8PlayerController.h"
+#include "LobbyPlayerController.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerState.h"
 #include "Engine/World.h"
 
-AT8PlayerController::AT8PlayerController()
+ALobbyPlayerController::ALobbyPlayerController()
 {
     // 기본 설정
 }
 
-void AT8PlayerController::RequestMoveToSlot(int32 SlotIndex)
+void ALobbyPlayerController::RequestMoveToSlot(int32 SlotIndex)
 {
     // 클라이언트 UI에서 호출할 함수
     // 서버 RPC 호출
@@ -17,13 +17,13 @@ void AT8PlayerController::RequestMoveToSlot(int32 SlotIndex)
     ServerRequestMoveToSlot(SlotIndex);
 }
 
-bool AT8PlayerController::ServerRequestMoveToSlot_Validate(int32 SlotIndex)
+bool ALobbyPlayerController::ServerRequestMoveToSlot_Validate(int32 SlotIndex)
 {
     // 간단한 유효성 검사 - 음수가 아닌 슬롯 인덱스만 허용
     return SlotIndex >= 0;
 }
 
-void AT8PlayerController::ServerRequestMoveToSlot_Implementation(int32 SlotIndex)
+void ALobbyPlayerController::ServerRequestMoveToSlot_Implementation(int32 SlotIndex)
 {
     // 서버에서 실행되는 RPC 함수
     UE_LOG(LogTemp, Log, TEXT("ServerRequestMoveToSlot: Running on server, slot %d"), SlotIndex);
@@ -62,7 +62,7 @@ void AT8PlayerController::ServerRequestMoveToSlot_Implementation(int32 SlotIndex
     }
 }
 
-void AT8PlayerController::AddAIToSlot(int32 SlotIndex)
+void ALobbyPlayerController::AddAIToSlot(int32 SlotIndex)
 {
     // AI 추가 기능
     if (!HasAuthority())

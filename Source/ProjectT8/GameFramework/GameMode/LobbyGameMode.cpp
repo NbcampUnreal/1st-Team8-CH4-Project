@@ -5,7 +5,7 @@
 #include "GameFramework/PlayerController.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
-#include "GameFramework/PlayerController/T8PlayerController.h"
+#include "GameFramework/PlayerController/LobbyPlayerController.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -13,7 +13,7 @@ ALobbyGameMode::ALobbyGameMode()
     bUseSeamlessTravel = true;
     
     // 기본 클래스 설정
-    PlayerControllerClass = AT8PlayerController::StaticClass();
+    PlayerControllerClass = ALobbyPlayerController::StaticClass();
 }
 
 void ALobbyGameMode::StartGame()

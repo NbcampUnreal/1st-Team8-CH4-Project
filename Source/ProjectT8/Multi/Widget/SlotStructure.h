@@ -13,7 +13,7 @@ class UPanelWidget;
 class UWidgetSwitcher;
 class UGridPanel;
 class UUniformGridPanel;
-class AT8PlayerController;
+class ALobbyPlayerController;
 
 UCLASS()
 class PROJECTT8_API USlotStructure : public UUserWidget
