@@ -1,5 +1,6 @@
 #include "BaseItem.h"
 #include "Player/CharacterBase.h"
+#include "Player/Component/ItemComponent.h"
 
 
 ABaseItem::ABaseItem()
@@ -7,14 +8,15 @@ ABaseItem::ABaseItem()
 	bReplicates = true;
 	SetReplicateMovement(true);
 
-	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	RootComponent = RootComp;
-
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	ItemMesh->SetupAttachment(RootComp);
+	RootComponent = ItemMesh;
+	ItemMesh->SetSimulatePhysics(true);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	ItemMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	ItemMesh->SetCollisionObjectType(ECC_PhysicsBody);
 
 	InteractSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractSphere"));
-	InteractSphere->SetupAttachment(RootComp);
+	InteractSphere->SetupAttachment(ItemMesh);
 	InteractSphere->SetSphereRadius(200.0f);
 	InteractSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -30,9 +32,14 @@ void ABaseItem::BeginPlay()
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 {
+	if (!HasAuthority()) return;
+	
 	if (Player && !GetOwner())
 	{
-		Player->PickupItem(this);
+		if (UItemComponent* ItemComp = Player->ItemComponent)
+		{
+			ItemComp->TryPickUpItem(this);
+		}
 	}
 }
 

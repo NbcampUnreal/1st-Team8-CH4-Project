@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "GAS/CharacterAttributeSet.h"
 #include "CharacterBase.generated.h"
 
 class USpringArmComponent;
@@ -11,6 +10,11 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class ABaseItem;
+class UCombatComponent;
+class UAbilitySystemComponent;
+class UCharacterAttributeSet;
+class UGameplayEffect;
+class UItemComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -30,6 +34,19 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<class UCharacterAttributeSet> AttributeSet;
+
+	// Combat
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", Replicated)
+	TObjectPtr<class UCombatComponent> CombatComponent;
+
+	UFUNCTION(BlueprintCallable)
+	UCombatComponent* GetCombatComponent() const { return CombatComponent; }
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item", Replicated)
+	TObjectPtr<class UItemComponent> ItemComponent;
+
+	UFUNCTION(BlueprintCallable)
+	UItemComponent* GetItemComponent() const { return ItemComponent; }
 
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
@@ -51,35 +68,6 @@ public:
 	UUserWidget* BurnWidgetInstance;
 
 	void InitAbilityActorInfo();
-	void ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
-	void OnAttackHit();
-	void DealDamageToActors(const TArray<FHitResult>& HitResults);
-	void ApplyKnockback(AActor* TargetActor);
-
-	bool CanAttack() const;
-
-	// RPC
-	UFUNCTION(Server, Reliable)
-	void Server_Attack();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayAttackMontage();
-
-	UFUNCTION(Server, Reliable)
-	void Server_ApplyEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
-
-	UFUNCTION(Server, Reliable)
-	void Server_ApplyKnockback(AActor* TargetActor);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_ApplyKnockback(AActor* TargetActor, FVector Direction);
-
-	// Item
-	UPROPERTY(Replicated)
-	ABaseItem* EquippedItem;
-
-	UFUNCTION(BlueprintCallable)
-	void PickupItem(ABaseItem* Item);
 
 	UFUNCTION(BlueprintCallable)
 	void UseItem();
@@ -88,11 +76,11 @@ public:
 	void TryInteract();
 
 	UFUNCTION(Server, Reliable)
-	void Server_PickupItem(ABaseItem* Item);
-
-	UFUNCTION(Server, Reliable)
 	void Server_Interact(AActor* InteractableActor);
 
+	// Combat
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	UAnimMontage* AttackMontage;
 protected:
 	// Input
 	virtual void BeginPlay() override;
@@ -132,12 +120,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	UCameraComponent* FollowCamera;
 
-	// Combat
-	UPROPERTY(EditDefaultsOnly, Category = "Combat")
-	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	TSubclassOf<UGameplayEffect> CurrentDamageEffect;
+	
 
 private:
 	bool bIsRunning = false;

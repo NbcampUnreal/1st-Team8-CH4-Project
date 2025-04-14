@@ -1,13 +1,16 @@
 #include "Player/AnimNotifyDealDamage.h"
 #include "CharacterBase.h"
+#include "Player/Component/CombatComponent.h"
 
 void UAnimNotifyDealDamage::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	if (!MeshComp) return;
 
-	ACharacterBase* OwnerChar = Cast<ACharacterBase>(MeshComp->GetOwner());
-	if (OwnerChar)
+	if (ACharacterBase* Character = Cast<ACharacterBase>(MeshComp->GetOwner()))
 	{
-		OwnerChar->OnAttackHit();
+		if (UCombatComponent* Combat = Character->GetCombatComponent())
+		{
+			Combat->HandleAttackNotify();
+		}
 	}
 }
