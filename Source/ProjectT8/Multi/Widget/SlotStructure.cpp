@@ -13,7 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "InputCoreTypes.h"
-#include "GameFramework/PlayerController/T8PlayerController.h"
+#include "GameFramework/PlayerController/LobbyPlayerController.h"
 
 void USlotStructure::NativeConstruct()
 {
@@ -542,11 +542,11 @@ void USlotStructure::OnSlotButtonClicked()
         }
     }
 
-    // T8PlayerController로 캐스팅
-    AT8PlayerController* T8PC = Cast<AT8PlayerController>(PC);
-    if (!T8PC)
+    // LobbyPlayerController로 캐스팅
+    ALobbyPlayerController* LobbyPC = Cast<ALobbyPlayerController>(PC);
+    if (!LobbyPC)
     {
-        UE_LOG(LogTemp, Error, TEXT("Failed to cast to T8PlayerController"));
+        UE_LOG(LogTemp, Error, TEXT("Failed to cast to LobbyPlayerController"));
         return;
     }
 
@@ -554,12 +554,12 @@ void USlotStructure::OnSlotButtonClicked()
     if (bIsShiftDown && IsLocalPlayerHost() && bIsEmpty)
     {
         UE_LOG(LogTemp, Log, TEXT("Adding AI to slot %d"), clickedIndex);
-        T8PC->AddAIToSlot(clickedIndex);
+        LobbyPC->AddAIToSlot(clickedIndex);
     }
     else if (bIsEmpty)
     {
         UE_LOG(LogTemp, Log, TEXT("Requesting move to slot %d"), clickedIndex);
-        T8PC->RequestMoveToSlot(clickedIndex);
+        LobbyPC->RequestMoveToSlot(clickedIndex);
     }
     else
     {
