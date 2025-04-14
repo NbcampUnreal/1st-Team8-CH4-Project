@@ -2,19 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
+#include "EnvironmentQuery/EnvQueryTypes.h"
+#include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "T8AIController.generated.h"
 
-class UAIPerceptionComponent;
-class UAISenseConfig_Sight;
 
 UCLASS()
 class PROJECTT8_API AT8AIController : public AAIController
 {
 	GENERATED_BODY()
-	
 
 public:
 	AT8AIController();
@@ -24,12 +23,17 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
+	void OnEQSQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+
+private:
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UBehaviorTree* BehaviorTreeAsset;
 
-private:
-	UBlackboardComponent* Blackboard;
+	UPROPERTY(EditDefaultsOnly, Category = "EQS")
+	UEnvQuery* TargetQueryTemplate;
 
-	virtual void Tick(float DeltaTime) override;
+	void RunTargetSearchQuery();
 };
