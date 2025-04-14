@@ -1,17 +1,10 @@
-
-
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "DataRow.generated.h"
 
-/**
- * 
- */
-UCLASS()
-class PROJECTT8_API UDataRow : public UObject
+USTRUCT(BlueprintType)
+struct PROJECTT8_API FDataRow : public FTableRowBase
 {
 	GENERATED_BODY()
-	
 };
