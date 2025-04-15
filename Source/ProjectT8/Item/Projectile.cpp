@@ -1,41 +1,46 @@
 #include "Item/Projectile.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
-
+#include "Components/StaticMeshComponent.h"
+#include "GameFramework/Actor.h"
+#include "Player/CharacterBase.h"
 
 AProjectile::AProjectile()
 {
+    PrimaryActorTick.bCanEverTick = false;
+    SetReplicates(true);
+    SetReplicateMovement(true);
+
+    CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+    CollisionComp->InitSphereRadius(10.0f);
+    CollisionComp->SetCollisionProfileName("BlockAllDynamic");
+    CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+    RootComponent = CollisionComp;
+
     ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh"));
-    RootComponent = ProjectileMesh;
+    ProjectileMesh->SetupAttachment(RootComponent);
+    ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
-    CollisionSphere->SetupAttachment(RootComponent);
-    CollisionSphere->SetSphereRadius(100.0f); // 충돌 범위 Test후 수정 必
-    CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnSphereOverlap);
+    MovementComp = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+    MovementComp->UpdatedComponent = CollisionComp;
+    MovementComp->InitialSpeed = Speed;
+    MovementComp->MaxSpeed = Speed;
+    MovementComp->bRotationFollowsVelocity = true;
+    MovementComp->bShouldBounce = false;
+    MovementComp->ProjectileGravityScale = 0.f;
 
-    PrimaryActorTick.bCanEverTick = true;
-    SetLifeSpan(LifeSpan);
 }
 
 void AProjectile::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
+    SetLifeSpan(LifeSpan);
 }
 
-void AProjectile::Tick(float DeltaTime)
+void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	Super::Tick(DeltaTime);
-    FVector NewLocation = GetActorLocation() + GetActorForwardVector() * MoveSpeed * DeltaTime;
-	SetActorLocation(NewLocation); // 직선이동말고 살짝 곡선 + 땅에 떨어지게 수정 必
-}
-
-void AProjectile::ApplyEffect(ACharacterBase* Target)
-{
-    // 각 총 종류별 효과 , 자식 클래스에서 오버라이드
-}
-void AProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-    if (ACharacterBase* Target = Cast<ACharacterBase>(OtherActor))
+    if (OtherActor && OtherActor != GetOwner())
     {
-        ApplyEffect(Target);
+        Destroy();
     }
 }

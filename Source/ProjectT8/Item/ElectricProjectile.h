@@ -3,15 +3,18 @@
 #include "Item/Projectile.h"
 #include "ElectricProjectile.generated.h"
 
+class UGameplayEffect;
+
 UCLASS()
 class PROJECTT8_API AElectricProjectile : public AProjectile
 {
 	GENERATED_BODY()
 public:
     AElectricProjectile();
-    virtual void ApplyEffect(ACharacterBase* Target) override;
-
 protected:
-    UPROPERTY(EditAnywhere)
-    float StunDuration = 3.0f;
+    virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Effect")
+    TSubclassOf<UGameplayEffect> ShockEffect;
 };

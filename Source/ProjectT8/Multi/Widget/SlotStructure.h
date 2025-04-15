@@ -2,11 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/GameState/LobbyGameState.h"
 #include "SlotStructure.generated.h"
 
-class UUniformGridPanel;
-class UButton;
+// Forward declarations
 class ALobbyGameState;
+class APlayerState;
+class UButton;
+class UPanelWidget;
+class UWidgetSwitcher;
+class UGridPanel;
+class UUniformGridPanel;
+class ALobbyPlayerController;
 
 UCLASS()
 class PROJECTT8_API USlotStructure : public UUserWidget
@@ -14,48 +21,83 @@ class PROJECTT8_API USlotStructure : public UUserWidget
     GENERATED_BODY()
 
 public:
-    virtual void NativeConstruct() override;
+    UFUNCTION(BlueprintCallable, Category = "Slot")
+    void RefreshSlotWidgets();
+
+    UFUNCTION(BlueprintCallable, Category = "Slot")
+    void UpdateTeamMode(ETeamSetup NewTeamMode);
+    
+    UFUNCTION()
+    void FindGameState();
+    
+    // Adds an AI to the specified slot
+    UFUNCTION(BlueprintCallable, Category = "Slot")
+    void AddAIToSlot(int32 SlotIndex);
+    
+    // Context menu function to add AI to slot
+    UFUNCTION(BlueprintCallable, Category = "Slot")
+    void ShowAddAIOption(int32 SlotIndex);
 
 protected:
-    // ºí·çÇÁ¸°Æ® ¿¡µğÅÍ¿¡¼­ ÁöÁ¤ÇÒ UniformGridPanel (SlotGridPanel À§Á¬)
+    virtual void NativeConstruct() override;
+
+    UFUNCTION()
+    void OnSlotButtonClicked();
+    
+    UFUNCTION()
+    void OnTeamModeChanged();
+    
+    /** Maps slots between different team mode layouts */
+    int32 DetermineNewSlotIndex(int32 OldIndex, ETeamSetup NewMode);
+    
+    // í´ë¼ì´ì–¸íŠ¸ê°€ ì„œë²„ì— ìŠ¬ë¡¯ ì´ë™ ìš”ì²­
+    void ServerRequestMoveToSlot(int32 SlotIndex);
+
+private:
+    /** LobbyGameState ë ˆí¼ëŸ°ìŠ¤ (ì‹¤ì‹œê°„ ë°ì´í„° ì ‘ê·¼) */
+    UPROPERTY()
+    ALobbyGameState* LobbyGameStateRef;
+
+    /**
+     * ìŠ¬ë¡¯ ìœ„ì ¯ í´ë˜ìŠ¤ (ì˜ˆ: UUserSlot BP í´ë˜ìŠ¤). BPì—ì„œ ì˜¤ë²„ë¼ì´ë“œ ê°€ëŠ¥í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot", meta = (AllowPrivateAccess = "true"))
+    TSubclassOf<UUserWidget> UserSlotWidgetClass;
+
+    /**
+     * WidgetSwitcher: 3ê°€ì§€ ê·¸ë¦¬ë“œ íŒ¨ë„ì„ ê´€ë¦¬í•©ë‹ˆë‹¤.
+     * ì¸ë±ìŠ¤ 0: FreeForAllGrid, 1: TwoTeamsGrid, 2: FourTeamsGrid.
+     */
     UPROPERTY(meta = (BindWidget))
-    UUniformGridPanel* SlotGridPanel;
+    UWidgetSwitcher* TeamModeSwitcher;
 
-    // µ¿ÀûÀ¸·Î »ı¼ºÇÑ ½½·Ô ¹öÆ°µéÀ» ÀúÀåÇÒ ¹è¿­ (Transient)
-    UPROPERTY(Transient)
-    TArray<UButton*> SlotButtons;
+    /** Free-for-all ëª¨ë“œ ê·¸ë¦¬ë“œ íŒ¨ë„ (GridPanel, BPì—ì„œ êµ¬í˜„ë ) */
+    UPROPERTY(meta = (BindWidgetOptional))
+    UGridPanel* FreeForAllGrid;
+    /** Two Teams ëª¨ë“œ ê·¸ë¦¬ë“œ íŒ¨ë„ (UniformGridPanel, BPì—ì„œ êµ¬í˜„ë ) */
+    UPROPERTY(meta = (BindWidgetOptional))
+    UUniformGridPanel* TwoTeamsGrid;
+    /** Four Teams ëª¨ë“œ ê·¸ë¦¬ë“œ íŒ¨ë„ (UniformGridPanel, BPì—ì„œ êµ¬í˜„ë ) */
+    UPROPERTY(meta = (BindWidgetOptional))
+    UUniformGridPanel* FourTeamsGrid;
 
-    // ½½·Ô ¹öÆ°µéÀ» »ı¼ºÇÏ¿© ±×¸®µå¿¡ Ãß°¡ÇÏ´Â ÇÔ¼ö
-    void SetupSlotButtons();
+    /** ê° ê·¸ë¦¬ë“œ íŒ¨ë„(ëª¨ë“œ)ë³„ ìŠ¬ë¡¯ ë²„íŠ¼ ë°°ì—´ */
+    TArray<UButton*> FFAButtons;
+    TArray<UButton*> TwoTeamsButtons;
+    TArray<UButton*> FourTeamsButtons;
 
-    // °øÅëÀ¸·Î È£ÃâµÇ´Â ÇÔ¼ö, SlotIndex¿¡ ÇØ´çÇÏ´Â ½½·ÔÀ¸·Î ÀÌµ¿ ¿äÃ»
-    void OnSlotButtonClicked(int32 SlotIndex);
+    /** í˜„ì¬ í™œì„±í™”ëœ íŒ€ ëª¨ë“œ */
+    ETeamSetup CurrentTeamMode;
 
-    // °¢ ½½·Ô ¹öÆ° Àü¿ë Å¬¸¯ ÇÚµé·¯ (µ¿Àû delegate ¹ÙÀÎµùÀ» À§ÇØ °¢°¢ UFUNCTIONÀ¸·Î ¼±¾ğ)
-    UFUNCTION()
-    void OnSlotButton0Clicked();
+    /** ê° í”Œë ˆì´ì–´ì— ì—°ê²°ëœ í”Œë ˆì´ì–´ PlayerStateì™€ ìœ„ì ¯ ë§¤í•‘ */
+    TMap<APlayerState*, UUserWidget*> SlotWidgetMap;
+    
+    /** Stores the slot index for AI context menu */
+    int32 ContextMenuSlotIndex;
 
-    UFUNCTION()
-    void OnSlotButton1Clicked();
-
-    UFUNCTION()
-    void OnSlotButton2Clicked();
-
-    UFUNCTION()
-    void OnSlotButton3Clicked();
-
-    UFUNCTION()
-    void OnSlotButton4Clicked();
-
-    UFUNCTION()
-    void OnSlotButton5Clicked();
-
-    UFUNCTION()
-    void OnSlotButton6Clicked();
-
-    UFUNCTION()
-    void OnSlotButton7Clicked();
-
-    // ÇöÀç ·Îºñ GameState¸¦ ¾ò´Â ÇïÆÛ ÇÔ¼ö
-    ALobbyGameState* GetLobbyGameState() const;
+    /** ê° ìŠ¬ë¡¯ ë²„íŠ¼ì— í´ë¦­ ì´ë²¤íŠ¸ë¥¼ ë°”ì¸ë”©í•©ë‹ˆë‹¤. */
+    void BindSlotButtonEvents();
+    
+    /** Checks if the local player is the host */
+    bool IsLocalPlayerHost() const;
 };

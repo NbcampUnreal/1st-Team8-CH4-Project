@@ -9,7 +9,6 @@ class PROJECTT8_API AIceProjectile : public AProjectile
 	GENERATED_BODY()
 public:
     AIceProjectile();
-    virtual void ApplyEffect(ACharacterBase* Target) override;
 
 protected:
     UPROPERTY(EditAnywhere)

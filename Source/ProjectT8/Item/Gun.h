@@ -3,13 +3,17 @@
 #include "Item/Weapon.h"
 #include "Gun.generated.h"
 
+
 UCLASS()
 class PROJECTT8_API AGun : public AWeapon
 {
 	GENERATED_BODY()
 
 protected:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UFUNCTION(Server, Reliable)
+    void Server_Use(ACharacterBase* Player);
+
+    UPROPERTY(Replicated)
     int32 CurrentAmmo = 5;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
