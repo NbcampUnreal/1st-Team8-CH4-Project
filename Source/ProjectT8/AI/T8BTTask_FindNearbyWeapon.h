@@ -8,12 +8,11 @@
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "T8BTTask_FindNearbyWeapon.generated.h"
 
-
 UCLASS()
 class PROJECTT8_API UT8BTTask_FindNearbyWeapon : public UBTTaskNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	UT8BTTask_FindNearbyWeapon();
 
@@ -30,6 +29,7 @@ protected:
 	struct FBlackboardKeySelector TargetWeaponKey;
 
 private:
-	UPROPERTY()
-	UBehaviorTreeComponent* CachedOwnerComp;
+	TWeakObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;
+
+	bool bQueryInProgress = false;
 };

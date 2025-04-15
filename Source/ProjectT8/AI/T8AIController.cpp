@@ -110,11 +110,11 @@ void AT8AIController::OnWeaponQueryFinished(UEnvQueryInstanceBlueprintWrapper* Q
 
 	if (FoundItems.Num() > 0)
 	{
-		GetBlackboardComponent()->SetValueAsObject(TEXT("NearbyItem"), FoundItems[0]);
+		GetBlackboardComponent()->SetValueAsObject(TEXT("NearbyWeapon"), FoundItems[0]);
 	}
 	else
 	{
-		GetBlackboardComponent()->ClearValue(TEXT("NearbyItem"));
+		GetBlackboardComponent()->ClearValue(TEXT("NearbyWeapon"));
 	}
 }
 

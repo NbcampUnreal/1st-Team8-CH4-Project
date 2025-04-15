@@ -23,6 +23,11 @@ EBTNodeResult::Type UT8BTTask_PickupWeapon::ExecuteTask(UBehaviorTreeComponent& 
 	if (!AIChar || !AIChar->GetItemComponent()) return EBTNodeResult::Failed;
 
 	UObject* TargetObj = OwnerComp.GetBlackboardComponent()->GetValueAsObject(NearbyItemKey.SelectedKeyName);
+
+	UE_LOG(LogTemp, Warning, TEXT("[PickUpWeapon] Blackboard '%s' 에서 읽은 값 = %s"),
+		*NearbyItemKey.SelectedKeyName.ToString(),
+		*GetNameSafe(TargetObj));
+
 	if (!TargetObj) return EBTNodeResult::Failed;
 
 	ABaseItem* Item = Cast<ABaseItem>(TargetObj);
