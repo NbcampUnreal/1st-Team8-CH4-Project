@@ -2,21 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "T8BTTask_Attack.generated.h"
-
+#include "T8BTTask_UseHealItem.generated.h"
 
 UCLASS()
-class PROJECTT8_API UT8BTTask_Attack : public UBTTaskNode
+class PROJECTT8_API UT8BTTask_UseHealItem : public UBTTaskNode
 {
 	GENERATED_BODY()
-	
 
 public:
-	UT8BTTask_Attack();
-
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	UT8BTTask_UseHealItem();
 
 protected:
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
-	struct FBlackboardKeySelector TargetKey;
+	struct FBlackboardKeySelector HealItemKey;
 };

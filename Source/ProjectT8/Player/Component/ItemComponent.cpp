@@ -5,6 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/CharacterBase.h"
+#include "AI/T8AICharacter.h"
 
 
 UItemComponent::UItemComponent()
@@ -30,9 +31,19 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
 
-	if (OwnerCharacter && Cast<ACharacterBase>(OwnerCharacter)->GetCombatComponent())
+	if (ACharacterBase* PlayerCharacter = Cast<ACharacterBase>(OwnerCharacter))
 	{
-		Cast<ACharacterBase>(OwnerCharacter)->GetCombatComponent()->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		if (UCombatComponent* Combat = PlayerCharacter->GetCombatComponent())
+		{
+			Combat->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		}
+	}
+	else if (AT8AICharacter* AICharacter = Cast<AT8AICharacter>(OwnerCharacter))
+	{
+		if (UCombatComponent* Combat = AICharacter->GetCombatComponent())
+		{
+			Combat->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		}
 	}
 
 	if (OwnerCharacter->HasAuthority())
@@ -41,6 +52,7 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 		Multicast_AttachItem(NewItem);
 	}
 }
+
 
 void UItemComponent::UseEquippedItem()
 {
