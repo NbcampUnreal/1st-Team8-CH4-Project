@@ -2,19 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
+#include "EnvironmentQuery/EnvQueryTypes.h"
+#include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "T8AIController.generated.h"
 
-class UAIPerceptionComponent;
-class UAISenseConfig_Sight;
 
 UCLASS()
 class PROJECTT8_API AT8AIController : public AAIController
 {
 	GENERATED_BODY()
-	
 
 public:
 	AT8AIController();
@@ -22,14 +21,47 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	AActor* GetTargetPlayer() const;
 
+	UFUNCTION(BlueprintCallable)
+	void RunWeaponSearchQuery();
+
+	void RunTargetPriorityQuery();
+
+	UFUNCTION()
+	void RequestFindNewTarget();
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION()
+	void OnWeaponQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+
+	UFUNCTION()
+	void OnTargetPriorityQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+	
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UBehaviorTree* BehaviorTreeAsset;
 
-private:
-	UBlackboardComponent* Blackboard;
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	class UEnvQuery* TargetSearchQuery;
 
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditDefaultsOnly, Category = "EQS")
+	UEnvQuery* WeaponQueryTemplate;
+
+	UPROPERTY(EditDefaultsOnly, Category = "EQS")
+	UEnvQuery* PriorityTargetQueryTemplate;
+
+	UPROPERTY()
+	AActor* CurrentTarget = nullptr;
+
+	float LastTargetSetTime = 0.f;
+
+	UPROPERTY(EditAnywhere, Category = "Targeting")
+	float TargetHoldTime = 3.0f;
+
+	
+
+private:
+
 };
