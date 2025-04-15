@@ -5,8 +5,9 @@
 #include "GameplayEffectTypes.h"
 #include "CombatComponent.generated.h"
 
-class ACharacterBase;
+class ACharacter;
 class UGameplayEffect;
+class UAnimMontage;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTT8_API UCombatComponent : public UActorComponent
@@ -16,7 +17,7 @@ class PROJECTT8_API UCombatComponent : public UActorComponent
 public:	
 	UCombatComponent();
 
-	void Init(ACharacterBase* InOwner);
+	void Init(ACharacter* InOwner);
 
 	void Attack();
 	void HandleAttackNotify();
@@ -24,7 +25,7 @@ public:
 
 	void OnAttackHit();
 	void DealDamageToActors(const TArray<FHitResult>& HitResults);
-	void ApplyGameplayEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
+	void ApplyGameplayEffectToTarget(ACharacter* Target, TSubclassOf<UGameplayEffect> EffectClass);
 	void ApplyKnockback(AActor* TargetActor);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
@@ -33,7 +34,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_Attack();
 	UFUNCTION(Server, Reliable)
-	void Server_ApplyEffectToTarget(ACharacterBase* Target, TSubclassOf<UGameplayEffect> EffectClass);
+	void Server_ApplyEffectToTarget(ACharacter* Target, TSubclassOf<UGameplayEffect> EffectClass);
 	UFUNCTION(Server, Reliable)
 	void Server_ApplyKnockback(AActor* TargetActor);
 	
@@ -45,7 +46,10 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float KnockbackStrength = 800.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	UAnimMontage* AttackMontage;
+
 private:
 	UPROPERTY()
-	ACharacterBase* OwnerCharacter;
+	ACharacter* OwnerCharacter;
 };
