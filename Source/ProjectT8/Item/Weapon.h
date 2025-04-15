@@ -15,6 +15,12 @@ class PROJECTT8_API AWeapon : public ABaseItem
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	UAnimMontage* IdleMontage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Combat")
+    UAnimMontage* AttackMontage;
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     EWeaponType WeaponType;
