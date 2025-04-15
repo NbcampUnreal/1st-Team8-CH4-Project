@@ -26,17 +26,12 @@ public:
 
 	void RunTargetPriorityQuery();
 
+	UFUNCTION()
+	void RequestFindNewTarget();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-
-	
-
-	/*UFUNCTION(BlueprintCallable)
-	void RunTargetSearchQuery();
-
-	UFUNCTION()
-	void OnEQSQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);*/
 
 	UFUNCTION()
 	void OnWeaponQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
@@ -48,11 +43,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UBehaviorTree* BehaviorTreeAsset;
 
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	class UEnvQuery* TargetSearchQuery;
+
 	UPROPERTY(EditDefaultsOnly, Category = "EQS")
 	UEnvQuery* WeaponQueryTemplate;
-
-	/*UPROPERTY(EditDefaultsOnly, Category = "EQS")
-	UEnvQuery* TargetQueryTemplate;*/
 
 	UPROPERTY(EditDefaultsOnly, Category = "EQS")
 	UEnvQuery* PriorityTargetQueryTemplate;
@@ -64,6 +59,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Targeting")
 	float TargetHoldTime = 3.0f;
+
+	
 
 private:
 

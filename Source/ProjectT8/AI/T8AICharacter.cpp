@@ -85,14 +85,14 @@ void AT8AICharacter::Tick(float DeltaTime)
 	if (UBlackboardComponent* BB = CachedAIController->GetBlackboardComponent())
 	{
 		BB->SetValueAsBool(TEXT("HasWeapon"), bHasWeapon);
-	}
 
-	UBlackboardComponent* BB = CachedAIController->GetBlackboardComponent();
-	if (!bHasWeapon && BB && !BB->GetValueAsObject(TEXT("NearbyWeapon")))
-	{
-		if (AT8AIController* AICon = Cast<AT8AIController>(CachedAIController))
+		if (AttributeSet->GetHealth() < AttributeSet->GetMaxHealth() * 0.5f)
 		{
-			//AICon->RunWeaponSearchQuery();
+			BB->SetValueAsBool("NeedHeal", true);
+		}
+		else
+		{
+			BB->SetValueAsBool("NeedHeal", false);
 		}
 	}
 }

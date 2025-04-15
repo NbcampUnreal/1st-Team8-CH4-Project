@@ -9,6 +9,7 @@
 
 AT8AIController::AT8AIController()
 {
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void AT8AIController::BeginPlay()
@@ -21,20 +22,26 @@ void AT8AIController::BeginPlay()
 	}
 
 	RunTargetPriorityQuery();
-	//RunTargetSearchQuery();
-
 }
 
 
-void AT8AIController::Tick(float DeltaTime)
+void AT8AIController::Tick(float DeltaSeconds)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaSeconds);
 
-	if (Blackboard && !Blackboard->GetValueAsObject(TEXT("TargetPlayer")))
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB) return;
+
+	this->CurrentTarget = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetPlayer")));
+
+	if (this->CurrentTarget == nullptr || !LineOfSightTo(this->CurrentTarget))
 	{
-		//RunTargetSearchQuery();
+		UE_LOG(LogTemp, Warning, TEXT("타겟 상실: TargetPlayer 초기화"));
+		BB->ClearValue(TEXT("TargetFromBB"));
+		RequestFindNewTarget();
 	}
 }
+
 
 AActor* AT8AIController::GetTargetPlayer() const
 {
@@ -44,44 +51,6 @@ AActor* AT8AIController::GetTargetPlayer() const
 	}
 	return nullptr;
 }
-
-
-
-//void AT8AIController::RunTargetSearchQuery()
-//{
-//	if (!TargetQueryTemplate) return;
-//
-//	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
-//		this,
-//		TargetQueryTemplate,
-//		this,
-//		EEnvQueryRunMode::SingleResult,
-//		nullptr
-//	);
-//
-//	if (QueryInstance)
-//	{
-//		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AT8AIController::OnEQSQueryFinished);
-//	}
-//}
-//
-//void AT8AIController::OnEQSQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
-//{
-//	if (!QueryInstance || !Blackboard) return;
-//
-//	TArray<AActor*> FoundActors;
-//	QueryInstance->GetQueryResultsAsActors(FoundActors);
-//
-//	if (FoundActors.Num() > 0)
-//	{
-//		AActor* TargetActor = FoundActors[0];
-//		Blackboard->SetValueAsObject(TEXT("TargetPlayer"), TargetActor);
-//	}
-//	else
-//	{
-//		Blackboard->ClearValue(TEXT("TargetPlayer"));
-//	}
-//}
 
 void AT8AIController::RunWeaponSearchQuery()
 {
@@ -207,4 +176,25 @@ void AT8AIController::OnTargetPriorityQueryFinished(UEnvQueryInstanceBlueprintWr
 		}
 	}
 
+}
+
+void AT8AIController::RequestFindNewTarget()
+{
+	if (!TargetSearchQuery) return;
+
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn) return;
+
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance =
+		UEnvQueryManager::RunEQSQuery(
+			this,
+			TargetSearchQuery,
+			ControlledPawn,
+			EEnvQueryRunMode::SingleResult,
+			nullptr);
+
+	if (QueryInstance)
+	{
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AT8AIController::OnTargetPriorityQueryFinished);
+	}
 }
