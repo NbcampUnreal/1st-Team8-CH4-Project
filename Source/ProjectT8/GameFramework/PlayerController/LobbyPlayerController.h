@@ -26,4 +26,12 @@ public:
     
     UFUNCTION(BlueprintCallable, Category = "Lobby")
     void AddAIToSlot(int32 SlotIndex);
+    
+    // AI 제거 기능
+    UFUNCTION(BlueprintCallable, Category = "Lobby")
+    void RemoveAIFromSlot(int32 SlotIndex);
+    
+    // 플레이어 추방 기능
+    UFUNCTION(BlueprintCallable, Category = "Lobby")
+    void KickPlayerFromSlot(int32 SlotIndex);
 }; 

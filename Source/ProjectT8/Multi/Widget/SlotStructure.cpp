@@ -14,6 +14,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "InputCoreTypes.h"
 #include "GameFramework/PlayerController/LobbyPlayerController.h"
+#include "Components/PanelWidget.h"
 
 void USlotStructure::NativeConstruct()
 {
@@ -50,7 +51,13 @@ void USlotStructure::NativeConstruct()
 
     ContextMenuSlotIndex = -1;
     
+    // 각 슬롯 버튼 바인딩
     BindSlotButtonEvents();
+    
+    // 호스트 전용 버튼 바인딩
+    BindHostButtonEvents();
+    
+    // UI 초기화
     RefreshSlotWidgets();
 }
 
@@ -374,14 +381,7 @@ void USlotStructure::RefreshSlotWidgets()
     TMap<APlayerState*, UUserWidget*> newSlotWidgetMap;
     newSlotWidgetMap.Reserve(totalSlots);
 
-    TArray<UButton*>* ActiveButtons = nullptr;
-    switch (CurrentTeamMode)
-    {
-        case ETeamSetup::FreeForAll: ActiveButtons = &FFAButtons; break;
-        case ETeamSetup::TwoTeams:   ActiveButtons = &TwoTeamsButtons; break;
-        case ETeamSetup::FourTeams:  ActiveButtons = &FourTeamsButtons; break;
-        default:                     ActiveButtons = &FFAButtons; break;
-    }
+    TArray<UButton*>* ActiveButtons = GetActiveButtonArray();
     if (!ActiveButtons)
     {
         UE_LOG(LogTemp, Error, TEXT("RefreshSlotWidgets: No active buttons available!"));
@@ -390,6 +390,16 @@ void USlotStructure::RefreshSlotWidgets()
 
     // Get local player controller to check if user is host
     bool bIsHost = IsLocalPlayerHost();
+
+    // 현재 활성화된 그리드 인덱스 (0, 1, 2)
+    int32 activeGridIndex = 0;
+    switch (CurrentTeamMode)
+    {
+        case ETeamSetup::FreeForAll: activeGridIndex = 0; break;
+        case ETeamSetup::TwoTeams:   activeGridIndex = 1; break;
+        case ETeamSetup::FourTeams:  activeGridIndex = 2; break;
+        default:                     activeGridIndex = 0; break;
+    }
 
     for (int32 i = 0; i < totalSlots && i < ActiveButtons->Num(); ++i)
     {
@@ -439,8 +449,8 @@ void USlotStructure::RefreshSlotWidgets()
             if (userSlotWidget)
             {
                 if (playerState)
-                {
-                    newSlotWidgetMap.Add(playerState, userSlotWidget);
+            {
+                newSlotWidgetMap.Add(playerState, userSlotWidget);
                 }
                 
                 // Disable the button for occupied slots
@@ -460,6 +470,76 @@ void USlotStructure::RefreshSlotWidgets()
             
             // 중요: RefreshSlotWidgets에서는 버튼 이벤트를 바인딩하지 않음
             // 모든 버튼 바인딩은 BindSlotButtonEvents()에서만 처리
+        }
+        
+        // 호스트 전용 버튼 상태 업데이트
+        const int32 MaxSlotsPerGrid = 8;
+        for (int32 j = 0; j < MaxSlotsPerGrid; ++j)
+        {
+            // 각 그리드별 배열 인덱스 계산
+            int32 arrayIndex = activeGridIndex * MaxSlotsPerGrid + j;
+            
+            // 배열 범위 확인
+            if (arrayIndex < AddAIButtons.Num() && arrayIndex < KickButtons.Num())
+            {
+                UButton* addAIButton = AddAIButtons[arrayIndex];
+                UButton* kickButton = KickButtons[arrayIndex];
+                
+                if (addAIButton && kickButton)
+                {
+                    // 호스트가 아니면 버튼 숨김
+                    if (!bIsHost)
+                    {
+                        addAIButton->SetVisibility(ESlateVisibility::Hidden);
+                        kickButton->SetVisibility(ESlateVisibility::Hidden);
+                        continue;
+                    }
+                    
+                    // 호스트 본인 슬롯이면 버튼 비활성화
+                    if (IsHostSlot(j))
+                    {
+                        addAIButton->SetVisibility(ESlateVisibility::Hidden);
+                        kickButton->SetVisibility(ESlateVisibility::Hidden);
+                        continue;
+                    }
+                    
+                    // 슬롯 데이터 가져오기 - 변수 이름 변경하여 충돌 방지
+                    FSlotInfo SlotDataForButton = slotsData.IsValidIndex(j) ? slotsData[j] : FSlotInfo();
+                    APlayerState* playerStateForButton = SlotDataForButton.PlayerState;
+                    bool bIsAIForButton = SlotDataForButton.bIsAI;
+                    
+                    // 호스트가 아닌 사용자 슬롯이면
+                    if (playerStateForButton && !IsHostSlot(j))
+                    {
+                        // AI 추가 버튼 숨김 (이미 플레이어가 있음)
+                        addAIButton->SetVisibility(ESlateVisibility::Hidden);
+                        
+                        // 추방 버튼 표시
+                        kickButton->SetVisibility(ESlateVisibility::Visible);
+                        kickButton->SetToolTipText(FText::FromString(TEXT("플레이어 추방")));
+                    }
+                    // AI 슬롯이면
+                    else if (bIsAIForButton)
+                    {
+                        // AI 추가 버튼 숨김 (이미 AI가 있음)
+                        addAIButton->SetVisibility(ESlateVisibility::Hidden);
+                        
+                        // 추방 버튼 표시
+                        kickButton->SetVisibility(ESlateVisibility::Visible);
+                        kickButton->SetToolTipText(FText::FromString(TEXT("AI 제거")));
+                    }
+                    // 빈 슬롯이면
+                    else
+                    {
+                        // AI 추가 버튼 표시
+                        addAIButton->SetVisibility(ESlateVisibility::Visible);
+                        addAIButton->SetToolTipText(FText::FromString(TEXT("AI 추가")));
+                        
+                        // 추방 버튼 숨김 (제거할 대상 없음)
+                        kickButton->SetVisibility(ESlateVisibility::Hidden);
+                    }
+                }
+            }
         }
     }
 
@@ -617,4 +697,360 @@ void USlotStructure::OnTeamModeChanged()
         // 현재 설정된 팀 모드로 UI 업데이트
         UpdateTeamMode(LobbyGameStateRef->TeamSetup);
     }
+}
+
+// 헬퍼 함수 구현
+bool USlotStructure::IsHostSlot(int32 SlotIndex) const
+{
+    if (!LobbyGameStateRef || SlotIndex < 0 || SlotIndex >= LobbyGameStateRef->Slots.Num())
+    {
+        return false;
+    }
+    
+    APlayerController* PC = GetOwningPlayer();
+    if (!PC || !PC->PlayerState)
+    {
+        return false;
+    }
+    
+    return LobbyGameStateRef->Slots[SlotIndex].PlayerState == PC->PlayerState;
+}
+
+TArray<UButton*>* USlotStructure::GetActiveButtonArray()
+{
+    switch (CurrentTeamMode)
+    {
+        case ETeamSetup::FreeForAll: return &FFAButtons;
+        case ETeamSetup::TwoTeams:   return &TwoTeamsButtons;
+        case ETeamSetup::FourTeams:  return &FourTeamsButtons;
+        default:                     return &FFAButtons;
+    }
+}
+
+bool USlotStructure::IsSlotEmpty(int32 SlotIndex) const
+{
+    if (!LobbyGameStateRef || SlotIndex < 0 || SlotIndex >= LobbyGameStateRef->Slots.Num())
+    {
+        return false;
+    }
+    
+    return !LobbyGameStateRef->Slots[SlotIndex].PlayerState && !LobbyGameStateRef->Slots[SlotIndex].bIsAI;
+}
+
+bool USlotStructure::IsSlotAI(int32 SlotIndex) const
+{
+    if (!LobbyGameStateRef || SlotIndex < 0 || SlotIndex >= LobbyGameStateRef->Slots.Num())
+    {
+        return false;
+    }
+    
+    return LobbyGameStateRef->Slots[SlotIndex].bIsAI;
+}
+
+bool USlotStructure::IsSlotPlayer(int32 SlotIndex) const
+{
+    if (!LobbyGameStateRef || SlotIndex < 0 || SlotIndex >= LobbyGameStateRef->Slots.Num())
+    {
+        return false;
+    }
+    
+    return LobbyGameStateRef->Slots[SlotIndex].PlayerState != nullptr && !LobbyGameStateRef->Slots[SlotIndex].bIsAI;
+}
+
+// 버튼에 해당하는 슬롯 인덱스를 찾는 함수 추가
+int32 USlotStructure::GetSlotIndexForButton(UButton* Button) const
+{
+    if (!Button) return -1;
+    
+    const int32* FoundIndex = ButtonToSlotMap.Find(Button);
+    if (FoundIndex)
+    {
+        return *FoundIndex;
+    }
+    
+    return -1;
+}
+
+// 호스트 전용 버튼 바인딩 함수
+void USlotStructure::BindHostButtonEvents()
+{
+    // 먼저 버튼의 가시성 설정 (호스트만 볼 수 있음)
+    bool bIsHost = IsLocalPlayerHost();
+    
+    // 맵 초기화
+    ButtonToSlotMap.Empty();
+    LastClickedButton = nullptr;
+    
+    // AddAIButtons와 KickButtons 배열 초기화 (최대 8개 * 3그리드 = 24개)
+    const int32 MaxSlotsPerGrid = 8;
+    const int32 TotalMaxSlots = MaxSlotsPerGrid * 3;
+    
+    if (AddAIButtons.Num() < TotalMaxSlots)
+    {
+        AddAIButtons.SetNum(TotalMaxSlots);
+    }
+    
+    if (KickButtons.Num() < TotalMaxSlots)
+    {
+        KickButtons.SetNum(TotalMaxSlots);
+    }
+    
+    // 그리드 별 버튼 바인딩 (3개 그리드, 각 8개씩)
+    // 버튼 이름 규칙: 
+    // - 첫 번째 그리드(FFA): AddAI_11 ~ AddAI_18, Kick_11 ~ Kick_18
+    // - 두 번째 그리드(TwoTeams): AddAI_21 ~ AddAI_28, Kick_21 ~ Kick_28
+    // - 세 번째 그리드(FourTeams): AddAI_31 ~ AddAI_38, Kick_31 ~ Kick_38
+    
+    for (int32 gridIndex = 0; gridIndex < 3; ++gridIndex)
+    {
+        int32 gridPrefix = gridIndex + 1; // 1, 2, 3
+        
+        for (int32 slotIndex = 0; slotIndex < MaxSlotsPerGrid; ++slotIndex)
+        {
+            // 0~7을 1~8로 변환
+            int32 buttonNumber = slotIndex + 1;
+            
+            // 버튼 이름 생성 (예: "AddAI_11", "AddAI_21", "AddAI_31" 등)
+            FString addAIButtonName = FString::Printf(TEXT("AddAI_%d%d"), gridPrefix, buttonNumber);
+            FString kickButtonName = FString::Printf(TEXT("Kick_%d%d"), gridPrefix, buttonNumber);
+            
+            // 배열 인덱스 계산 (0~23)
+            int32 arrayIndex = gridIndex * MaxSlotsPerGrid + slotIndex;
+            
+            // AI 추가 버튼 찾기
+            UButton* addAIButton = Cast<UButton>(GetWidgetFromName(FName(*addAIButtonName)));
+            if (addAIButton)
+            {
+                // 버튼 가시성 설정
+                addAIButton->SetVisibility(bIsHost ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+                
+                // 기존 바인딩 제거
+                addAIButton->OnClicked.Clear();
+                
+                // 버튼과 슬롯 인덱스 매핑 (각 그리드 내에서의 슬롯 인덱스 0~7만 저장)
+                ButtonToSlotMap.Add(addAIButton, slotIndex);
+                AddAIButtons[arrayIndex] = addAIButton;
+                
+                // 버튼 클릭 이벤트 바인딩
+                addAIButton->OnClicked.AddDynamic(this, &USlotStructure::OnAddAIButtonClicked);
+            }
+            
+            // 추방 버튼 찾기
+            UButton* kickButton = Cast<UButton>(GetWidgetFromName(FName(*kickButtonName)));
+            if (kickButton)
+            {
+                // 버튼 가시성 설정
+                kickButton->SetVisibility(bIsHost ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+                
+                // 기존 바인딩 제거
+                kickButton->OnClicked.Clear();
+                
+                // 버튼과 슬롯 인덱스 매핑 (각 그리드 내에서의 슬롯 인덱스 0~7만 저장)
+                ButtonToSlotMap.Add(kickButton, slotIndex);
+                KickButtons[arrayIndex] = kickButton;
+                
+                // 버튼 클릭 이벤트 바인딩
+                kickButton->OnClicked.AddDynamic(this, &USlotStructure::OnKickButtonClicked);
+            }
+        }
+    }
+}
+
+// AI 추가 버튼 클릭 이벤트 핸들러
+void USlotStructure::OnAddAIButtonClicked()
+{
+    // 호스트인지 확인
+    if (!IsLocalPlayerHost())
+    {
+        return;
+    }
+    
+    // 클릭된 버튼 찾기
+    UButton* ClickedButton = nullptr;
+    
+    // 현재 활성화된 그리드 인덱스에 해당하는 버튼들만 검사
+    int32 activeGridIndex = 0;
+    switch (CurrentTeamMode)
+    {
+        case ETeamSetup::FreeForAll: activeGridIndex = 0; break;
+        case ETeamSetup::TwoTeams:   activeGridIndex = 1; break;
+        case ETeamSetup::FourTeams:  activeGridIndex = 2; break;
+        default:                     activeGridIndex = 0; break;
+    }
+    
+    const int32 MaxSlotsPerGrid = 8;
+    int32 startIndex = activeGridIndex * MaxSlotsPerGrid;
+    int32 endIndex = startIndex + MaxSlotsPerGrid;
+    
+    // 해당 그리드의 버튼들만 검사
+    for (int32 i = startIndex; i < endIndex && i < AddAIButtons.Num(); ++i)
+    {
+        UButton* Button = AddAIButtons[i];
+        if (Button && (Button->HasUserFocus(GetOwningPlayer()) || Button->IsHovered()))
+        {
+            ClickedButton = Button;
+            break;
+        }
+    }
+    
+    if (!ClickedButton)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnAddAIButtonClicked: Couldn't determine which button was clicked"));
+        return;
+    }
+    
+    // 버튼에 매핑된 슬롯 인덱스 찾기
+    int32 SlotIndex = GetSlotIndexForButton(ClickedButton);
+    if (SlotIndex == -1)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnAddAIButtonClicked: Invalid slot index"));
+        return;
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("OnAddAIButtonClicked: Slot %d"), SlotIndex);
+    
+    // 슬롯이 비어있는지 확인
+    if (IsSlotEmpty(SlotIndex))
+    {
+        AddAIToSlot(SlotIndex);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnAddAIButtonClicked: Slot %d is not empty"), SlotIndex);
+    }
+}
+
+// 추방 버튼 클릭 이벤트 핸들러
+void USlotStructure::OnKickButtonClicked()
+{
+    // 호스트인지 확인
+    if (!IsLocalPlayerHost())
+    {
+        return;
+    }
+    
+    // 클릭된 버튼 찾기
+    UButton* ClickedButton = nullptr;
+    
+    // 현재 활성화된 그리드 인덱스에 해당하는 버튼들만 검사
+    int32 activeGridIndex = 0;
+    switch (CurrentTeamMode)
+    {
+        case ETeamSetup::FreeForAll: activeGridIndex = 0; break;
+        case ETeamSetup::TwoTeams:   activeGridIndex = 1; break;
+        case ETeamSetup::FourTeams:  activeGridIndex = 2; break;
+        default:                     activeGridIndex = 0; break;
+    }
+    
+    const int32 MaxSlotsPerGrid = 8;
+    int32 startIndex = activeGridIndex * MaxSlotsPerGrid;
+    int32 endIndex = startIndex + MaxSlotsPerGrid;
+    
+    // 해당 그리드의 버튼들만 검사
+    for (int32 i = startIndex; i < endIndex && i < KickButtons.Num(); ++i)
+    {
+        UButton* Button = KickButtons[i];
+        if (Button && (Button->HasUserFocus(GetOwningPlayer()) || Button->IsHovered()))
+        {
+            ClickedButton = Button;
+            break;
+        }
+    }
+    
+    if (!ClickedButton)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnKickButtonClicked: Couldn't determine which button was clicked"));
+        return;
+    }
+    
+    // 버튼에 매핑된 슬롯 인덱스 찾기
+    int32 SlotIndex = GetSlotIndexForButton(ClickedButton);
+    if (SlotIndex == -1)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnKickButtonClicked: Invalid slot index"));
+        return;
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("OnKickButtonClicked: Slot %d"), SlotIndex);
+    
+    // 자신의 슬롯인지 확인
+    if (IsHostSlot(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnKickButtonClicked: Cannot kick yourself"));
+        return;
+    }
+    
+    // 슬롯이 비어있는지 확인
+    if (IsSlotEmpty(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnKickButtonClicked: Slot %d is empty"), SlotIndex);
+        return;
+    }
+    
+    // AI인 경우 제거, 플레이어인 경우 추방
+    if (IsSlotAI(SlotIndex))
+    {
+        RemoveAIFromSlot(SlotIndex);
+    }
+    else if (IsSlotPlayer(SlotIndex))
+    {
+        KickPlayerFromSlot(SlotIndex);
+    }
+}
+
+void USlotStructure::RemoveAIFromSlot(int32 SlotIndex)
+{
+    if (!IsLocalPlayerHost()) return;
+    
+    UE_LOG(LogTemp, Log, TEXT("Removing AI from slot %d"), SlotIndex);
+    
+    // AI가 있는지 확인
+    if (!IsSlotAI(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("RemoveAIFromSlot: No AI in slot %d"), SlotIndex);
+        return;
+    }
+    
+    // LobbyPlayerController로 캐스팅
+    ALobbyPlayerController* LobbyPC = Cast<ALobbyPlayerController>(GetOwningPlayer());
+    if (!LobbyPC)
+    {
+        UE_LOG(LogTemp, Error, TEXT("RemoveAIFromSlot: Failed to cast to LobbyPlayerController"));
+        return;
+    }
+    
+    // 컨트롤러에 요청 전달
+    LobbyPC->RemoveAIFromSlot(SlotIndex);
+}
+
+void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
+{
+    if (!IsLocalPlayerHost()) return;
+    
+    UE_LOG(LogTemp, Log, TEXT("Kicking player from slot %d"), SlotIndex);
+    
+    // 플레이어가 있는지 확인
+    if (!IsSlotPlayer(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("KickPlayerFromSlot: No player in slot %d"), SlotIndex);
+        return;
+    }
+    
+    // 자기 자신은 추방 불가
+    if (IsHostSlot(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("KickPlayerFromSlot: Cannot kick yourself"));
+        return;
+    }
+    
+    // LobbyPlayerController로 캐스팅
+    ALobbyPlayerController* LobbyPC = Cast<ALobbyPlayerController>(GetOwningPlayer());
+    if (!LobbyPC)
+    {
+        UE_LOG(LogTemp, Error, TEXT("KickPlayerFromSlot: Failed to cast to LobbyPlayerController"));
+        return;
+    }
+    
+    // 컨트롤러에 요청 전달
+    LobbyPC->KickPlayerFromSlot(SlotIndex);
 }
