@@ -68,6 +68,12 @@ public:
 	UPROPERTY()
 	UUserWidget* BurnWidgetInstance;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> FlashWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* FlashWidgetInstance;
+
 	void InitAbilityActorInfo();
 
 	UFUNCTION(BlueprintCallable)

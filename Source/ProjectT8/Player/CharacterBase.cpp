@@ -169,6 +169,7 @@ void ACharacterBase::BeginPlay()
 		FGameplayTag::RequestGameplayTag("State.Poisoned"),
 		FGameplayTag::RequestGameplayTag("State.Burning"),
 		FGameplayTag::RequestGameplayTag("State.Shocked"),
+		FGameplayTag::RequestGameplayTag("State.Blinded"),
 	};
 
 	RegisterStatusEffectDelegates();
@@ -247,6 +248,20 @@ void ACharacterBase::ShowStatusWidget(const FGameplayTag& Tag)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("쇽 쇽 쇽!!!"));
 	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Blinded")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("플래시 플래시!!!"));
+		if (!FlashWidgetInstance && FlashWidgetClass)
+		{
+			FlashWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), FlashWidgetClass);
+			if (FlashWidgetInstance)
+			{
+				FlashWidgetInstance->AddToViewport();
+				UE_LOG(LogTemp, Warning, TEXT("플래시 위젯 생성"));
+			}
+		}
+	}
 }
 
 void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
@@ -260,6 +275,16 @@ void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
 			BurnWidgetInstance->RemoveFromParent();
 			BurnWidgetInstance = nullptr;
 			UE_LOG(LogTemp, Warning, TEXT("불 위젯 제거"));
+		}
+	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Blinded")))
+	{
+		if (FlashWidgetInstance)
+		{
+			FlashWidgetInstance->RemoveFromParent();
+			FlashWidgetInstance = nullptr;
+			UE_LOG(LogTemp, Warning, TEXT("플래시 위젯 제거"));
 		}
 	}
 }
