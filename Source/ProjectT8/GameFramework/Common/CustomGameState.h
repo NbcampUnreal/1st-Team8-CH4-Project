@@ -13,8 +13,10 @@ class PROJECTT8_API ACustomGameState : public AGameState
 	GENERATED_BODY()
 	
 public:
+    virtual void BeginPlay() override;
+
     UPROPERTY(BlueprintReadOnly)
-    EGamePhase CurPhase;
+    EGamePhase CurPhase = EGamePhase::None;
 
     UFUNCTION(BlueprintCallable)
     void SetGamePhase(EGamePhase _NewPhase);

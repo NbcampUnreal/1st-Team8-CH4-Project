@@ -4,10 +4,14 @@
 #include "Animation/AnimInstance.h"
 #include "AI/T8AICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Player/Component/CombatComponent.h"
 
 UT8BTTask_Attack::UT8BTTask_Attack()
 {
-	NodeName = TEXT("Attack");
+	{
+		NodeName = TEXT("Attack Target");
+		bNotifyTick = false;
+	}
 }
 
 EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* Nodememory)
@@ -15,40 +19,34 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	AAIController* AICon = OwnerComp.GetAIOwner();
 	if (!AICon) return EBTNodeResult::Failed;
 
-	ACharacter* AIPawn = Cast<ACharacter>(AICon->GetPawn());
-	if (!AIPawn) return EBTNodeResult::Failed;
+	AT8AICharacter* AIChar = Cast<AT8AICharacter>(AICon->GetPawn());
+	if (!AIChar || !AIChar->GetCombatComponent()) return EBTNodeResult::Failed;
 
+	AActor* TargetActor = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(TargetKey.SelectedKeyName));
+	if (!TargetActor) return EBTNodeResult::Failed;
 
-	UAnimInstance* AnimInstance = AIPawn->GetMesh()->GetAnimInstance();
-	AT8AICharacter* T8Char = Cast<AT8AICharacter>(AIPawn);
-
-	if (T8Char && T8Char->AttackMontage && AnimInstance)
+	if (!AIChar->bCanAttack)
 	{
-		if (!T8Char->bCanAttack)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Attack on cooldown."));
-			return EBTNodeResult::Failed;
-		}
-
-		T8Char->bCanAttack = false;
-		T8Char->bIsAttacking = true;
-
-		AICon->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttacking"), true);
-
-		AnimInstance->Montage_Play(T8Char->AttackMontage);
-		UE_LOG(LogTemp, Warning, TEXT("AI is attacking."));
-
-		T8Char->GetWorldTimerManager().SetTimer(
-			T8Char->AttackCooldownTimer,
-			T8Char,
-			&AT8AICharacter::ResetCanAttack,
-			T8Char->AttackCooldown,
-			false
-		);
+		return EBTNodeResult::Failed;
 	}
-	else
+
+	AIChar->Attack();
+
+	AIChar->bCanAttack = false;
+	AIChar->bIsAttacking = true;
+
+	AIChar->GetWorldTimerManager().SetTimer(
+		AIChar->AttackCooldownTimer,
+		AIChar,
+		&AT8AICharacter::ResetCanAttack,
+		AIChar->AttackCooldown,
+		false
+	);
+
+	// Blackboard에도 IsAttacking 설정 가능
+	if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AI tried to attack."));
+		BB->SetValueAsBool(TEXT("IsAttacking"), true);
 	}
 
 	return EBTNodeResult::Succeeded;
