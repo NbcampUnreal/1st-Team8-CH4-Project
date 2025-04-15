@@ -4,18 +4,18 @@
 
 void UScreenBaseWidget::OnScreenActivated_Implementation()
 {
-    if (FadeInAnim)
+    if (Anim_FadeIn_Screen)
     {
-        PlayAnimation(FadeInAnim);
+        PlayAnimation(Anim_FadeIn_Screen);
     }
 }
 
 void UScreenBaseWidget::OnScreenDeactivated_Implementation()
 {
-    if (FadeOutAnim)
+    if (Anim_FadeOut_Screen)
     {
-        BindToAnimationFinished(FadeOutAnim, FadeOutFinishedDelegate);
-        PlayAnimation(FadeOutAnim);
+        BindToAnimationFinished(Anim_FadeOut_Screen, FadeOutFinishedDelegate);
+        PlayAnimation(Anim_FadeOut_Screen);
     }
     else
     {
@@ -25,9 +25,9 @@ void UScreenBaseWidget::OnScreenDeactivated_Implementation()
 
 void UScreenBaseWidget::BindFadeOutFinished()
 {
-    if (FadeOutAnim)
+    if (Anim_FadeOut_Screen)
     {
-        BindToAnimationFinished(FadeOutAnim, FadeOutFinishedDelegate);
+        BindToAnimationFinished(Anim_FadeOut_Screen, FadeOutFinishedDelegate);
     }
 }
 

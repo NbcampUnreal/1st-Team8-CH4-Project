@@ -29,8 +29,8 @@ public:
 
 protected:
     UPROPERTY(meta = (BindWidgetAnim), Transient)
-    UWidgetAnimation* FadeInAnim;
+    UWidgetAnimation* Anim_FadeIn_Screen;
 
     UPROPERTY(meta = (BindWidgetAnim), Transient)
-    UWidgetAnimation* FadeOutAnim;
+    UWidgetAnimation* Anim_FadeOut_Screen;
 };
