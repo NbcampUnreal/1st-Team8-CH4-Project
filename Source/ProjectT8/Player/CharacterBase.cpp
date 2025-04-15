@@ -17,6 +17,7 @@
 #include "GAS/CharacterAttributeSet.h"
 #include "Component/ItemComponent.h"
 #include "Player/Customize/CharacterAppearanceSubsystem.h"
+#include "Item/Weapon.h"
 
 
 // Constructor
@@ -328,6 +329,35 @@ void ACharacterBase::Attack()
 	}
 }
 
+void ACharacterBase::PlayWeaponIdleAnimation()
+{
+	if (!ItemComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ItemComponent가 없습니다."));
+		return;
+	}
+
+	if (AWeapon* CurrentWeapon = Cast<AWeapon>(ItemComponent->GetEquippedItem()))
+	{
+		if (UAnimMontage* IdleMontage = CurrentWeapon->IdleMontage)
+		{
+			if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+			{
+				AnimInstance->Montage_Play(IdleMontage);
+				UE_LOG(LogTemp, Warning, TEXT("무기 Idle 몽타주 재생: %s"), *IdleMontage->GetName());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("무기에 Idle 몽타주가 설정되지 않았습니다."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("장착된 무기가 없습니다."));
+	}
+}
+
 void ACharacterBase::UseItem()
 {
 	if (ItemComponent)
@@ -399,5 +429,19 @@ void ACharacterBase::PossessedBy(AController* NewController)
 	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
 	{
 		ApplyApperance(PS->ApperanceData);
+	}
+}
+
+void ACharacterBase::OnWeaponEquipped()
+{
+	PlayWeaponIdleAnimation();
+}
+
+void ACharacterBase::OnWeaponUnequipped()
+{
+	// 현재 재생 중인 무기 Idle 몽타주를 중지하고 기본 Idle 애니메이션으로 돌아가기
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->StopAllMontages(0.25f);
 	}
 }

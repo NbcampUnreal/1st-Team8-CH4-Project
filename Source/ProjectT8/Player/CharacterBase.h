@@ -85,6 +85,13 @@ public:
 
 	UFUNCTION()
 	void ApplyApperance(const FCharacterAppearanceData& Data);
+
+	UFUNCTION()
+	virtual void OnWeaponEquipped();
+
+	UFUNCTION()
+	virtual void OnWeaponUnequipped();
+
 protected:
 	// Input
 	virtual void BeginPlay() override;
@@ -137,6 +144,9 @@ protected:
 	USkeletalMeshComponent* BottomMesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
 	USkeletalMeshComponent* ShoesMesh;
+
+	void PlayWeaponIdleAnimation();
+
 private:
 	bool bIsRunning = false;
 
