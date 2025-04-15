@@ -6,7 +6,6 @@
 #include "Components/HorizontalBox.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
-#include "Components/Button.h"
 #include "UserSlot.generated.h"
 
 class APlayerState;
@@ -30,13 +29,6 @@ protected:
     
     UPROPERTY(meta = (BindWidget))
     UTextBlock* CharacterName;
-    
-    UPROPERTY(meta = (BindWidget))
-    UButton* KickButton;
-
-    // Called when the kick button is clicked
-    UFUNCTION()
-    void OnKickButtonClicked();
 
 public:
     // Set up the slot with all needed information
@@ -51,9 +43,6 @@ public:
     
     UFUNCTION(BlueprintCallable, Category = "UI")
     void SetCharacterImage(UMaterialInterface* NewMaterial);
-    
-    UFUNCTION(BlueprintCallable, Category = "UI")
-    void ShowKickButton(bool bShow);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     UMaterialInterface* CharacterRenderTargetToMaterial;
