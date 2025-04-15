@@ -16,6 +16,7 @@ class UCharacterAttributeSet;
 class UGameplayEffect;
 class UItemComponent;
 struct FInputActionValue;
+struct FCharacterAppearanceData;
 
 UCLASS()
 class ACharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -81,11 +82,15 @@ public:
 	// Combat
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;
+
+	UFUNCTION()
+	void ApplyApperance(const FCharacterAppearanceData& Data);
 protected:
 	// Input
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PossessedBy(AController* NewController) override;
 
 	void Move(const FInputActionValue& Value);
 	void SprintStart();
@@ -120,8 +125,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	UCameraComponent* FollowCamera;
 
-	
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* HeadMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* AccessoryMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* GlovesMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* TopMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* BottomMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
+	USkeletalMeshComponent* ShoesMesh;
 private:
 	bool bIsRunning = false;
 

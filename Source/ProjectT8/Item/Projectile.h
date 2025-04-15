@@ -1,9 +1,11 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Player/EffectComponent.h"
-#include "Player/CharacterBase.h"
 #include "Projectile.generated.h"
+
+class USphereComponent;
+class UStaticMeshComponent;
+class UProjectileMovementComponent;
 
 UCLASS()
 class PROJECTT8_API AProjectile : public AActor
@@ -14,23 +16,24 @@ public:
 	AProjectile();
 
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void ApplyEffect(class ACharacterBase* Target);
 
 protected:
-    UPROPERTY(VisibleAnywhere)
-    class UStaticMeshComponent* ProjectileMesh;
+    UPROPERTY(VisibleAnywhere, Category = "Components")
+    UStaticMeshComponent* ProjectileMesh;
 
-    UPROPERTY(VisibleAnywhere)
-    class USphereComponent* CollisionSphere;
+    UPROPERTY(VisibleAnywhere, Category = "Components")
+    USphereComponent* CollisionComp;
+
+    UPROPERTY(VisibleAnywhere, Category = "Components")
+    UProjectileMovementComponent* MovementComp;
 
     UPROPERTY(EditAnywhere)
     float LifeSpan = 2.0f;
 
     UPROPERTY(EditAnywhere)
-    float MoveSpeed = 1000.0f;
+    float Speed = 1000.0f;
 
     UFUNCTION()
-    void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+    virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 };

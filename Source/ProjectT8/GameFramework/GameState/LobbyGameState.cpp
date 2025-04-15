@@ -95,12 +95,31 @@ void ALobbyGameState::RemoveSlotOccupant(int32 SlotIndex)
 
 void ALobbyGameState::MovePlayerToSlot(APlayerState* Player, int32 NewSlotIndex)
 {
-    if (!HasAuthority() || Player == nullptr) return;
-    if (NewSlotIndex < 0 || NewSlotIndex >= Slots.Num()) return;
+    UE_LOG(LogTemp, Log, TEXT("MovePlayerToSlot: Player %s to slot %d"), 
+        Player ? *Player->GetPlayerName() : TEXT("NULL"), NewSlotIndex);
+    
+    if (!HasAuthority())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("MovePlayerToSlot: Must be called on server"));
+        return;
+    }
+    
+    if (Player == nullptr)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("MovePlayerToSlot: Player is NULL"));
+        return;
+    }
+    
+    if (NewSlotIndex < 0 || NewSlotIndex >= Slots.Num())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("MovePlayerToSlot: Invalid slot index %d"), NewSlotIndex);
+        return;
+    }
 
     // 대상 슬롯에 이미 플레이어나 AI가 있으면 실패
     if (Slots[NewSlotIndex].PlayerState != nullptr || Slots[NewSlotIndex].bIsAI)
     {
+        UE_LOG(LogTemp, Warning, TEXT("MovePlayerToSlot: Slot %d is already occupied"), NewSlotIndex);
         return;
     }
 
@@ -114,11 +133,29 @@ void ALobbyGameState::MovePlayerToSlot(APlayerState* Player, int32 NewSlotIndex)
             break;
         }
     }
-    if (CurrentIndex == INDEX_NONE || CurrentIndex == NewSlotIndex)
+    
+    // 현재 슬롯이 없거나 이미 목표 슬롯에 있으면 처리 중단
+    if (CurrentIndex == NewSlotIndex)
     {
+        UE_LOG(LogTemp, Warning, TEXT("MovePlayerToSlot: Player already in slot %d"), NewSlotIndex);
+        return;
+    }
+    
+    // 현재 슬롯이 없는 경우 (새 플레이어)
+    if (CurrentIndex == INDEX_NONE)
+    {
+        UE_LOG(LogTemp, Log, TEXT("MovePlayerToSlot: New player being assigned to slot %d"), NewSlotIndex);
+        // 새로운 슬롯에 플레이어 할당
+        Slots[NewSlotIndex].PlayerState = Player;
+        Slots[NewSlotIndex].bIsAI = false;
+        Slots[NewSlotIndex].DisplayName = Player->GetPlayerName();
+        OnSlotsUpdated.Broadcast();
         return;
     }
 
+    // 슬롯 이동 처리
+    UE_LOG(LogTemp, Log, TEXT("MovePlayerToSlot: Moving player from slot %d to %d"), CurrentIndex, NewSlotIndex);
+    
     // 이전 슬롯 초기화
     Slots[CurrentIndex].PlayerState = nullptr;
     Slots[CurrentIndex].bIsAI = false;
@@ -129,6 +166,7 @@ void ALobbyGameState::MovePlayerToSlot(APlayerState* Player, int32 NewSlotIndex)
     Slots[NewSlotIndex].bIsAI = false;
     Slots[NewSlotIndex].DisplayName = Player->GetPlayerName();
 
+    // 단 한 번만 브로드캐스트
     OnSlotsUpdated.Broadcast();
 }
 
@@ -137,8 +175,17 @@ void ALobbyGameState::SetTeamSetup(ETeamSetup NewSetup)
     if (!HasAuthority()) return;
     if (TeamSetup == NewSetup) return;
 
+    UE_LOG(LogTemp, Log, TEXT("LobbyGameState: Changing team setup from %d to %d"), (int32)TeamSetup, (int32)NewSetup);
+
+    // 팀 모드 변경
+    ETeamSetup OldSetup = TeamSetup;
     TeamSetup = NewSetup;
+    
+    // 변경사항 브로드캐스트
     OnTeamModeChanged.Broadcast();
+    
+    // 주의: 슬롯 재배치는 SlotStructure 클래스에서 처리
+    // 이 브로드캐스트를 통해 SlotStructure::UpdateTeamMode가 호출됨
 }
 
 void ALobbyGameState::CycleMapChoice()

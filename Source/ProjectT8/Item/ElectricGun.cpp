@@ -3,5 +3,9 @@
 AElectricGun::AElectricGun()
 {
     ItemName = "ElectricGun";
-    ProjectileClass = AElectricProjectile::StaticClass();
+    static ConstructorHelpers::FClassFinder<AProjectile> ProjectileBPClass(TEXT("/Game/Blueprints/Item/BP_ElectricProjectile"));
+    if (ProjectileBPClass.Succeeded())
+    {
+        ProjectileClass = ProjectileBPClass.Class;
+    }    
 }

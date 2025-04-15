@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/Common/T8PlayerState.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -15,6 +16,7 @@
 #include "Component/CombatComponent.h"
 #include "GAS/CharacterAttributeSet.h"
 #include "Component/ItemComponent.h"
+#include "Player/Customize/CharacterAppearanceSubsystem.h"
 
 
 // Constructor
@@ -56,6 +58,30 @@ ACharacterBase::ACharacterBase()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	bIsRunning = false;
+
+	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HeadMesh"));
+	HeadMesh->SetupAttachment(GetMesh());
+	HeadMesh->SetLeaderPoseComponent(GetMesh());
+
+	AccessoryMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("AccessoryMesh"));
+	AccessoryMesh->SetupAttachment(GetMesh());
+	AccessoryMesh->SetLeaderPoseComponent(GetMesh());
+
+	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
+	GlovesMesh->SetupAttachment(GetMesh());
+	GlovesMesh->SetLeaderPoseComponent(GetMesh());
+
+	TopMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("TopMesh"));
+	TopMesh->SetupAttachment(GetMesh());
+	TopMesh->SetLeaderPoseComponent(GetMesh());
+
+	BottomMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BottomMesh"));
+	BottomMesh->SetupAttachment(GetMesh());
+	BottomMesh->SetLeaderPoseComponent(GetMesh());
+
+	ShoesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShoesMesh"));
+	ShoesMesh->SetupAttachment(GetMesh());
+	ShoesMesh->SetLeaderPoseComponent(GetMesh());
 }
 
 // GAS
@@ -80,6 +106,60 @@ void ACharacterBase::InitAbilityActorInfo()
 	}
 }
 
+void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
+{
+	UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+	if (!ApperanceSybsystem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ApperanceSubsystem is null!"));
+		return;
+	}
+
+	// 각 부위별로 메시 적용 시도
+	if (USkeletalMesh* HeadSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.HeadID))
+	{
+		if (HeadMesh)
+		{
+			HeadMesh->SetSkeletalMesh(HeadSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* AccessorySkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.AccessoryID))
+	{
+		if (AccessoryMesh)
+		{
+			AccessoryMesh->SetSkeletalMesh(AccessorySkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* GlovesSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.GlovesID))
+	{
+		if (GlovesMesh)
+		{
+			GlovesMesh->SetSkeletalMesh(GlovesSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* TopSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.TopID))
+	{
+		if (TopMesh)
+		{
+			TopMesh->SetSkeletalMesh(TopSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* BottomSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.BottomID))
+	{
+		if (BottomMesh)
+		{
+			BottomMesh->SetSkeletalMesh(BottomSkeletalMesh);
+		}
+	}
+	if (USkeletalMesh* ShoesSkeletalMesh = ApperanceSybsystem->GetCostumeMeshByID(Data.ShoesID))
+	{
+		if (ShoesMesh)
+		{
+			ShoesMesh->SetSkeletalMesh(ShoesSkeletalMesh);
+		}
+	}
+}
+
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -92,6 +172,12 @@ void ACharacterBase::BeginPlay()
 	};
 
 	RegisterStatusEffectDelegates();
+
+	// PlayerState가 있을 때만 외형 적용 시도
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		ApplyApperance(PS->ApperanceData);
+	}
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -303,4 +389,15 @@ void ACharacterBase::TryInteract()
 void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
 {
 	IInteractable::Execute_Interact(InteractableActor, this);
+}
+
+void ACharacterBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// PlayerState가 있다면 외형 적용
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		ApplyApperance(PS->ApperanceData);
+	}
 }

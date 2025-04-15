@@ -1,42 +1,39 @@
-#include "GameSettings.h"
+ï»¿#include "GameSettings.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "SlotStructure.h"
 
 void UGameSettings::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // ÇöÀç ¿ùµåÀÇ SlotStructure(GameState) °¡Á®¿À±â
     LobbyState = GetWorld()->GetGameState<ALobbyGameState>();
     if (LobbyState)
     {
-        // ÃÊ±â UI ÅØ½ºÆ® ¼³Á¤ (ÇöÀç ÆÀ ¸ðµå, ¸Ê)
-        ETeamSetup currentMode = LobbyState->TeamSetup;
-        FText ModeText;
-        switch (currentMode)
-        {
-        case ETeamSetup::FreeForAll: ModeText = FText::FromString(TEXT("Free-For-All")); break;
-        case ETeamSetup::TwoTeams:   ModeText = FText::FromString(TEXT("Two Teams"));    break;
-        case ETeamSetup::FourTeams:  ModeText = FText::FromString(TEXT("Four Teams"));   break;
-        }
-        if (TeamModeText) TeamModeText->SetText(ModeText);
-
+        // UI ì´ˆê¸°í™”
+        UpdateTeamModeUI(LobbyState->TeamSetup);
         if (MapText) MapText->SetText(FText::FromString(LobbyState->SelectedMap));
 
-        LobbyState->OnTeamModeChanged.AddDynamic(this, &UGameSettings::OnTeamModeButtonClicked);
-        LobbyState->OnSelectedMapChanged.AddDynamic(this, &UGameSettings::OnMapButtonClicked);
+        // ë¸ë¦¬ê²Œì´íŠ¸ ë°”ì¸ë”©
+        LobbyState->OnTeamModeChanged.RemoveAll(this);
+        LobbyState->OnTeamModeChanged.AddDynamic(this, &UGameSettings::OnTeamModeChanged);
+        LobbyState->OnSelectedMapChanged.AddDynamic(this, &UGameSettings::OnMapChanged);
 
-		// È£½ºÆ®¸¸ ¹öÆ° È°¼ºÈ­. ¾îÂ÷ÇÇ ÀÌ À§Á¬ ÀÚÃ¼°¡ È£½ºÆ® Àü¿ëÀÌ¹Ç·Î ¾ø¾îµµ µÇ´Â ºÎºÐ
+        // í˜¸ìŠ¤íŠ¸ë§Œ ì„¤ì • ë³€ê²½ ê°€ëŠ¥
         APlayerController* PC = GetOwningPlayer();
-        bool bIsHost = PC && (PC->GetLocalRole() == ROLE_Authority);
+        bool bIsHost = PC && PC->HasAuthority();
         if (TeamModeButton) TeamModeButton->SetIsEnabled(bIsHost);
         if (MapButton) MapButton->SetIsEnabled(bIsHost);
     }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GameSettings: LobbyState is null!"));
+    }
 
-    // ¹öÆ° Å¬¸¯ ÀÌº¥Æ® ¿¬°á
+    // ë²„íŠ¼ ì´ë²¤íŠ¸ ë°”ì¸ë”©
     if (TeamModeButton)
     {
         TeamModeButton->OnClicked.AddDynamic(this, &UGameSettings::OnTeamModeButtonClicked);
@@ -47,44 +44,85 @@ void UGameSettings::NativeConstruct()
     }
 }
 
+void UGameSettings::UpdateTeamModeUI(ETeamSetup TeamMode)
+{
+    if (!TeamModeText) return;
+    
+    FText ModeText;
+    switch (TeamMode)
+    {
+    case ETeamSetup::FreeForAll: ModeText = FText::FromString(TEXT("Free-For-All")); break;
+    case ETeamSetup::TwoTeams:  ModeText = FText::FromString(TEXT("Two Teams"));    break;
+    case ETeamSetup::FourTeams: ModeText = FText::FromString(TEXT("Four Teams"));   break;
+    }
+    
+    TeamModeText->SetText(ModeText);
+}
+
+void UGameSettings::OnTeamModeChanged()
+{
+    if (!LobbyState) return;
+    
+    // í˜„ìž¬ ì„¤ì •ëœ íŒ€ ëª¨ë“œë¡œ UI ì—…ë°ì´íŠ¸
+    UpdateTeamModeUI(LobbyState->TeamSetup);
+    
+    UE_LOG(LogTemp, Log, TEXT("Team mode changed to: %d"), (int32)LobbyState->TeamSetup);
+}
+
+void UGameSettings::OnMapChanged()
+{
+    if (!LobbyState || !MapText) return;
+    
+    MapText->SetText(FText::FromString(LobbyState->SelectedMap));
+    UE_LOG(LogTemp, Log, TEXT("Map changed to: %s"), *LobbyState->SelectedMap);
+}
+
 void UGameSettings::OnTeamModeButtonClicked()
 {
     if (!LobbyState) return;
-
+    
+    // í˜¸ìŠ¤íŠ¸ ì²´í¬
     APlayerController* PC = GetOwningPlayer();
-    bool bIsHost = PC && (PC->GetLocalRole() == ROLE_Authority);
-    if (!bIsHost)
+    bool bIsHost = PC && PC->HasAuthority();
+    if (!bIsHost) 
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Only host can change team mode!"));
         return;
-    // ÆÀ ¸ðµå ¹öÆ° Å¬¸¯ -> ´ÙÀ½ ÆÀ ¸ðµå·Î ¼øÈ¯ // ¹öÆ° ¹æ½ÄÀÌ ºÒÆíÇÑ°¡?
+    }
+
+    // ë‹¤ìŒ íŒ€ ëª¨ë“œë¡œ ìˆœí™˜
     ETeamSetup NewMode;
     switch (LobbyState->TeamSetup)
     {
     case ETeamSetup::FreeForAll: NewMode = ETeamSetup::TwoTeams; break;
-    case ETeamSetup::TwoTeams:   NewMode = ETeamSetup::FourTeams; break;
-    case ETeamSetup::FourTeams:  NewMode = ETeamSetup::FreeForAll; break;
-    default: NewMode = ETeamSetup::FreeForAll; break;
+    case ETeamSetup::TwoTeams:  NewMode = ETeamSetup::FourTeams; break;
+    case ETeamSetup::FourTeams: NewMode = ETeamSetup::FreeForAll; break;
+    default:                     NewMode = ETeamSetup::FreeForAll; break;
     }
+    
+    // ì„œë²„ì—ì„œë§Œ íŒ€ ëª¨ë“œ ë³€ê²½ ê°€ëŠ¥
     LobbyState->SetTeamSetup(NewMode);
-
-    // ·ÎÄÃ UI ÅØ½ºÆ® ¾÷µ¥ÀÌÆ®
-    FText ModeText;
-    switch (NewMode)
-    {
-    case ETeamSetup::FreeForAll: ModeText = FText::FromString(TEXT("Free-For-All")); break;
-    case ETeamSetup::TwoTeams:   ModeText = FText::FromString(TEXT("Two Teams"));    break;
-    case ETeamSetup::FourTeams:  ModeText = FText::FromString(TEXT("Four Teams"));   break;
-    }
-    if (TeamModeText)
-        TeamModeText->SetText(ModeText);
+    UE_LOG(LogTemp, Log, TEXT("Team mode set to: %d"), (int32)NewMode);
+    
+    // ì£¼ì˜: SlotStructure.UpdateTeamModeëŠ” ì§ì ‘ í˜¸ì¶œí•  í•„ìš” ì—†ìŒ
+    // LobbyGameStateì—ì„œ OnTeamModeChanged ë¸ë¦¬ê²Œì´íŠ¸ë¥¼ ë¸Œë¡œë“œìºìŠ¤íŠ¸í•˜ì—¬ 
+    // SlotStructureê°€ ìžë™ìœ¼ë¡œ ì—…ë°ì´íŠ¸ë˜ë„ë¡ í•¨
 }
 
 void UGameSettings::OnMapButtonClicked()
 {
     if (!LobbyState) return;
+    
+    // í˜¸ìŠ¤íŠ¸ ì²´í¬
     APlayerController* PC = GetOwningPlayer();
-    bool bIsHost = PC && (PC->GetLocalRole() == ROLE_Authority);
-    if (!bIsHost) return;
+    bool bIsHost = PC && PC->HasAuthority();
+    if (!bIsHost) 
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Only host can change map!"));
+        return;
+    }
 
+    // ë‹¤ìŒ ë§µìœ¼ë¡œ ìˆœí™˜
     LobbyState->CycleMapChoice();
-    if (MapText) MapText->SetText(FText::FromString(LobbyState->SelectedMap));
+    UE_LOG(LogTemp, Log, TEXT("Map cycling to: %s"), *LobbyState->SelectedMap);
 }
