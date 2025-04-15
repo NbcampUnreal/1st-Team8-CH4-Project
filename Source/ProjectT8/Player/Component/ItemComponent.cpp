@@ -39,10 +39,6 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
 		Multicast_AttachItem(NewItem);
-		if (ACharacterBase* Character = Cast<ACharacterBase>(OwnerCharacter))
-		{
-			Character->OnWeaponEquipped();
-		}
 	}
 }
 
@@ -58,11 +54,6 @@ void UItemComponent::UseEquippedItem()
 void UItemComponent::DropItemToWorld()
 {
 	if (!EquippedItem) return;
-
-	if (ACharacterBase* Character = Cast<ACharacterBase>(OwnerCharacter))
-	{
-		Character->OnWeaponUnequipped();
-	}
 
 	EquippedItem->SetOwner(nullptr);
 	EquippedItem->SetActorEnableCollision(true);

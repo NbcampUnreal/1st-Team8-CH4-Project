@@ -16,9 +16,6 @@ class PROJECTT8_API AWeapon : public ABaseItem
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, Category = "Combat")
-	UAnimMontage* IdleMontage;
-
     UPROPERTY(EditDefaultsOnly, Category = "Combat")
     UAnimMontage* AttackMontage;
 protected:
@@ -27,6 +24,5 @@ protected:
 
 public:
     AWeapon();
-
     virtual void Use(class ACharacterBase* Player) override;
 };
