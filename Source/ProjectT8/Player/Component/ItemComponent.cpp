@@ -1,9 +1,10 @@
 ﻿#include "ItemComponent.h"
-#include "Player/CharacterBase.h"
+#include "GameFramework/Character.h"
 #include "CombatComponent.h"
 #include "Item/BaseItem.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/CharacterBase.h"
 
 
 UItemComponent::UItemComponent()
@@ -12,7 +13,7 @@ UItemComponent::UItemComponent()
 	SetIsReplicatedByDefault(true);
 }
 
-void UItemComponent::Init(ACharacterBase* InOwner)
+void UItemComponent::Init(ACharacter* InOwner)
 {
 	OwnerCharacter = InOwner;
 }
@@ -29,9 +30,9 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
 
-	if (OwnerCharacter && OwnerCharacter->GetCombatComponent())
+	if (OwnerCharacter && Cast<ACharacterBase>(OwnerCharacter)->GetCombatComponent())
 	{
-		OwnerCharacter->GetCombatComponent()->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		Cast<ACharacterBase>(OwnerCharacter)->GetCombatComponent()->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
 	}
 
 	if (OwnerCharacter->HasAuthority())
@@ -45,7 +46,7 @@ void UItemComponent::UseEquippedItem()
 {
 	if (EquippedItem)
 	{
-		EquippedItem->Use(OwnerCharacter);
+		EquippedItem->Use(Cast<ACharacterBase>(OwnerCharacter));
 		UE_LOG(LogTemp, Warning, TEXT("사용한 아이템: %s"), *GetNameSafe(EquippedItem));
 	}
 }
