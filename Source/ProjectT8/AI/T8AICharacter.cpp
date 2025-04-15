@@ -92,7 +92,7 @@ void AT8AICharacter::Tick(float DeltaTime)
 	{
 		if (AT8AIController* AICon = Cast<AT8AIController>(CachedAIController))
 		{
-			AICon->RunWeaponSearchQuery();
+			//AICon->RunWeaponSearchQuery();
 		}
 	}
 }
@@ -210,13 +210,11 @@ void AT8AICharacter::InitAbilityActorInfo()
 	}
 	if (CombatComponent)
 	{
-		// TODO: 플레이어 파트와 협의되면 Init 활성화
-		//CombatComponent->Init(this);
+		CombatComponent->Init(this);
 	}
 	if (ItemComponent)
 	{
-		// TODO: 플레이어 파트와 협의되면 Init 활성화
-		//ItemComponent->Init(this);
+		ItemComponent->Init(this);
 	}
 }
 
