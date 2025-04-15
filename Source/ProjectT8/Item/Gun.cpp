@@ -23,6 +23,17 @@ void AGun::Use(ACharacterBase* Player)
     }
     if (CurrentAmmo > 0 && ProjectileClass)
     {
+        UAnimInstance* AnimInstance = Player->GetMesh()->GetAnimInstance();
+        if (!AnimInstance)
+        {
+            UE_LOG(LogTemp, Error, TEXT("AnimInstance Is Nullptr"));
+        }
+
+        if (AnimInstance && !AnimInstance->Montage_IsPlaying(GunAttackMontage))
+        {
+            AnimInstance->Montage_Play(GunAttackMontage);
+        }
+
         FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f; // ÃÑ±¸ À§Ä¡ Á¶Á¤ ù±
         FRotator SpawnRotation = GetActorRotation();
 
