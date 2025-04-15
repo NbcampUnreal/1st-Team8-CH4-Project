@@ -49,11 +49,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UItemComponent* GetItemComponent() const { return ItemComponent; }
 
-	UPROPERTY(EditDefaultsOnly, Category = "GAS")
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
-	UPROPERTY(EditDefaultsOnly, Category = "GAS")
-	TSubclassOf<UGameplayEffect> StunEffectClass;
-
 	TArray<FGameplayTag> StatusEffectTags;
 	void RegisterStatusEffectDelegates();
 	UFUNCTION()
@@ -85,6 +80,7 @@ public:
 
 	UFUNCTION()
 	void ApplyApperance(const FCharacterAppearanceData& Data);
+
 protected:
 	// Input
 	virtual void BeginPlay() override;
@@ -137,6 +133,7 @@ protected:
 	USkeletalMeshComponent* BottomMesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
 	USkeletalMeshComponent* ShoesMesh;
+
 private:
 	bool bIsRunning = false;
 

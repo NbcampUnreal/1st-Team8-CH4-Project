@@ -17,6 +17,7 @@
 #include "GAS/CharacterAttributeSet.h"
 #include "Component/ItemComponent.h"
 #include "Player/Customize/CharacterAppearanceSubsystem.h"
+#include "Item/Weapon.h"
 
 
 // Constructor
