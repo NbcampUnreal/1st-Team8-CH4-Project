@@ -1,4 +1,4 @@
-#include "UI/Widgets/ScreenBaseWidget.h"
+#include "UI/Widgets/Base/ScreenBaseWidget.h"
 
 #include "Global/Managers/UIManager.h"
 
