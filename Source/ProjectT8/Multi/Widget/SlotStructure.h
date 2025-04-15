@@ -48,7 +48,7 @@ protected:
     UFUNCTION()
     void OnAddAIButtonClicked();
     
-    // 추방 버튼 클릭 이벤트 - 매개변수 없음
+    // AI 제거 버튼 클릭 이벤트 - 매개변수 없음
     UFUNCTION()
     void OnKickButtonClicked();
     
@@ -98,7 +98,7 @@ private:
     UPROPERTY(meta = (BindWidgetOptional))
     TArray<UButton*> AddAIButtons;
     
-    /** 각 슬롯에 대응되는 추방 버튼 (호스트만 볼 수 있음) */
+    /** 각 슬롯에 대응되는 AI 제거 버튼 (호스트만 볼 수 있음) */
     UPROPERTY(meta = (BindWidgetOptional))
     TArray<UButton*> KickButtons;
     
@@ -128,10 +128,6 @@ private:
     /** AI를 제거합니다 */
     UFUNCTION(BlueprintCallable, Category = "Slot")
     void RemoveAIFromSlot(int32 SlotIndex);
-    
-    /** 플레이어를 추방합니다 */
-    UFUNCTION(BlueprintCallable, Category = "Slot")
-    void KickPlayerFromSlot(int32 SlotIndex);
     
     /** Checks if the local player is the host */
     bool IsLocalPlayerHost() const;

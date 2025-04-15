@@ -5,6 +5,10 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
+#include "OnlineSessionSettings.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 ALobbyGameState::ALobbyGameState()
 {
@@ -280,10 +284,5 @@ void ALobbyGameState::RemovePlayerFromSlot(APlayerState* LeavingPlayer)
             OnSlotsUpdated.Broadcast();
             break;
         }
-    }
-
-    if (APlayerController* PC = Cast<APlayerController>(LeavingPlayer->GetOwner()))
-    {
-        PC->ClientReturnToMainMenuWithTextReason(FText::FromString(TEXT("You have been kicked from the session.")));
     }
 }

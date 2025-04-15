@@ -516,7 +516,7 @@ void USlotStructure::RefreshSlotWidgets()
                         
                         // 추방 버튼 표시
                         kickButton->SetVisibility(ESlateVisibility::Visible);
-                        kickButton->SetToolTipText(FText::FromString(TEXT("플레이어 추방")));
+                        kickButton->SetToolTipText(FText::FromString(TEXT("AI 제거 전용")));
                     }
                     // AI 슬롯이면
                     else if (bIsAIForButton)
@@ -987,14 +987,16 @@ void USlotStructure::OnKickButtonClicked()
         return;
     }
     
-    // AI인 경우 제거, 플레이어인 경우 추방
+    // AI인 경우에만 제거, 플레이어인 경우 아무 동작도 하지 않음
     if (IsSlotAI(SlotIndex))
     {
         RemoveAIFromSlot(SlotIndex);
     }
+    // 플레이어인 경우 아무 동작도 하지 않음
     else if (IsSlotPlayer(SlotIndex))
     {
-        KickPlayerFromSlot(SlotIndex);
+        UE_LOG(LogTemp, Log, TEXT("OnKickButtonClicked: Cannot remove human player from slot %d"), SlotIndex);
+        // 아무 동작도 하지 않음
     }
 }
 
@@ -1021,36 +1023,4 @@ void USlotStructure::RemoveAIFromSlot(int32 SlotIndex)
     
     // 컨트롤러에 요청 전달
     LobbyPC->RemoveAIFromSlot(SlotIndex);
-}
-
-void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
-{
-    if (!IsLocalPlayerHost()) return;
-    
-    UE_LOG(LogTemp, Log, TEXT("Kicking player from slot %d"), SlotIndex);
-    
-    // 플레이어가 있는지 확인
-    if (!IsSlotPlayer(SlotIndex))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("KickPlayerFromSlot: No player in slot %d"), SlotIndex);
-        return;
-    }
-    
-    // 자기 자신은 추방 불가
-    if (IsHostSlot(SlotIndex))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("KickPlayerFromSlot: Cannot kick yourself"));
-        return;
-    }
-    
-    // LobbyPlayerController로 캐스팅
-    ALobbyPlayerController* LobbyPC = Cast<ALobbyPlayerController>(GetOwningPlayer());
-    if (!LobbyPC)
-    {
-        UE_LOG(LogTemp, Error, TEXT("KickPlayerFromSlot: Failed to cast to LobbyPlayerController"));
-        return;
-    }
-    
-    // 컨트롤러에 요청 전달
-    LobbyPC->KickPlayerFromSlot(SlotIndex);
 }
