@@ -10,5 +10,4 @@ class PROJECTT8_API AFlashGrenade : public AThrowable
 
 public:
     AFlashGrenade();
-    virtual void ApplyEffect(ACharacterBase* Target) override;
 };
