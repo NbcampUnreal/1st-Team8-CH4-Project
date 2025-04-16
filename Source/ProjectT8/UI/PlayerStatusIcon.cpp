@@ -5,7 +5,9 @@
 void UPlayerStatusIcon::SetStatus(bool bIsAlive, FLinearColor TeamColor, bool bIsAI)
 {
     if (Border_TeamOutline)
+    {
         Border_TeamOutline->SetBrushColor(TeamColor);
+    }
 
     if (Image_PlayerIcon)
     {
