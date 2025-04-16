@@ -10,13 +10,16 @@ struct FPlayerStatusUIData
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite)
-    int32 PlayerID;
+    FString DisplayName;
 
     UPROPERTY(BlueprintReadWrite)
     FLinearColor TeamColor;
 
     UPROPERTY(BlueprintReadWrite)
     bool bIsAlive;
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bIsAI;
 };
 
 class UPlayerStatusIcon;

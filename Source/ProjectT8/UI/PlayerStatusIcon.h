@@ -11,7 +11,7 @@ class PROJECTT8_API UPlayerStatusIcon : public UUserWidget
 	
 public:
     UFUNCTION(BlueprintCallable)
-    void SetStatus(bool bIsAlive, FLinearColor TeamColor);
+    void SetStatus(bool bIsAlive, FLinearColor TeamColor, bool bIsAI);
 
 protected:
     UPROPERTY(meta = (BindWidget))
@@ -19,4 +19,10 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     class UImage* Image_PlayerIcon;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    UTexture2D* PlayerTexture;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    UTexture2D* AITexture;
 };

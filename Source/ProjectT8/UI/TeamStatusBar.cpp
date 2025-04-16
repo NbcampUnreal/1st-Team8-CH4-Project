@@ -10,7 +10,7 @@ void UTeamStatusBar::InitPlayerIcons(const TArray<FPlayerStatusUIData>& PlayerLi
     for (const FPlayerStatusUIData& Data : PlayerList)
     {
         UPlayerStatusIcon* Icon = CreateWidget<UPlayerStatusIcon>(this, PlayerStatusIconClass);
-        Icon->SetStatus(Data.bIsAlive, Data.TeamColor);
+        Icon->SetStatus(Data.bIsAlive, Data.TeamColor, Data.bIsAI);
         HorizontalBox_Players->AddChildToHorizontalBox(Icon);
     }
 }
