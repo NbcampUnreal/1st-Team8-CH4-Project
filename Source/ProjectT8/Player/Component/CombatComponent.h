@@ -47,7 +47,7 @@ public:
 	float KnockbackStrength = 800.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
-	UAnimMontage* AttackMontage;
+	UAnimMontage* DefaultAttackMontage;
 
 private:
 	UPROPERTY()

@@ -5,8 +5,7 @@
 #include "LobbyPlayerController.generated.h"
 
 /**
- * 커스텀 PlayerController 클래스
- * 멀티플레이어 기능 및 RPC를 구현
+ * Lobby에서 플레이어 상호작용을 처리하는 PlayerController
  */
 
 class UInputMappingContext;
@@ -15,12 +14,16 @@ class UInputAction;
 UCLASS()
 class PROJECTT8_API ALobbyPlayerController : public APlayerController
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
     ALobbyPlayerController();
 
-    // 클라이언트에서 서버로 슬롯 이동 요청
+    // 클라이언트가 서버에 슬롯 이동 요청
+    UFUNCTION(BlueprintCallable, Category = "Lobby")
+    void RequestMoveToSlot(int32 SlotIndex);
+
+    // 서버 RPC: 슬롯 이동 요청 처리
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerRequestMoveToSlot(int32 SlotIndex);
     

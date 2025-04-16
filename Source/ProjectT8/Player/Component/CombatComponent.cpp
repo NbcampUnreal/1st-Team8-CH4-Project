@@ -3,6 +3,8 @@
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Player/CharacterBase.h"
+#include "Player/Component/ItemComponent.h"
+#include "Item/Weapon.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -35,12 +37,30 @@ void UCombatComponent::Server_Attack_Implementation()
 
 void UCombatComponent::Multicast_PlayAttackMontage_Implementation()
 {
-	if (!OwnerCharacter || !AttackMontage) return;
+	if (!OwnerCharacter || !DefaultAttackMontage) return;
 
 	UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (AnimInstance && !AnimInstance->Montage_IsPlaying(AttackMontage))
+	if (!AnimInstance)
 	{
-		AnimInstance->Montage_Play(AttackMontage);
+		UE_LOG(LogTemp, Error, TEXT("AnimInstance Is Nullptr"));
+	}
+
+	ABaseItem* BaseItem = Cast<ACharacterBase>(OwnerCharacter)->ItemComponent->GetEquippedItem();
+	AWeapon* Weapon = Cast<AWeapon>(BaseItem);
+
+	if (BaseItem && Weapon)
+	{
+		if (AnimInstance && !AnimInstance->Montage_IsPlaying(Weapon->AttackMontage))
+		{
+			AnimInstance->Montage_Play(Weapon->AttackMontage);
+		}
+	}
+	else 
+	{
+		if (AnimInstance && !AnimInstance->Montage_IsPlaying(DefaultAttackMontage))
+		{
+			AnimInstance->Montage_Play(DefaultAttackMontage);
+		}
 	}
 }
 

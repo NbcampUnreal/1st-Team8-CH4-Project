@@ -21,6 +21,9 @@ protected:
 
     UPROPERTY(EditAnywhere)
     TSubclassOf<class AProjectile> ProjectileClass;
+
+    UPROPERTY(EditAnywhere)
+    UAnimMontage* GunAttackMontage;
 public:
     AGun(); 
     virtual void Use(ACharacterBase* Player) override;

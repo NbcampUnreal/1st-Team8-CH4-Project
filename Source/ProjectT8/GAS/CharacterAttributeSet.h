@@ -5,6 +5,9 @@
 #include "AbilitySystemComponent.h"
 #include "CharacterAttributeSet.generated.h"
 
+// Health 변경 델리게이트 선언
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChangedDelegate, float, Health, float, MaxHealth);
+
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
 GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
@@ -18,6 +21,14 @@ class PROJECTT8_API UCharacterAttributeSet : public UAttributeSet
 	
 public:
 	UCharacterAttributeSet();
+
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// Health 변경 델리게이트
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnHealthChangedDelegate OnHealthChanged;
 
 	// 체력
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Health)
@@ -33,13 +44,10 @@ public:
 	FGameplayAttributeData Damage;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, Damage)
 
-	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 protected:
 	UFUNCTION()
-	void OnRep_Health(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_Health(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-	void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
 };
