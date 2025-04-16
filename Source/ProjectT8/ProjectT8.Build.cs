@@ -23,7 +23,10 @@ public class ProjectT8 : ModuleRules
             "Networking",
 			"GameplayAbilities",
 			"GameplayTags",
-			"GameplayTasks"
+			"GameplayTasks",
+            "AIModule",
+            "GameplayDebugger",
+			"NavigationSystem"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
