@@ -3,6 +3,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerState.h"
 #include "Engine/World.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
 
 ALobbyPlayerController::ALobbyPlayerController()
 {
@@ -83,3 +87,37 @@ void ALobbyPlayerController::AddAIToSlot(int32 SlotIndex)
         UE_LOG(LogTemp, Warning, TEXT("AddAIToSlot: LobbyGameState not found"));
     }
 } 
+
+void ALobbyPlayerController::BeginPlay()
+{
+    Super::BeginPlay();
+
+    SetInputMode(FInputModeGameAndUI());
+    bShowMouseCursor = true;
+
+    if (IsLocalController())
+    {
+        if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+        {
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+            {
+                Subsystem->AddMappingContext(LobbyMappingContext, 0);
+            }
+        }
+    }
+}
+
+void ALobbyPlayerController::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+
+    if (UEnhancedInputComponent* EInput = Cast<UEnhancedInputComponent>(InputComponent))
+    {
+        EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALobbyPlayerController::HandleNextPhaseInput);
+    }
+}
+
+void ALobbyPlayerController::HandleNextPhaseInput()
+{
+    UGameplayStatics::OpenLevel(this, FName("LoadingMap"));
+}

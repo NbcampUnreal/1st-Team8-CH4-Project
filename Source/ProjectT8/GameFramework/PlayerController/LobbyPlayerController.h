@@ -8,6 +8,10 @@
  * 커스텀 PlayerController 클래스
  * 멀티플레이어 기능 및 RPC를 구현
  */
+
+class UInputMappingContext;
+class UInputAction;
+
 UCLASS()
 class PROJECTT8_API ALobbyPlayerController : public APlayerController
 {
@@ -26,4 +30,19 @@ public:
     
     UFUNCTION(BlueprintCallable, Category = "Lobby")
     void AddAIToSlot(int32 SlotIndex);
+
+protected:
+    virtual void BeginPlay() override;
+    virtual void SetupInputComponent() override;
+
+    // Input Mapping Context
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    UInputMappingContext* LobbyMappingContext;
+
+    // Input Actions
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    UInputAction* NextPhaseAction;
+
+private:
+    void HandleNextPhaseInput();
 }; 

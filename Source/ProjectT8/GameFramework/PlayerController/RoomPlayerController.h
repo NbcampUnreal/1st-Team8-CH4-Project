@@ -22,7 +22,7 @@ protected:
 
     // Input Actions
     UPROPERTY(EditDefaultsOnly, Category = "Input")
-    UInputAction* NextPhaseAction;
+    UInputAction* RoomNextPhaseAction;
 
 private:
     void HandleNextPhaseInput();

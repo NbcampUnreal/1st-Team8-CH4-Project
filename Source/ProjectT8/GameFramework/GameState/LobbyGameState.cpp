@@ -27,6 +27,8 @@ void ALobbyGameState::BeginPlay()
 {
     Super::BeginPlay();
 
+    SetGamePhase(EGamePhase::Lobby);
+
     // 서버만 초기 설정
     if (HasAuthority())
     {
