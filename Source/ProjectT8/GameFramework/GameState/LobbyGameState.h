@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Common/CustomGameState.h"
+#include "GameFramework/GameState.h"
 #include "LobbyGameState.generated.h"
 
 class UUserWidget;
@@ -10,9 +11,9 @@ class APlayerState;
 UENUM(BlueprintType)
 enum class ETeamSetup : uint8
 {
-    FreeForAll UMETA(DisplayName = "Free-For-All"),
-    TwoTeams   UMETA(DisplayName = "Two Teams"),
-    FourTeams  UMETA(DisplayName = "Four Teams")
+    FreeForAll = 0 UMETA(DisplayName = "Free For All"),
+    TwoTeams = 1   UMETA(DisplayName = "Two Teams"),
+    FourTeams = 2  UMETA(DisplayName = "Four Teams")
 };
 
 USTRUCT(BlueprintType)

@@ -7,6 +7,7 @@
 UENUM(BlueprintType)
 enum class EGamePhase : uint8
 {
+	None    UMETA(DisplayName = "None"),	// Initial Phase
 	Title	UMETA(DisplayName = "Title"),
 	Room	UMETA(DisplayName = "Room"),
 	Lobby	UMETA(DisplayName = "Lobby"),
