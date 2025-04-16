@@ -427,11 +427,11 @@ void ACharacterBase::InitializeFloatingStatusWidget()
 		{
 			StatusWidget->SetOwnerCharacter(this);
 			
-			// 플레이어 이름 설정
-			if (APlayerState* PS = GetPlayerState())
-			{
-				StatusWidget->SetPlayerName(PS->GetPlayerName());
-			}
+			//// 플레이어 이름 설정
+			//if (APlayerState* PS = GetPlayerState())
+			//{
+			//	StatusWidget->SetPlayerName(PS->GetPlayerName());
+			//}
 		}
 	}
 }

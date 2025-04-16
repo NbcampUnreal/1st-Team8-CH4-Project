@@ -27,6 +27,7 @@ public:
     UFUNCTION()
     void UpdateHealthBar(float CurrentHealth, float MaxHealth);
     
+    UFUNCTION(BlueprintCallable)
     void SetPlayerName(const FString& Name);
 
 protected:
