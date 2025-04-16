@@ -6,6 +6,10 @@
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
 
 ALobbyPlayerController::ALobbyPlayerController()
 {
@@ -108,4 +112,38 @@ void ALobbyPlayerController::RemoveAIFromSlot(int32 SlotIndex)
 
     LobbyState->RemoveSlotOccupant(SlotIndex);
     UE_LOG(LogTemp, Log, TEXT("RemoveAIFromSlot: AI removed from slot %d"), SlotIndex);
+}
+
+void ALobbyPlayerController::BeginPlay()
+{
+    Super::BeginPlay();
+
+    SetInputMode(FInputModeGameAndUI());
+    bShowMouseCursor = true;
+
+    if (IsLocalController())
+    {
+        if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+        {
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+            {
+                Subsystem->AddMappingContext(LobbyMappingContext, 0);
+            }
+        }
+    }
+}
+
+void ALobbyPlayerController::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+
+    if (UEnhancedInputComponent* EInput = Cast<UEnhancedInputComponent>(InputComponent))
+    {
+        EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALobbyPlayerController::HandleNextPhaseInput);
+    }
+}
+
+void ALobbyPlayerController::HandleNextPhaseInput()
+{
+    UGameplayStatics::OpenLevel(this, FName("LoadingMap"));
 }

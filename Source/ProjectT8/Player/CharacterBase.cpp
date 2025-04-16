@@ -18,6 +18,8 @@
 #include "Component/ItemComponent.h"
 #include "Player/Customize/CharacterAppearanceSubsystem.h"
 #include "Item/Weapon.h"
+#include "UI/FloatingStatusWidget.h"
+#include "Components/WidgetComponent.h"
 
 
 // Constructor
@@ -83,6 +85,17 @@ ACharacterBase::ACharacterBase()
 	ShoesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShoesMesh"));
 	ShoesMesh->SetupAttachment(GetMesh());
 	ShoesMesh->SetLeaderPoseComponent(GetMesh());
+
+	// 플로팅 위젯 컴포넌트 생성
+	FloatingStatusWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("FloatingStatusWidget"));
+	FloatingStatusWidget->SetupAttachment(GetRootComponent());
+	FloatingStatusWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 120.0f));  // 캐릭터 위에 위치
+	FloatingStatusWidget->SetWidgetSpace(EWidgetSpace::Screen);  // 항상 화면을 향하도록
+	FloatingStatusWidget->SetDrawSize(FVector2D(150.0f, 50.0f));  // 위젯 크기
+
+	// 네트워크 복제 설정
+	FloatingStatusWidget->SetIsReplicated(true);
+	FloatingStatusWidget->SetVisibility(true);
 }
 
 // GAS
@@ -179,6 +192,8 @@ void ACharacterBase::BeginPlay()
 	{
 		ApplyApperance(PS->ApperanceData);
 	}
+
+	InitializeFloatingStatusWidget();
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -400,5 +415,51 @@ void ACharacterBase::PossessedBy(AController* NewController)
 	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
 	{
 		ApplyApperance(PS->ApperanceData);
+	}
+}
+
+void ACharacterBase::InitializeFloatingStatusWidget()
+{
+	if (FloatingStatusWidget)
+	{
+		StatusWidget = Cast<UFloatingStatusWidget>(FloatingStatusWidget->GetUserWidgetObject());
+		if (StatusWidget)
+		{
+			StatusWidget->SetOwnerCharacter(this);
+		}
+	}
+}
+
+float ACharacterBase::GetHealth() const
+{
+	if (AbilitySystemComponent)
+	{
+		if (const UCharacterAttributeSet* CharacterAS = Cast<UCharacterAttributeSet>(AbilitySystemComponent->GetAttributeSet(UCharacterAttributeSet::StaticClass())))
+		{
+			return CharacterAS->GetHealth();
+		}
+	}
+	return 0.0f;
+}
+
+float ACharacterBase::GetMaxHealth() const
+{
+	if (AbilitySystemComponent)
+	{
+		if (const UCharacterAttributeSet* CharacterAS = Cast<UCharacterAttributeSet>(AbilitySystemComponent->GetAttributeSet(UCharacterAttributeSet::StaticClass())))
+		{
+			return CharacterAS->GetMaxHealth();
+		}
+	}
+	return 0.0f;
+}
+
+void ACharacterBase::UpdateHealthUI()
+{
+	if (StatusWidget && AbilitySystemComponent)
+	{
+		float CurrentHealth = GetHealth();
+		float MaxHealth = GetMaxHealth();
+		StatusWidget->UpdateHealthBar(CurrentHealth, MaxHealth);
 	}
 }
