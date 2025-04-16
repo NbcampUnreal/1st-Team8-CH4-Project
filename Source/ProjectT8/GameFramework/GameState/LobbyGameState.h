@@ -31,6 +31,8 @@ struct FSlotInfo
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     FString DisplayName;        // 표시 이름: 실제 플레이어는 Steam 닉네임, AI는 "AI Player n" 등
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    int32 TeamNumber;
     // 추가로 SceneCapture 결과를 표시하기 위한 머티리얼/텍스처 정보도 가질 수 있습니다 (예: UTextureRenderTarget2D* 등)
     // 하지만 렌더 대상은 네트워크로 직접 복제하지 않고, 각 클라이언트에서 해당 Player/AІ의 미리보기 SceneCapture를 활용해 UI에 표시합니다.
     // （Requirement 1: 실제 플레이어는 Steam OSS로부터 닉네임・아바타를 가져와 DisplayName 및 아바타 이미지를 설정하고, 
@@ -40,6 +42,7 @@ struct FSlotInfo
         : PlayerState(nullptr)
         , bIsAI(false)
         , DisplayName(TEXT(""))
+        , TeamNumber(-1)
     {
     }
 };
@@ -79,7 +82,7 @@ public:
     void CycleMapChoice();
     void AssignPlayerToSlot(APlayerState* NewPlayer);
     void RemovePlayerFromSlot(APlayerState* LeavingPlayer);
-
+    void UpdateTeamAssignments();
 protected:
     /** AI 플레이어 추가시 이름 생성을 위한 인덱스 (서버 전용) */
     int32 NextAIIndex;

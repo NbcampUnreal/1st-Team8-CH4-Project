@@ -9,6 +9,7 @@
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "GameFramework/Common/T8PlayerState.h"
 
 ALobbyGameState::ALobbyGameState()
 {
@@ -23,8 +24,6 @@ ALobbyGameState::ALobbyGameState()
 
     TeamSetup = ETeamSetup::FreeForAll;
     SelectedMap = TEXT("DefaultMap");
-
-    NextAIIndex = 1;
 }
 
 void ALobbyGameState::BeginPlay()
@@ -38,6 +37,7 @@ void ALobbyGameState::BeginPlay()
     {
         TeamSetup = ETeamSetup::FreeForAll;
         SelectedMap = TEXT("Map1");
+        UpdateTeamAssignments();
     }
 }
 
@@ -63,6 +63,71 @@ void ALobbyGameState::OnRep_TeamSetup()
 void ALobbyGameState::OnRep_SelectedMap()
 {
     OnSelectedMapChanged.Broadcast();
+}
+
+void ALobbyGameState::UpdateTeamAssignments()
+{
+    if (!HasAuthority()) return; // Server only
+
+    UE_LOG(LogTemp, Log, TEXT("Updating team assignments for TeamSetup: %d"), static_cast<int32>(TeamSetup));
+
+    for (int32 i = 0; i < Slots.Num(); ++i)
+    {
+        FSlotInfo& Slot = Slots[i];
+        int32 NewTeamNumber = -1; // Default for empty slots
+
+        // Only assign teams to occupied slots
+        if (Slot.PlayerState != nullptr || Slot.bIsAI)
+        {
+            switch (TeamSetup)
+            {
+            case ETeamSetup::FreeForAll:
+                NewTeamNumber = i; // 0 to 7 for each slot
+                break;
+            case ETeamSetup::TwoTeams:
+                NewTeamNumber = (i < 4) ? 0 : 1; // Slots 0-3 are Team 0, Slots 4-7 are Team 1
+                break;
+            case ETeamSetup::FourTeams:
+                // Slots 0,1 = Team 0
+                // Slots 2,3 = Team 1
+                // Slots 4,5 = Team 2
+                // Slots 6,7 = Team 3
+                NewTeamNumber = i / 2;
+                break;
+            }
+        }
+
+        // Update the team number in the slot info
+        Slot.TeamNumber = NewTeamNumber;
+
+        // If this slot is occupied by a real player, update their PlayerState's TeamNumber
+        if (Slot.PlayerState != nullptr)
+        {
+            AT8PlayerState* T8PlayerState = Cast<AT8PlayerState>(Slot.PlayerState);
+            if (T8PlayerState)
+            {
+                // This change will be replicated automatically because AT8PlayerState::TeamNumber is replicated.
+                T8PlayerState->TeamNumber = NewTeamNumber;
+                UE_LOG(LogTemp, Verbose, TEXT("Assigned Team %d to Player %s in Slot %d"), NewTeamNumber, *T8PlayerState->GetPlayerName(), i);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("UpdateTeamAssignments: PlayerState in slot %d is not an AT8PlayerState!"), i);
+            }
+        }
+        else if (Slot.bIsAI)
+        {
+            UE_LOG(LogTemp, Verbose, TEXT("Assigned Team %d to AI %s in Slot %d"), NewTeamNumber, *Slot.DisplayName, i);
+        }
+    }
+
+    // Manually trigger the OnRep function on the server *if* you need immediate server-side updates
+    // that depend on the OnRep logic (like updating server UI).
+    // Replication to clients happens automatically due to DOREPLIFETIME.
+    // OnRep_Slots(); // Usually not needed here unless server UI relies on it.
+
+    // Since the Slots array content changed, replication will handle updating clients.
+    // The OnRep_Slots function will broadcast OnSlotsUpdated on clients when they receive the update.
 }
 
 void ALobbyGameState::AddAIToSlot(int32 SlotIndex)
