@@ -17,7 +17,7 @@ void AGun::Use(ACharacterBase* Player)
     if (!Player) return;
 
     if (!HasAuthority())
-    {
+    {   //총소리 넣을거면 여따가
         Server_Use(Player);
         return;
     }

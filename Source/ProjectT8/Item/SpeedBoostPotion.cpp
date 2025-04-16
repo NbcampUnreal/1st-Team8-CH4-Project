@@ -12,6 +12,6 @@ void ASpeedBoostPotion::Use(ACharacterBase* Player)
         Player->SpeedUpStart(SpeedIncreaseRatio);
         FTimerHandle TimerHandle;
         GetWorld()->GetTimerManager().SetTimer(TimerHandle, [Player]() {if (Player) { Player->SpeedUpEnd(); }}, Duration, false);
-        Destroy();
+        Super::Use(Player);
     }
 }
