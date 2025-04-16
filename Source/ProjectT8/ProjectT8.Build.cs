@@ -24,9 +24,8 @@ public class ProjectT8 : ModuleRules
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
-            "AIModule",
-            "GameplayDebugger",
-			"NavigationSystem"
+			"Slate",
+			"SlateCore"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
