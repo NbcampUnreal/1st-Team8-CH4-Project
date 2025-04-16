@@ -36,7 +36,6 @@ void AT8AIController::Tick(float DeltaSeconds)
 
 	if (this->CurrentTarget == nullptr || !LineOfSightTo(this->CurrentTarget))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("타겟 상실: TargetPlayer 초기화"));
 		BB->ClearValue(TEXT("TargetFromBB"));
 		RequestFindNewTarget();
 	}
