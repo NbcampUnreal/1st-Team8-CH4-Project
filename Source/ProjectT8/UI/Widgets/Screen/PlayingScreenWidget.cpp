@@ -14,10 +14,23 @@ void UPlayingScreenWidget::NativeConstruct()
 	if (!GI) return;
 
 	TArray<FPlayerStatusUIData> PlayerUIList;
-
+	
 	for (const FSlotInfo& EachSlot : GI->SavedLobbySlots)
 	{
 		FPlayerStatusUIData UIData;
+
+		/*if (GEngine)
+		{
+			FString LogMessage = FString::Printf(
+				TEXT("EachSlot DisplayName: %s, bIsAI: %s, TeamNumber: %d"),
+				*EachSlot.DisplayName,
+				EachSlot.bIsAI ? TEXT("True") : TEXT("False"),
+				EachSlot.TeamNumber
+			);
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, LogMessage);
+		}*/
+
 		UIData.DisplayName = EachSlot.DisplayName;
 		UIData.bIsAlive = true;
 		UIData.bIsAI = EachSlot.bIsAI;
