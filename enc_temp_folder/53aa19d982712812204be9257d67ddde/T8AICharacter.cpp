@@ -99,17 +99,15 @@ void AT8AICharacter::Tick(float DeltaTime)
 		if (CameraManager)
 		{
 			FVector CameraLocation = CameraManager->GetCameraLocation();
-			FVector IndicatorLocation = TeamIndicator->GetComponentLocation();
+			FVector ToCamera = CameraLocation - TeamIndicator->GetComponentLocation();
+			FRotator LookRotation = FRotationMatrix::MakeFromX(ToCamera).Rotator();
 
-			FVector ToCamera = (CameraLocation - IndicatorLocation);
-			ToCamera.Z = 0.f;
-			ToCamera.Normalize();
+			LookRotation.Pitch = 0.f;
+			LookRotation.Roll = 0.f;
 
-			FRotator LookRotation = ToCamera.Rotation();
 			TeamIndicator->SetWorldRotation(LookRotation);
 		}
 	}
-
 
 	if (!CachedAIController) return;
 

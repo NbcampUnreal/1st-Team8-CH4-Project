@@ -123,6 +123,6 @@ public:
 	/*UFUNCTION(BlueprintCallable, Category = "Team")
 	void SetTeamID(int32 NewID);*/
 
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Team")
-	UTextRenderComponent* TeamIndicator;*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Team")
+	UTextRenderComponent* TeamIndicator;
 };
