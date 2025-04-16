@@ -22,7 +22,7 @@ protected:
         UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
     UPROPERTY(EditDefaultsOnly, Category = "Throwable")
-    float ThrowForce = 1000.0f;
+    float ThrowForce = 2000.0f;
 
     UPROPERTY(VisibleAnywhere, Category = "Throwable")
     bool bIsThrown = false;

@@ -4,9 +4,11 @@
 #include "Player/CharacterBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "Player/Component/ItemComponent.h"
 
 AThrowable::AThrowable()
 {
+    DrawDebugSphere(GetWorld(), GetActorLocation(), 50.f, 12, FColor::Red, false, 1.f);
     PrimaryActorTick.bCanEverTick = true;
     SetReplicates(true);
 
@@ -29,6 +31,8 @@ void AThrowable::Use(ACharacterBase* Player)
     DetachFromActor(DetachRules);
 
     // 확실하게 물리 재설정
+    ItemMesh->SetSimulatePhysics(false);
+
     ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     ItemMesh->SetCollisionResponseToAllChannels(ECR_Block);
     ItemMesh->SetCollisionObjectType(ECC_PhysicsBody);
@@ -36,14 +40,16 @@ void AThrowable::Use(ACharacterBase* Player)
     ItemMesh->SetSimulatePhysics(true);
     ItemMesh->SetEnableGravity(true);
 
-    // 스케일 강제 고정 (테스트용)
-    SetActorScale3D(FVector(2.0f));
-
-
-    FVector ThrowDirection = Player->GetActorForwardVector() + FVector(0, 0, 0.5f);
+    FVector ThrowDirection = Player->GetActorForwardVector() + FVector(0, 0, -0.1f);
     ItemMesh->AddImpulse(ThrowDirection * ThrowForce, NAME_None, true);
 
     bIsThrown = true;
+
+    if (UItemComponent* ItemComp = Player->FindComponentByClass<UItemComponent>())
+    {
+        ItemComp->SetEquippedItem(nullptr);
+    }
+    
     /*if (!Player || bIsThrown) return;
 
     DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
@@ -52,11 +58,12 @@ void AThrowable::Use(ACharacterBase* Player)
     ItemMesh->AddImpulse(ThrowDirection * ThrowForce, NAME_None, true);
 
     bIsThrown = true;*/
+
 }
 
 void AThrowable::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
     if (!bIsThrown) return;
-
+    UE_LOG(LogTemp, Warning, TEXT("[Throwable] OnHit: %s hit %s"), *GetNameSafe(this), *GetNameSafe(OtherActor));
     Destroy();
 }
