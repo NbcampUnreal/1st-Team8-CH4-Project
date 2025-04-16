@@ -21,6 +21,9 @@ public:
 	void UseEquippedItem();
 	void DropItemToWorld();
 
+	UFUNCTION(Server, Reliable)
+	void Server_UseEquippedItem();
+
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_AttachItem(ABaseItem* Item);
 

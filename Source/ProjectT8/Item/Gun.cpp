@@ -52,11 +52,6 @@ void AGun::Use(ACharacterBase* Player)
     }
 }
 
-void AGun::Server_Use_Implementation(ACharacterBase* Player)
-{
-    Use(Player);
-}
-
 void AGun::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

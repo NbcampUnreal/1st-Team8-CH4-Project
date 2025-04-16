@@ -45,5 +45,9 @@ void ABaseItem::Interact_Implementation(ACharacterBase* Player)
 
 void ABaseItem::Use(ACharacterBase* Player)
 {
-	// 기본 사용 로직, 파생 클래스에서 오버라이드
+}
+
+void ABaseItem::Server_Use_Implementation(ACharacterBase* Player)
+{
+	Use(Player);
 }
