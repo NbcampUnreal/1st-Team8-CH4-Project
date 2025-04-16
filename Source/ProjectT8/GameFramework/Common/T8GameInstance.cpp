@@ -6,10 +6,25 @@ void UT8GameInstance::SaveLobbyGameState(ALobbyGameState* LobbyGameState)
     if (!LobbyGameState)
         return;
 
-    // LobbyGameStateÀÇ Á¤º¸ º¹»ç
+    // LobbyGameStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     SavedLobbySlots = LobbyGameState->Slots;
     SavedTeamSetup = LobbyGameState->TeamSetup;
     SavedSelectedMap = LobbyGameState->SelectedMap;
+
+    for (int32 i = 0; i < SavedLobbySlots.Num(); ++i)
+    {
+        const FSlotInfo& Slot = SavedLobbySlots[i];
+        if (Slot.bIsAI)
+        {
+            UE_LOG(LogTemp, Log, TEXT("Saved AI slot %d: Name=%s, TeamNumber=%d"), 
+                i, *Slot.DisplayName, Slot.TeamNumber);
+        }
+        else if (Slot.PlayerState)
+        {
+            UE_LOG(LogTemp, Log, TEXT("Saved Player slot %d: Name=%s, TeamNumber=%d"), 
+                i, *Slot.DisplayName, Slot.TeamNumber);
+        }
+    }
 
     UE_LOG(LogTemp, Log, TEXT("Saved LobbyGameState to GameInstance: %d slots, TeamSetup: %d"),
         SavedLobbySlots.Num(), static_cast<int32>(SavedTeamSetup));
