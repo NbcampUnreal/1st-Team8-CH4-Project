@@ -7,6 +7,7 @@
 #include "Player/Component/CombatComponent.h"
 #include "Player/Component/ItemComponent.h"
 #include "Item/BaseItem.h"
+#include "UI/FloatingStatusWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BrainComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -28,13 +29,22 @@ AT8AICharacter::AT8AICharacter()
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	ItemComponent = CreateDefaultSubobject<UItemComponent>(TEXT("ItemComponent"));
 
-	TeamIndicator = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TeamIndicator"));
+	/*TeamIndicator = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TeamIndicator"));
 	TeamIndicator->SetupAttachment(RootComponent);
 	TeamIndicator->SetHorizontalAlignment(EHTA_Center);
 	TeamIndicator->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
 	TeamIndicator->SetText(FText::FromString("T0"));
 	TeamIndicator->SetTextRenderColor(FColor::White);
-	TeamIndicator->SetWorldSize(30.0f);
+	TeamIndicator->SetWorldSize(30.0f);*/
+
+	FloatingStatusWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("FloatingStatusWidget"));
+	FloatingStatusWidget->SetupAttachment(GetRootComponent());
+	FloatingStatusWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 120.0f));
+	FloatingStatusWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	FloatingStatusWidget->SetDrawSize(FVector2D(150.0f, 50.0f));
+
+	FloatingStatusWidget->SetIsReplicated(true);
+	FloatingStatusWidget->SetVisibility(true);
 }
 
 void AT8AICharacter::BeginPlay()
@@ -42,6 +52,8 @@ void AT8AICharacter::BeginPlay()
 	Super::BeginPlay();
 
 	InitAbilityActorInfo();
+
+	InitializeFloatingStatusWidget();
 
 	CachedAIController = Cast<AAIController>(GetController());
 
@@ -56,13 +68,23 @@ void AT8AICharacter::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT("초기화 이펙트 적용 완료"));
 		}
 	}
+
+	if (FloatingStatusWidget)
+	{
+		StatusWidget = Cast<UFloatingStatusWidget>(FloatingStatusWidget->GetUserWidgetObject());
+		if (StatusWidget)
+		{
+			StatusWidget->SetOwnerCharacter(Cast<ACharacterBase>(this));
+		}
+	}
+
 }
 
 void AT8AICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (TeamIndicator)
+	/*if (TeamIndicator)
 	{
 		APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
 		if (CameraManager)
@@ -76,7 +98,7 @@ void AT8AICharacter::Tick(float DeltaTime)
 
 			TeamIndicator->SetWorldRotation(LookRotation);
 		}
-	}
+	}*/
 
 	if (!CachedAIController) return;
 
@@ -166,7 +188,7 @@ bool AT8AICharacter::IsEnemy(AActor* OtherActor) const
 
 	if (!OtherActor->IsA<APawn>()) return false;
 
-	if(const AT8AICharacter* OtherAI = Cast< AT8AICharacter>(OtherActor))
+	if (const AT8AICharacter* OtherAI = Cast< AT8AICharacter>(OtherActor))
 	{
 		return OtherAI->GetTeamID() != GetTeamID();
 	}
@@ -179,23 +201,23 @@ int32 AT8AICharacter::GetTeamID() const
 	return TeamID;
 }
 
-void AT8AICharacter::SetTeamID(int32 NewID)
-{
-	TeamID = NewID;
-
-	if (TeamIndicator)
-	{
-		TeamIndicator->SetText(FText::FromString(FString::Printf(TEXT("T%d"), TeamID)));
-
-		switch (TeamID)
-		{
-		case 0: TeamIndicator->SetTextRenderColor(FColor::Blue); break;
-		case 1: TeamIndicator->SetTextRenderColor(FColor::Red); break;
-		case 2: TeamIndicator->SetTextRenderColor(FColor::Green); break;
-		default : TeamIndicator->SetTextRenderColor(FColor::White); break;
-		}
-	}
-}
+//void AT8AICharacter::SetTeamID(int32 NewID)
+//{
+//	TeamID = NewID;
+//
+//	if (TeamIndicator)
+//	{
+//		TeamIndicator->SetText(FText::FromString(FString::Printf(TEXT("T%d"), TeamID)));
+//
+//		switch (TeamID)
+//		{
+//		case 0: TeamIndicator->SetTextRenderColor(FColor::Blue); break;
+//		case 1: TeamIndicator->SetTextRenderColor(FColor::Red); break;
+//		case 2: TeamIndicator->SetTextRenderColor(FColor::Green); break;
+//		default : TeamIndicator->SetTextRenderColor(FColor::White); break;
+//		}
+//	}
+//}
 
 UAbilitySystemComponent* AT8AICharacter::GetAbilitySystemComponent() const
 {
@@ -243,11 +265,48 @@ void AT8AICharacter::ApplyGameplayDamage(AActor* TargetActor)
 	}
 }
 
+void AT8AICharacter::InitializeFloatingStatusWidget()
+{
+	if (FloatingStatusWidget)
+	{
+		StatusWidget = Cast<UFloatingStatusWidget>(FloatingStatusWidget->GetUserWidgetObject());
+		if (StatusWidget)
+		{
+			StatusWidget->SetOwnerCharacter(this);
+		}
+	}
+}
+
 float AT8AICharacter::GetHealth() const
 {
-	if (AttributeSet)
+	if (AbilitySystemComponent)
 	{
-		return AttributeSet->GetHealth();
+		if (const UCharacterAttributeSet* CharacterAS = Cast<UCharacterAttributeSet>(AbilitySystemComponent->GetAttributeSet(UCharacterAttributeSet::StaticClass())))
+		{
+			return CharacterAS->GetHealth();
+		}
 	}
 	return 0.0f;
+}
+
+float AT8AICharacter::GetMaxHealth() const
+{
+	if (AbilitySystemComponent)
+	{
+		if (const UCharacterAttributeSet* CharacterAS = Cast<UCharacterAttributeSet>(AbilitySystemComponent->GetAttributeSet(UCharacterAttributeSet::StaticClass())))
+		{
+			return CharacterAS->GetMaxHealth();
+		}
+	}
+	return 0.0f;
+}
+
+void AT8AICharacter::UpdateHealthUI()
+{
+	if (StatusWidget && AbilitySystemComponent)
+	{
+		float CurrentHealth = GetHealth();
+		float MaxHealth = GetMaxHealth();
+		StatusWidget->UpdateHealthBar(CurrentHealth, MaxHealth);
+	}
 }

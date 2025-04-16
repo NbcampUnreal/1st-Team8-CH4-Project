@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/WidgetComponent.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "GAS/CharacterAttributeSet.h"
@@ -14,6 +15,7 @@ class UCombatComponent;
 class UGameplayEffect;
 class UItemComponent;
 class UCharacterAttributeSet;
+class UFloatingStatusWidget;
 
 UCLASS()
 class PROJECTT8_API AT8AICharacter : public ACharacter, public IAbilitySystemInterface
@@ -70,8 +72,11 @@ public:
 	UFUNCTION()
 	void ResetCanAttack();
 
-	UFUNCTION(BlueprintCallable, Category = "GAS")
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	float GetHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	float GetMaxHealth() const;
 
 	UPROPERTY()
 	AActor* LastDamager = nullptr;
@@ -82,7 +87,6 @@ public:
 	float LastDamagerMemoryTime = 5.0f;
 
 	FTimerHandle DetectionTimer;
-
 
 	void Die();
 
@@ -103,13 +107,22 @@ protected:
 	UPROPERTY()
 	class AAIController* CachedAIController;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	UWidgetComponent* FloatingStatusWidget;
+
+	UPROPERTY()
+	UFloatingStatusWidget* StatusWidget;
+
+	void InitializeFloatingStatusWidget();
+	void UpdateHealthUI();
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Team")
 	int32 GetTeamID() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Team")
-	void SetTeamID(int32 NewID);
+	/*UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetTeamID(int32 NewID);*/
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Team")
-	UTextRenderComponent* TeamIndicator;
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Team")
+	UTextRenderComponent* TeamIndicator;*/
 };
