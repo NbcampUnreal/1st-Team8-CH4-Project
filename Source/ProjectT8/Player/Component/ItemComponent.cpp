@@ -1,9 +1,12 @@
 ﻿#include "ItemComponent.h"
-#include "Player/CharacterBase.h"
+#include "GameFramework/Character.h"
 #include "CombatComponent.h"
 #include "Item/BaseItem.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/CharacterBase.h"
+#include "AI/T8AICharacter.h"
+#include "Item/Weapon.h"
 
 
 UItemComponent::UItemComponent()
@@ -12,7 +15,7 @@ UItemComponent::UItemComponent()
 	SetIsReplicatedByDefault(true);
 }
 
-void UItemComponent::Init(ACharacterBase* InOwner)
+void UItemComponent::Init(ACharacter* InOwner)
 {
 	OwnerCharacter = InOwner;
 }
@@ -29,9 +32,19 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
 
-	if (OwnerCharacter && OwnerCharacter->GetCombatComponent())
+	if (ACharacterBase* PlayerCharacter = Cast<ACharacterBase>(OwnerCharacter))
 	{
-		OwnerCharacter->GetCombatComponent()->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		if (UCombatComponent* Combat = PlayerCharacter->GetCombatComponent())
+		{
+			Combat->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		}
+	}
+	else if (AT8AICharacter* AICharacter = Cast<AT8AICharacter>(OwnerCharacter))
+	{
+		if (UCombatComponent* Combat = AICharacter->GetCombatComponent())
+		{
+			Combat->CurrentDamageEffect = EquippedItem->GetAssociatedGameplayEffect();
+		}
 	}
 
 	if (OwnerCharacter->HasAuthority())
@@ -41,11 +54,12 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	}
 }
 
+
 void UItemComponent::UseEquippedItem()
 {
 	if (EquippedItem)
 	{
-		EquippedItem->Use(OwnerCharacter);
+		EquippedItem->Use(Cast<ACharacterBase>(OwnerCharacter));
 		UE_LOG(LogTemp, Warning, TEXT("사용한 아이템: %s"), *GetNameSafe(EquippedItem));
 	}
 }
@@ -83,7 +97,18 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	}
 
 	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-	Item->SetActorRelativeTransform(Item->AttachOffset);
+	
+	// 기본 AttachOffset 적용
+	FTransform ItemTransform = Item->AttachOffset;
+	
+	// 무기인 경우 타입별 회전값 적용
+	if (AWeapon* Weapon = Cast<AWeapon>(Item))
+	{
+		FRotator TypeRotation = Weapon->GetWeaponTypeRotation();
+		ItemTransform.SetRotation(FQuat(TypeRotation) * ItemTransform.GetRotation());
+	}
+	
+	Item->SetActorRelativeTransform(ItemTransform);
 }
 
 void UItemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

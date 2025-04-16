@@ -21,6 +21,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShowUI(EGamePhase Phase);
 
+	void NotifyScreenRemoved(UUserWidget* Widget);
+
 private:
 	UPROPERTY()
 	UPhaseWidgetDataAsset* WidgetDataAsset;

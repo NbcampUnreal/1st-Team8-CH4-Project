@@ -1,11 +1,16 @@
 #include "AI/T8AICharacter.h"
+#include "AI/T8AIController.h"
 #include "AIController.h"
 #include "DrawDebugHelpers.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Player/Component/CombatComponent.h"
+#include "Player/Component/ItemComponent.h"
+#include "Item/BaseItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BrainComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "Camera/PlayerCameraManager.h"
 
 
@@ -20,6 +25,9 @@ AT8AICharacter::AT8AICharacter()
 	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
 	bReplicates = true;
 
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	ItemComponent = CreateDefaultSubobject<UItemComponent>(TEXT("ItemComponent"));
+
 	TeamIndicator = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TeamIndicator"));
 	TeamIndicator->SetupAttachment(RootComponent);
 	TeamIndicator->SetHorizontalAlignment(EHTA_Center);
@@ -32,7 +40,10 @@ AT8AICharacter::AT8AICharacter()
 void AT8AICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
 	InitAbilityActorInfo();
+
+	CachedAIController = Cast<AAIController>(GetController());
 
 	if (InitEffectClass && AbilitySystemComponent)
 	{
@@ -45,14 +56,6 @@ void AT8AICharacter::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT("초기화 이펙트 적용 완료"));
 		}
 	}
-
-	/*GetWorldTimerManager().SetTimer(
-		DetectionTimer,
-		this,
-		&AT8AICharacter::DetectNearbyActors,
-		1.0f,
-		true
-	);*/
 }
 
 void AT8AICharacter::Tick(float DeltaTime)
@@ -74,44 +77,48 @@ void AT8AICharacter::Tick(float DeltaTime)
 			TeamIndicator->SetWorldRotation(LookRotation);
 		}
 	}
+
+	if (!CachedAIController) return;
+
+	bool bHasWeapon = (ItemComponent && ItemComponent->GetEquippedItem() != nullptr);
+
+	if (UBlackboardComponent* BB = CachedAIController->GetBlackboardComponent())
+	{
+		BB->SetValueAsBool(TEXT("HasWeapon"), bHasWeapon);
+
+		if (AttributeSet->GetHealth() < AttributeSet->GetMaxHealth() * 0.5f)
+		{
+			BB->SetValueAsBool("NeedHeal", true);
+		}
+		else
+		{
+			BB->SetValueAsBool("NeedHeal", false);
+		}
+	}
+}
+
+void AT8AICharacter::Attack()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->Attack();
+	}
+}
+
+void AT8AICharacter::UseItem()
+{
+	if (ItemComponent)
+	{
+		ItemComponent->UseEquippedItem();
+	}
 }
 
 void AT8AICharacter::PerformAttackHitCheck()
 {
-	FVector Start = GetActorLocation();
-	FVector Forward = GetActorForwardVector();
-	FVector End = Start + Forward * 100.0f;
-
-	FCollisionShape Shape = FCollisionShape::MakeSphere(50.0f);
-	TArray<FHitResult> HitResults;
-
-	if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_Pawn, Shape))
+	if (CombatComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PerformAttackHitCheck"));
-
-		for (const FHitResult& Hit : HitResults)
-		{
-			AActor* HitActor = Hit.GetActor();
-			if (APawn* HitPawn = Cast<APawn>(HitActor))
-			{
-				if (IsEnemy(HitPawn))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("AI hit Enemy actor : %s"), *HitPawn->GetName());
-
-					if (AT8AICharacter* EnemyAI = Cast<AT8AICharacter>(HitPawn))
-					{
-						ApplyGameplayDamage(EnemyAI);
-					}
-					else
-					{
-						UE_LOG(LogTemp, Warning, TEXT("AI hit friendly actor : %s (무시됨)"), *HitPawn->GetName());
-					}
-				}
-			}
-		}
+		CombatComponent->HandleAttackNotify();
 	}
-
-	DrawDebugSphere(GetWorld(), End, 50.0f, 12, FColor::Red, false, 1.0f);
 }
 
 void AT8AICharacter::ResetCanAttack()
@@ -129,105 +136,14 @@ void AT8AICharacter::ResetCanAttack()
 	}
 }
 
-//void AT8AICharacter::DetectNearbyActors()
-//{
-//	const float DetectionRadius = 1000.0f;
-//	const FVector Center = GetActorLocation();
-//
-//	TArray<FHitResult> HitResults;
-//	FCollisionShape Sphere = FCollisionShape::MakeSphere(DetectionRadius);
-//
-//	bool bHit = GetWorld()->SweepMultiByChannel(
-//		HitResults,
-//		Center,
-//		Center + FVector(0, 0, 1),
-//		FQuat::Identity,
-//		ECC_Pawn,
-//		Sphere
-//	);
-//
-//	AActor* Closest = nullptr;
-//	float ClosestDist = TNumericLimits<float>::Max();
-//
-//	if (bHit)
-//	{
-//		for (const FHitResult& Hit : HitResults)
-//		{
-//			AActor* Detected = Hit.GetActor();
-//			if (Detected && Detected != this && IsEnemy(Detected))
-//			{
-//				float Dist = FVector::Dist(Detected->GetActorLocation(), GetActorLocation());
-//				if (Dist < ClosestDist)
-//				{
-//					Closest = Detected;
-//					ClosestDist = Dist;
-//				}
-//			}
-//		}
-//	}
-//
-//	if (CurrentTarget == nullptr)
-//	{
-//		CurrentTarget = Closest;
-//		TargetTrackTime = 0.0f;
-//	}
-//	else if (Closest == CurrentTarget)
-//	{
-//		TargetTrackTime += 1.0f;
-//		PotentialTarget = nullptr;
-//		PotentialTargetTime = 0.0f;
-//	}
-//	else
-//	{
-//		if (PotentialTarget == Closest)
-//		{
-//			PotentialTargetTime += 1.0f;
-//			if (PotentialTargetTime >= TargetStickTime)
-//			{
-//				UE_LOG(LogTemp, Warning, TEXT("타겟 전환 조건 충족! 기존: %s -> 새로운: %s"),
-//					*GetNameSafe(CurrentTarget), *GetNameSafe(PotentialTarget));
-//
-//				CurrentTarget = PotentialTarget;
-//				TargetTrackTime = 0.0f;
-//				PotentialTarget = nullptr;
-//				PotentialTargetTime = 0.0f;
-//
-//				if (AAIController* AICon = Cast<AAIController>(GetController()))
-//				{
-//					if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
-//					{
-//						BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
-//					}
-//
-//					AICon->StopMovement();
-//					if (AICon->BrainComponent)
-//					{
-//						AICon->BrainComponent->RestartLogic();
-//					}
-//				}
-//
-//				UE_LOG(LogTemp, Warning, TEXT("목표 전환 : %s"), *GetNameSafe(CurrentTarget));
-//			}
-//		}
-//		else
-//		{
-//			PotentialTarget = Closest;
-//			PotentialTargetTime = 0.0f;
-//		}
-//	}
-//	if (CurrentTarget)
-//	{
-//		if (AAIController* AICon = Cast<AAIController>(GetController()))
-//		{
-//			if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
-//			{
-//				BB->SetValueAsObject(TEXT("TargetActor"), CurrentTarget);
-//			}
-//		}
-//	}
-//
-//	DrawDebugSphere(GetWorld(), Center, DetectionRadius, 12, FColor::Blue, false, 1.0f);
-//}
+void AT8AICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AT8AICharacter, AbilitySystemComponent);
+	DOREPLIFETIME(AT8AICharacter, CombatComponent);
+	DOREPLIFETIME(AT8AICharacter, ItemComponent);
+}
+
 
 void AT8AICharacter::Die()
 {
@@ -292,7 +208,16 @@ void AT8AICharacter::InitAbilityActorInfo()
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
+	if (CombatComponent)
+	{
+		CombatComponent->Init(this);
+	}
+	if (ItemComponent)
+	{
+		ItemComponent->Init(this);
+	}
 }
+
 
 void AT8AICharacter::ApplyGameplayDamage(AActor* TargetActor)
 {
@@ -316,4 +241,13 @@ void AT8AICharacter::ApplyGameplayDamage(AActor* TargetActor)
 		TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 		UE_LOG(LogTemp, Warning, TEXT("AI가 %s에게 데미지 이펙트 적용"), *TargetActor->GetName());
 	}
+}
+
+float AT8AICharacter::GetHealth() const
+{
+	if (AttributeSet)
+	{
+		return AttributeSet->GetHealth();
+	}
+	return 0.0f;
 }

@@ -4,8 +4,6 @@
 
 void UAnimNotify_DealDamage_AI::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Notify 호출됨 - DealDamage_AI"));
-
 	if (!MeshComp) return;
 
 	if (AActor* Owner = MeshComp->GetOwner())

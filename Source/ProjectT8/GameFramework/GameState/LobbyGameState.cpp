@@ -5,6 +5,10 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
+#include "OnlineSessionSettings.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 ALobbyGameState::ALobbyGameState()
 {
@@ -26,6 +30,8 @@ ALobbyGameState::ALobbyGameState()
 void ALobbyGameState::BeginPlay()
 {
     Super::BeginPlay();
+
+    SetGamePhase(EGamePhase::Lobby);
 
     // 서버만 초기 설정
     if (HasAuthority())
@@ -70,8 +76,54 @@ void ALobbyGameState::AddAIToSlot(int32 SlotIndex)
         return;
     }
 
+    // 사용되지 않는 가장 낮은 AI 번호를 찾기
+    TArray<int32> UsedNumbers;
+    
+    // 먼저 현재 사용 중인 모든 AI 번호를 수집
+    for (const FSlotInfo& ExistingSlot : Slots)
+    {
+        if (ExistingSlot.bIsAI && !ExistingSlot.DisplayName.IsEmpty())
+        {
+            // "AI Player X" 형식에서 숫자 부분만 추출
+            FString DisplayName = ExistingSlot.DisplayName;
+            int32 SpaceIndex = DisplayName.Find(TEXT(" "), ESearchCase::IgnoreCase, ESearchDir::FromEnd);
+            
+            if (SpaceIndex != INDEX_NONE)
+            {
+                FString NumberString = DisplayName.Mid(SpaceIndex + 1);
+                int32 Number = FCString::Atoi(*NumberString);
+                
+                if (Number > 0)
+                {
+                    UsedNumbers.Add(Number);
+                }
+            }
+        }
+    }
+    
+    // 사용 번호 정렬
+    UsedNumbers.Sort();
+    
+    // 가장 작은 사용되지 않는 번호 찾기
+    int32 AINumber = 1;  // 기본값은 1
+    for (int32 UsedNumber : UsedNumbers)
+    {
+        if (AINumber < UsedNumber)
+        {
+            // 현재 AINumber가 사용되지 않았으므로 이 번호 사용
+            break;
+        }
+        else if (AINumber == UsedNumber)
+        {
+            // 이미 사용중이므로 다음 번호 확인
+            AINumber++;
+        }
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("Adding AI with number %d to slot %d"), AINumber, SlotIndex);
+    
     Slot.bIsAI = true;
-    Slot.DisplayName = FString::Printf(TEXT("AI Player %d"), NextAIIndex++);
+    Slot.DisplayName = FString::Printf(TEXT("AI Player %d"), AINumber);
     OnSlotsUpdated.Broadcast();
 }
 
@@ -234,10 +286,5 @@ void ALobbyGameState::RemovePlayerFromSlot(APlayerState* LeavingPlayer)
             OnSlotsUpdated.Broadcast();
             break;
         }
-    }
-
-    if (APlayerController* PC = Cast<APlayerController>(LeavingPlayer->GetOwner()))
-    {
-        PC->ClientReturnToMainMenuWithTextReason(FText::FromString(TEXT("You have been kicked from the session.")));
     }
 }

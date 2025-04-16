@@ -6,7 +6,20 @@ AWeapon::AWeapon()
     ItemType = EItemType::Weapon;
 }
 
+FRotator AWeapon::GetWeaponTypeRotation() const
+{
+    switch (WeaponType)
+    {
+    case EWeaponType::Gun:
+        return GunRotation;
+    case EWeaponType::Melee:
+        return MeleeRotation;
+    default:
+        return FRotator::ZeroRotator;
+    }
+}
+
 void AWeapon::Use(ACharacterBase* Player)
 {
-    // ÇÏÀ§ Å¬·¡½º¿¡¼­ ±¸Çö
+    // ê¸°ì¡´ í´ë˜ìŠ¤ì—ì„œ êµ¬í˜„
 } 

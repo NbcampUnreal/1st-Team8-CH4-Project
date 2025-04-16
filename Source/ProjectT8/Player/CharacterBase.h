@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "Components/WidgetComponent.h"
 #include "CharacterBase.generated.h"
 
 class USpringArmComponent;
@@ -17,9 +18,10 @@ class UGameplayEffect;
 class UItemComponent;
 struct FInputActionValue;
 struct FCharacterAppearanceData;
+class UFloatingStatusWidget;
 
 UCLASS()
-class ACharacterBase : public ACharacter, public IAbilitySystemInterface
+class PROJECTT8_API ACharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -48,11 +50,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	UItemComponent* GetItemComponent() const { return ItemComponent; }
-
-	UPROPERTY(EditDefaultsOnly, Category = "GAS")
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
-	UPROPERTY(EditDefaultsOnly, Category = "GAS")
-	TSubclassOf<UGameplayEffect> StunEffectClass;
 
 	TArray<FGameplayTag> StatusEffectTags;
 	void RegisterStatusEffectDelegates();
@@ -85,6 +82,13 @@ public:
 
 	UFUNCTION()
 	void ApplyApperance(const FCharacterAppearanceData& Data);
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	float GetHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	float GetMaxHealth() const;
+
 protected:
 	// Input
 	virtual void BeginPlay() override;
@@ -137,6 +141,16 @@ protected:
 	USkeletalMeshComponent* BottomMesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Apperance")
 	USkeletalMeshComponent* ShoesMesh;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	UWidgetComponent* FloatingStatusWidget;
+
+	UPROPERTY()
+	UFloatingStatusWidget* StatusWidget;
+
+	void InitializeFloatingStatusWidget();
+	void UpdateHealthUI();
+
 private:
 	bool bIsRunning = false;
 
