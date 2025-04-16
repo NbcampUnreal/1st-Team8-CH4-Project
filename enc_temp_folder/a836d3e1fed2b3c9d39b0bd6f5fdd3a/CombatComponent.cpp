@@ -71,7 +71,6 @@ void UCombatComponent::Multicast_PlayAttackMontage_Implementation()
 }
 
 
-
 void UCombatComponent::HandleAttackNotify()
 {
 	OnAttackHit();
@@ -116,7 +115,6 @@ void UCombatComponent::DealDamageToActors(const TArray<FHitResult>& HitResults)
 	for (const FHitResult& Hit : HitResults)
 	{
 		ACharacter* TargetCharacter = Cast<ACharacter>(Hit.GetActor());
-
 		if (!TargetCharacter || TargetCharacter == OwnerCharacter) continue;
 
 		if (OwnerCharacter->HasAuthority())
@@ -163,10 +161,7 @@ void UCombatComponent::ApplyGameplayEffectToTarget(ACharacter* Target, TSubclass
 
 void UCombatComponent::ApplyKnockback(AActor* TargetActor)
 {	
-	if (!OwnerCharacter || !OwnerCharacter->HasAuthority())
-	{
-		return;
-	}
+	if (!OwnerCharacter || !OwnerCharacter->HasAuthority()) return;
 
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
 	if (!TargetCharacter) return;
@@ -182,16 +177,9 @@ void UCombatComponent::Multicast_ApplyKnockback_Implementation(AActor* TargetAct
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
 	if (!TargetCharacter) return;
 
-	if (TargetCharacter->IsLocallyControlled())
-	{
-		TargetCharacter->LaunchCharacter(Direction * KnockbackStrength, true, true);
-		return;
-	}
-
 	FVector knockbackForce = Direction * KnockbackStrength;
 	TargetCharacter->LaunchCharacter(knockbackForce, true, true);
 }
-
 
 void UCombatComponent::Server_ApplyEffectToTarget_Implementation(ACharacter* Target, TSubclassOf<UGameplayEffect> EffectClass)
 {
