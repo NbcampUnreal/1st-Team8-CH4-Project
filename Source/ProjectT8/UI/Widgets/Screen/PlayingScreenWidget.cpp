@@ -1,5 +1,6 @@
 #include "UI/Widgets/Screen/PlayingScreenWidget.h"
 #include "UI/TeamStatusBar.h"
+#include "Components/TextBlock.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
 
@@ -36,5 +37,21 @@ void UPlayingScreenWidget::NativeConstruct()
 	if (TeamStatusBar)
 	{
 		TeamStatusBar->InitPlayerIcons(PlayerUIList);
+	}
+
+	if (TeamModeText)
+	{
+		switch (GI->SavedTeamSetup)	
+		{
+			case ETeamSetup::FreeForAll:
+				TeamModeText->SetText(FText::FromString("FreeForAll"));
+			case ETeamSetup::TwoTeams:
+				TeamModeText->SetText(FText::FromString("TwoTeams"));
+			case ETeamSetup::FourTeams:
+				TeamModeText->SetText(FText::FromString("FourTeams"));
+			default:
+				TeamModeText->SetText(FText::FromString("FreeForAll"));
+				break;
+		}
 	}
 }
