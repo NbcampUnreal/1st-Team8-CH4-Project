@@ -10,6 +10,11 @@
 #include "T8AICharacter.generated.h"
 
 
+// AI 전용 죽음 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAIDeathDelegate, AT8AICharacter*, DeadAI);
+
+
+
 class ABaseItem;
 class UCombatComponent;
 class UGameplayEffect;
@@ -78,6 +83,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	float GetMaxHealth() const;
 
+	UFUNCTION()
+	void HandleHealthChanged(float NewHealth, float MaxHealth);
+
 	UPROPERTY()
 	AActor* LastDamager = nullptr;
 
@@ -88,7 +96,21 @@ public:
 
 	FTimerHandle DetectionTimer;
 
-	void Die();
+	UPROPERTY(BlueprintAssignable)
+	FAIDeathDelegate OnCharacterDeath;
+
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Character")
+	bool bIsDead = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Character")
+	virtual void Die();
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastDie();
+
+	UFUNCTION(BlueprintPure, Category = "Character")
+	virtual bool IsDead() const { return bIsDead; }
 
 	void InitAbilityActorInfo();
 	void ApplyGameplayDamage(AActor* TargetActor);
@@ -97,12 +119,14 @@ public:
 	void UseItem();
 	void Attack();
 
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	bool IsEnemy(AActor* OtherActor) const;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
 	int32 TeamID = 0;
 
-	UFUNCTION(BlueprintCallable, Category = "Team")
-	bool IsEnemy(AActor* OtherActor) const;
+	
 
 	UPROPERTY()
 	class AAIController* CachedAIController;

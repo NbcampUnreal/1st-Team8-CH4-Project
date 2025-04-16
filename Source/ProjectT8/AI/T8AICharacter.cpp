@@ -13,6 +13,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Camera/PlayerCameraManager.h"
+#include "GameFramework/GameMode/T8GameMode.h"
+#include "GameFramework/GameState/LobbyGameState.h"
 
 
 AT8AICharacter::AT8AICharacter()
@@ -62,6 +64,11 @@ void AT8AICharacter::BeginPlay()
 
 	InitAbilityActorInfo();
 
+	if (AttributeSet)
+	{
+		AttributeSet->OnHealthChanged.AddDynamic(this, &AT8AICharacter::HandleHealthChanged);
+	}
+
 	InitializeFloatingStatusWidget();
 
 	CachedAIController = Cast<AAIController>(GetController());
@@ -87,6 +94,27 @@ void AT8AICharacter::BeginPlay()
 		}
 	}
 
+	if (HasAuthority())
+	{
+		if (ALobbyGameState* LobbyState = GetWorld()->GetGameState<ALobbyGameState>())
+		{
+			FString AIDisplayName = TeamIndicator ? TeamIndicator->Text.ToString() : TEXT("");
+			TeamID = LobbyState->GetTeamNumberForAI(AIDisplayName);
+
+			// 시각적으로 팀 번호를 표시
+			TeamIndicator->SetText(FText::FromString(FString::Printf(TEXT("T%d"), TeamID)));
+
+			// 팀 색상 설정 (선택)
+			switch (TeamID)
+			{
+			case 0: TeamIndicator->SetTextRenderColor(FColor::Blue); break;
+			case 1: TeamIndicator->SetTextRenderColor(FColor::Red); break;
+			case 2: TeamIndicator->SetTextRenderColor(FColor::Green); break;
+			case 3: TeamIndicator->SetTextRenderColor(FColor::Yellow); break;
+			default: TeamIndicator->SetTextRenderColor(FColor::White); break;
+			}
+		}
+	}
 }
 
 void AT8AICharacter::Tick(float DeltaTime)
@@ -178,34 +206,38 @@ void AT8AICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 }
 
 
-void AT8AICharacter::Die()
-{
-	UE_LOG(LogTemp, Warning, TEXT("AI 사망 처리 시작"));
-
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetCharacterMovement()->DisableMovement();
-
-	DetachFromControllerPendingDestroy();
-
-	SetLifeSpan(5.0f);
-}
+//void AT8AICharacter::Die()
+//{
+//	UE_LOG(LogTemp, Warning, TEXT("AI 사망 처리 시작"));
+//
+//	GetMesh()->SetSimulatePhysics(true);
+//	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+//
+//	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+//	GetCharacterMovement()->DisableMovement();
+//
+//	DetachFromControllerPendingDestroy();
+//
+//	SetLifeSpan(5.0f);
+//}
 
 bool AT8AICharacter::IsEnemy(AActor* OtherActor) const
 {
 	if (!OtherActor || OtherActor == this) return false;
 
-	if (!OtherActor->IsA<APawn>()) return false;
-
-	if (const AT8AICharacter* OtherAI = Cast< AT8AICharacter>(OtherActor))
+	if (const AT8AICharacter* OtherAI = Cast<AT8AICharacter>(OtherActor))
 	{
 		return OtherAI->GetTeamID() != GetTeamID();
 	}
 
+	if (const ACharacterBase* Player = Cast<ACharacterBase>(OtherActor))
+	{
+		return Player->TeamNumber != GetTeamID();
+	}
+
 	return true;
 }
+
 
 int32 AT8AICharacter::GetTeamID() const
 {
@@ -320,4 +352,91 @@ void AT8AICharacter::UpdateHealthUI()
 		float MaxHealth = GetMaxHealth();
 		StatusWidget->UpdateHealthBar(CurrentHealth, MaxHealth);
 	}
+}
+
+void AT8AICharacter::HandleHealthChanged(float NewHealth, float MaxHealth)
+{
+	if (!bIsDead && NewHealth <= 0.0f)
+	{
+		Die();
+	}
+}
+
+void AT8AICharacter::Die()
+{
+	if (HasAuthority())
+	{
+		bIsDead = true;
+		MulticastDie();
+
+		// 게임모드에 AI 죽음 알림
+		if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
+		{
+			if (AT8GameMode* T8GameMode = Cast<AT8GameMode>(GameMode))
+			{
+				T8GameMode->NotifyPlayerDeath(this);
+			}
+		}
+	}
+}
+
+void AT8AICharacter::MulticastDie_Implementation()
+{
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->DisableMovement();
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->StopAllMontages(0.0f);
+		AnimInstance->bReceiveNotifiesFromLinkedInstances = false;
+	}
+
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		GetCapsuleComponent()->SetCapsuleHalfHeight(20.0f);
+	}
+
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetMesh()->SetCollisionResponseToAllChannels(ECR_Block);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetEnableGravity(true);
+		GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("root"), true, true);
+	}
+
+	if (ItemComponent)
+	{
+		if (ABaseItem* EquippedItem = ItemComponent->GetEquippedItem())
+		{
+			TArray<UPrimitiveComponent*> WeaponComponents;
+			EquippedItem->GetComponents<UPrimitiveComponent>(WeaponComponents);
+
+			for (UPrimitiveComponent* Component : WeaponComponents)
+			{
+				if (Component)
+				{
+					Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+					Component->SetSimulatePhysics(true);
+					Component->SetEnableGravity(true);
+				}
+			}
+		}
+	}
+
+	if (CachedAIController)
+	{
+		CachedAIController->GetBrainComponent()->StopLogic(TEXT("AI died"));
+	}
+
+	OnCharacterDeath.Broadcast(this);
 }
