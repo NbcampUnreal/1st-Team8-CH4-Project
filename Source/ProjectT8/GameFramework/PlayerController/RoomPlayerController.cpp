@@ -38,5 +38,5 @@ void ARoomPlayerController::SetupInputComponent()
 
 void ARoomPlayerController::HandleNextPhaseInput()
 {
-    UGameplayStatics::OpenLevel(this, FName("LobbyMap"));
+    UGameplayStatics::OpenLevel(this, FName("MultiLobbyLevel"));
 }
