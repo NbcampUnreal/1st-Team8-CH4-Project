@@ -3,6 +3,8 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "GameFramework/Character.h"
+#include "Player/CharacterBase.h"
 
 
 
@@ -45,6 +47,7 @@ void UPlayingScreenWidget::NativeConstruct()
 		}
 
 		PlayerUIList.Add(UIData);
+		PlayerStatusMap.Add(EachSlot.DisplayName, UIData);
 	}
 
 	if (TeamStatusBar)
@@ -58,13 +61,43 @@ void UPlayingScreenWidget::NativeConstruct()
 		{
 			case ETeamSetup::FreeForAll:
 				TeamModeText->SetText(FText::FromString("FreeForAll"));
+				break;
 			case ETeamSetup::TwoTeams:
 				TeamModeText->SetText(FText::FromString("TwoTeams"));
+				break;
 			case ETeamSetup::FourTeams:
 				TeamModeText->SetText(FText::FromString("FourTeams"));
+				break;
 			default:
 				TeamModeText->SetText(FText::FromString("FreeForAll"));
 				break;
+		}
+	}
+}
+
+void UPlayingScreenWidget::OnCharacterDeath(ACharacter* DeadCharacter)
+{
+	if (!DeadCharacter) return;
+
+	ACharacterBase* BaseCharacter = Cast<ACharacterBase>(DeadCharacter);
+	if (!BaseCharacter) return;
+
+	UpdatePlayerStatus(BaseCharacter->PlayerDisplayName, false);
+}
+
+void UPlayingScreenWidget::UpdatePlayerStatus(const FString& PlayerName, bool bIsAlive)
+{
+	// 플레이어 상태 데이터 업데이트
+	if (FPlayerStatusUIData* PlayerData = PlayerStatusMap.Find(PlayerName))
+	{
+		PlayerData->bIsAlive = bIsAlive;
+
+		// TeamStatusBar 업데이트
+		if (TeamStatusBar)
+		{
+			TArray<FPlayerStatusUIData> UpdatedList;
+			PlayerStatusMap.GenerateValueArray(UpdatedList);
+			TeamStatusBar->InitPlayerIcons(UpdatedList);
 		}
 	}
 }

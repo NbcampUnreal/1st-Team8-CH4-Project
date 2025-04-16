@@ -6,6 +6,9 @@
 #include "Components/WidgetComponent.h"
 #include "CharacterBase.generated.h"
 
+// 캐릭터 죽음 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDeathDelegate, ACharacterBase*, DeadCharacter);
+
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -97,6 +100,28 @@ public:
 
 	void SpeedUpStart(float SpeedRatio);
 	void SpeedUpEnd();
+	// 죽음 관련
+	UPROPERTY(BlueprintAssignable, Category = "Character")
+	FOnCharacterDeathDelegate OnCharacterDeath;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Character")
+	bool bIsDead = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Character")
+	virtual void Die();
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastDie();
+
+	UFUNCTION(BlueprintPure, Category = "Character")
+	virtual bool IsDead() const { return bIsDead; }
+
+	// 팀 정보
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Team")
+	int32 TeamNumber;
+
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Team")
+	FString PlayerDisplayName;
 
 protected:
 	// Input
