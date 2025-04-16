@@ -21,12 +21,12 @@ public:
     virtual void NativeConstruct() override;
     virtual bool IsNameStableForNetworking() const override { return true; }
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    
-    void SetOwnerCharacter(ACharacterBase* Character);
-    
+
+    void SetOwnerCharacter(ACharacter* InCharacter);
+
     UFUNCTION()
     void UpdateHealthBar(float CurrentHealth, float MaxHealth);
-    
+
     UFUNCTION(BlueprintCallable)
     void SetPlayerName(const FString& Name);
 
@@ -36,7 +36,7 @@ protected:
     // GAS 관련
     void BindAttributeChanges();
     void UnbindAttributeChanges();
-    
+
     void OnHealthChanged(const FOnAttributeChangeData& Data);
     void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
 
@@ -55,4 +55,4 @@ protected:
 
     UPROPERTY()
     UCharacterAttributeSet* AttributeSet;
-}; 
+};

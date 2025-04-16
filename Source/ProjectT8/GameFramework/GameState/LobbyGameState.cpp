@@ -353,3 +353,15 @@ void ALobbyGameState::RemovePlayerFromSlot(APlayerState* LeavingPlayer)
         }
     }
 }
+
+int32 ALobbyGameState::GetTeamNumberForAI(const FString& DisplayName) const
+{
+    for (const FSlotInfo& Slot : Slots)
+    {
+        if (Slot.bIsAI && Slot.DisplayName == DisplayName)
+        {
+            return Slot.TeamNumber;
+        }
+    }
+    return -1; // 찾지 못한 경우
+}

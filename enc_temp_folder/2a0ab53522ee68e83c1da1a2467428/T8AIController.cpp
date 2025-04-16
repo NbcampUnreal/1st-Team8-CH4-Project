@@ -32,21 +32,21 @@ void AT8AIController::Tick(float DeltaSeconds)
 	UBlackboardComponent* BB = GetBlackboardComponent();
 	if (!BB) return;
 
-	this->CurrentTarget = Cast<AActor>(BB->GetValueAsObject(TEXT("Target")));
+	this->CurrentTarget = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetPlayer")));
 
 	if (this->CurrentTarget == nullptr || !LineOfSightTo(this->CurrentTarget))
 	{
-		BB->ClearValue(TEXT("Target"));
+		BB->ClearValue(TEXT("TargetFromBB"));
 		RequestFindNewTarget();
 	}
 }
 
 
-AActor* AT8AIController::GetTarget() const
+AActor* AT8AIController::GetTargetPlayer() const
 {
 	if (Blackboard)
 	{
-		return Cast<AActor>(Blackboard->GetValueAsObject(TEXT("Target")));
+		return Cast<AActor>(Blackboard->GetValueAsObject(TEXT("TargetPlayer")));
 	}
 	return nullptr;
 }
@@ -111,54 +111,71 @@ void AT8AIController::OnTargetPriorityQueryFinished(UEnvQueryInstanceBlueprintWr
 	TArray<AActor*> FoundActors;
 	QueryInstance->GetQueryResultsAsActors(FoundActors);
 
-	AT8AICharacter* SelfChar = Cast<AT8AICharacter>(GetPawn());
-	if (!SelfChar) return;
-
 	AActor* BestTarget = nullptr;
 	float LowestHealth = MAX_flt;
 
+	AT8AICharacter* SelfChar = Cast<AT8AICharacter>(GetPawn());
+
 	for (AActor* Actor : FoundActors)
 	{
-		if (!SelfChar->IsEnemy(Actor)) continue;
+		ACharacterBase* Target = Cast<ACharacterBase>(Actor);
+		if (!Target /*|| Target->IsDead()*/) continue;
 
-		ACharacterBase* TargetCharacter = Cast<ACharacterBase>(Actor);
-		if (TargetCharacter && TargetCharacter->IsDead()) continue;
-
-		if (SelfChar->LastDamager == Actor)
+		//복수 타겟 우선
+		if (SelfChar && SelfChar->LastDamager == Target)
 		{
 			float TimeSinceDamaged = GetWorld()->GetTimeSeconds() - SelfChar->LastDamagerSetTime;
+
 			if (TimeSinceDamaged <= SelfChar->LastDamagerMemoryTime)
 			{
-				BestTarget = Actor;
+				BestTarget = Target;
 				break;
 			}
 		}
 
+		//체력 비교 (TODO: GetHealth 구현 후 주석 해제)
+		/*
+		float Health = Target->GetHealth();
+		if (Health < LowestHealth)
+		{
+			LowestHealth = Health;
+			BestTarget = Target;
+		}
+		*/
+
+		//임시 우선순위: 첫 유효 타겟
 		if (!BestTarget)
 		{
-			BestTarget = Actor;
+			BestTarget = Target;
 		}
 	}
 
-	float Now = GetWorld()->GetTimeSeconds();
-	if (!CurrentTarget) LastTargetSetTime = 0.f;
 
+	float Now = GetWorld()->GetTimeSeconds();
+
+	if (!CurrentTarget /*|| CurrentTarget->IsDead()*/)
+	{
+		LastTargetSetTime = 0.f;
+	}
+
+	// 현재 타겟 유지 시간 안 지났으면 기존 타겟 유지
 	if (CurrentTarget && (Now - LastTargetSetTime) < TargetHoldTime)
 	{
-		GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), CurrentTarget);
+		GetBlackboardComponent()->SetValueAsObject(TEXT("TargetPlayer"), CurrentTarget);
 	}
 	else
 	{
+		// 새로운 타겟으로 교체
 		CurrentTarget = BestTarget;
 		LastTargetSetTime = Now;
 
 		if (BestTarget)
 		{
-			GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), BestTarget);
+			GetBlackboardComponent()->SetValueAsObject(TEXT("TargetPlayer"), BestTarget);
 		}
 	}
-}
 
+}
 
 void AT8AIController::RequestFindNewTarget()
 {
