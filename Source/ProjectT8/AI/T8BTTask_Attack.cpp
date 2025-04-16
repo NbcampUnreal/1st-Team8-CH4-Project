@@ -43,7 +43,6 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		false
 	);
 
-	// Blackboard에도 IsAttacking 설정 가능
 	if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
 	{
 		BB->SetValueAsBool(TEXT("IsAttacking"), true);
