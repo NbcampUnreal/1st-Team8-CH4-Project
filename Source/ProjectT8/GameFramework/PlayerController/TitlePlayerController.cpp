@@ -38,5 +38,5 @@ void ATitlePlayerController::SetupInputComponent()
 
 void ATitlePlayerController::HandleStartInput()
 {
-    UGameplayStatics::OpenLevel(this, FName("RoomMap"));
+    UGameplayStatics::OpenLevel(this, FName("PrivateLevel"));
 }
