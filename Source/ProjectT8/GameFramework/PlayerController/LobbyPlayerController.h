@@ -26,13 +26,16 @@ public:
     // 서버 RPC: 슬롯 이동 요청 처리
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerRequestMoveToSlot(int32 SlotIndex);
-    
-    // 슬롯 관련 기능
-    UFUNCTION(BlueprintCallable, Category = "Lobby")
-    void RequestMoveToSlot(int32 SlotIndex);
-    
-    UFUNCTION(BlueprintCallable, Category = "Lobby")
+    bool ServerRequestMoveToSlot_Validate(int32 SlotIndex);
+    void ServerRequestMoveToSlot_Implementation(int32 SlotIndex);
+
+    // 호스트가 AI를 슬롯에 추가 (UI 등에서 호출)
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Admin")
     void AddAIToSlot(int32 SlotIndex);
+
+    // 호스트가 AI를 슬롯에서 제거 (UI 등에서 호출)
+    UFUNCTION(BlueprintCallable, Category = "Lobby|Admin")
+    void RemoveAIFromSlot(int32 SlotIndex);
 
 protected:
     virtual void BeginPlay() override;
