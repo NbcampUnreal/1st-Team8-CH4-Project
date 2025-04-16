@@ -1,21 +1,26 @@
 #include "Item/PoisonKnife.h"
+#include "Player/CharacterBase.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
 
 APoisonKnife::APoisonKnife()
 {
     ItemName = "PoisonKnife";
-    ThrowDuration = 0.0f;
 }
 
-void APoisonKnife::ApplyEffect(ACharacterBase* Target)
+void APoisonKnife::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    if (Target)
+    Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+
+    if (ACharacterBase* HitChar = Cast<ACharacterBase>(OtherActor))
     {
-        UEffectComponent* EffectComp = Target->FindComponentByClass<UEffectComponent>();
-        if (EffectComp)
+        if (UAbilitySystemComponent* ASC = HitChar->GetAbilitySystemComponent())
         {
-            FEffectParams Params;
-            Params.Duration = 5.0f;
-            EffectComp->ApplyEffect(EEffectType::Poison, Params);
+            if (PoisonEffect)
+            {
+                ASC->ApplyGameplayEffectToSelf(PoisonEffect->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
+            }
         }
     }
 }

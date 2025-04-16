@@ -10,5 +10,4 @@ class PROJECTT8_API ABlackHoleGenerator : public AThrowable
 
 public:
     ABlackHoleGenerator();
-    virtual void ApplyEffect(ACharacterBase* Target) override;
 };

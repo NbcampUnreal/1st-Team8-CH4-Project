@@ -8,6 +8,7 @@
 AProjectile::AProjectile()
 {
     PrimaryActorTick.bCanEverTick = false;
+    UE_LOG(LogTemp,Warning,TEXT("Set Replicate func, AProjectile()"));
     SetReplicates(true);
     SetReplicateMovement(true);
 

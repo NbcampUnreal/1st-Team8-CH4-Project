@@ -24,6 +24,7 @@ void UStartGameButton::OnStartGameButtonClicked()
 
         if (LobbyState && GameInstance)
         {
+            LobbyState->UpdateTeamAssignments();
             // 로비 정보를 GameInstance에 저장
             GameInstance->SaveLobbyGameState(LobbyState);
 

@@ -1,18 +1,18 @@
 #include "Throwable.h"
-#include "Engine/World.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/SphereComponent.h"
 #include "Player/CharacterBase.h"
-#include "GameFramework/Actor.h"
-#include "Components/PrimitiveComponent.h"
-#include "Engine/OverlapResult.h"
-#include "CollisionQueryParams.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+#include "Player/Component/ItemComponent.h"
 
 AThrowable::AThrowable()
 {
-    ItemMesh->SetSimulatePhysics(true);
-    ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    ItemMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-    ItemMesh->OnComponentHit.AddDynamic(this, &AThrowable::OnHit);
+    DrawDebugSphere(GetWorld(), GetActorLocation(), 50.f, 12, FColor::Red, false, 1.f);
     PrimaryActorTick.bCanEverTick = true;
+    SetReplicates(true);
+
+    ItemMesh->OnComponentHit.AddDynamic(this, &AThrowable::OnHit);
 }
 
 void AThrowable::BeginPlay()
@@ -22,60 +22,48 @@ void AThrowable::BeginPlay()
 
 void AThrowable::Use(ACharacterBase* Player)
 {
-    if (Player)
-    {
-        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-        FVector ThrowDirection = Player->GetActorForwardVector() + FVector(0, 0, 0.5f);
-        ItemMesh->AddImpulse(ThrowDirection * ThrowForce);
-        bIsThrown = true;
-    }
-}
+    if (!Player || bIsThrown) return;
 
-void AThrowable::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-    if (bIsThrown && ThrowDuration > 0.0f)
+    // 스케일 확인용 로그
+    UE_LOG(LogTemp, Warning, TEXT("Before Detach - Scale: %s"), *GetActorScale3D().ToString());
+
+    FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
+    DetachFromActor(DetachRules);
+
+    // 확실하게 물리 재설정
+    ItemMesh->SetSimulatePhysics(false);
+
+    ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    ItemMesh->SetCollisionResponseToAllChannels(ECR_Block);
+    ItemMesh->SetCollisionObjectType(ECC_PhysicsBody);
+
+    ItemMesh->SetSimulatePhysics(true);
+    ItemMesh->SetEnableGravity(true);
+
+    FVector ThrowDirection = Player->GetActorForwardVector() + FVector(0, 0, -0.1f);
+    ItemMesh->AddImpulse(ThrowDirection * ThrowForce, NAME_None, true);
+
+    bIsThrown = true;
+
+    if (UItemComponent* ItemComp = Player->FindComponentByClass<UItemComponent>())
     {
-        ThrowDuration -= DeltaTime;
-        if (ThrowDuration <= 0.0f)
-        {
-            Explode();
-        }
+        ItemComp->SetEquippedItem(nullptr);
     }
+    
+    /*if (!Player || bIsThrown) return;
+
+    DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+    FVector ThrowDirection = Player->GetActorForwardVector() + FVector(0, 0, 0.5f);
+    ItemMesh->AddImpulse(ThrowDirection * ThrowForce, NAME_None, true);
+
+    bIsThrown = true;*/
+
 }
 
 void AThrowable::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    if (ThrowDuration <= 0.0f) // 즉시 효과 적용
-    {
-        if (ACharacterBase* Target = Cast<ACharacterBase>(OtherActor))
-        {
-            ApplyEffect(Target);
-        }
-        Destroy();
-    }
-}
-
-void AThrowable::Explode()
-{
-    TArray<FOverlapResult> Overlaps;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-
-    if (GetWorld()->OverlapMultiByChannel(Overlaps, GetActorLocation(), FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(EffectRadius), Params))
-    {
-        for (const FOverlapResult& Result : Overlaps)
-        {
-            if (ACharacterBase* Target = Cast<ACharacterBase>(Result.GetActor()))
-            {
-                ApplyEffect(Target);
-            }
-        }
-    }
+    if (!bIsThrown) return;
+    UE_LOG(LogTemp, Warning, TEXT("[Throwable] OnHit: %s hit %s"), *GetNameSafe(this), *GetNameSafe(OtherActor));
     Destroy();
-}
-
-void AThrowable::ApplyEffect(ACharacterBase* Target)
-{
-    // 기본 효과 없음, 하위 클래스에서 오버라이드
 }
