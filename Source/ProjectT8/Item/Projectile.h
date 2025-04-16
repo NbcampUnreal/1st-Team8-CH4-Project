@@ -28,7 +28,7 @@ protected:
     UProjectileMovementComponent* MovementComp;
 
     UPROPERTY(EditAnywhere)
-    float LifeSpan = 2.0f;
+    float LifeSpan = 3.0f;
 
     UPROPERTY(EditAnywhere)
     float Speed = 1000.0f;

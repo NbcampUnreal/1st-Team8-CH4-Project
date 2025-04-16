@@ -262,7 +262,8 @@ void ACharacterBase::ShowStatusWidget(const FGameplayTag& Tag)
 
 	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Shocked")))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("쇽 쇽 쇽!!!"));
+		GetCharacterMovement()->MaxWalkSpeed = 0.f;
+		UE_LOG(LogTemp, Warning, TEXT("쇽 쇽 쇽!!! 이동 불가"));
 	}
 
 	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Blinded")))
@@ -294,6 +295,12 @@ void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
 		}
 	}
 
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Shocked")))
+	{
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		UE_LOG(LogTemp, Warning, TEXT("쇼크 해제 이동 가능"));
+	}
+
 	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Blinded")))
 	{
 		if (FlashWidgetInstance)
@@ -303,6 +310,8 @@ void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
 			UE_LOG(LogTemp, Warning, TEXT("플래시 위젯 제거"));
 		}
 	}
+
+
 }
 
 
@@ -351,13 +360,48 @@ void ACharacterBase::Move(const FInputActionValue& Value)
 void ACharacterBase::SprintStart()
 {
 	bIsRunning = true;
-	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+
+	float FinalSpeed = RunSpeed;
+	if (bIsSpeedBoosted)
+	{
+		FinalSpeed *= SpeedBoostRatio;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = FinalSpeed;
 }
 
 void ACharacterBase::SprintEnd()
 {
 	bIsRunning = false;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	float FinalSpeed = WalkSpeed;
+	if (bIsSpeedBoosted)
+	{
+		FinalSpeed *= SpeedBoostRatio;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = FinalSpeed;
+}
+
+void ACharacterBase::SpeedUpStart(float SpeedRatio)
+{
+	bIsSpeedBoosted = true;
+	SpeedBoostRatio = SpeedRatio;
+
+	if (bIsRunning)
+		SprintStart();
+	else
+		SprintEnd();
+}
+
+void ACharacterBase::SpeedUpEnd()
+{
+	bIsSpeedBoosted = false;
+
+	if (bIsRunning)
+		SprintStart();
+	else
+		SprintEnd();
 }
 
 // Attack
