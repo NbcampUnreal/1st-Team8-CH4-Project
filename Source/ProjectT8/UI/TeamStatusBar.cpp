@@ -1,4 +1,7 @@
 #include "UI/TeamStatusBar.h"
+#include "Components/HorizontalBox.h"
+#include "Blueprint/UserWidget.h"
+#include "UI/PlayerStatusIcon.h"
 
 void UTeamStatusBar::InitPlayerIcons(const TArray<FPlayerStatusUIData>& PlayerList)
 {   
