@@ -1,5 +1,7 @@
 #include "Item/HealthPotion.h"
 #include "Player/CharacterBase.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
 AHealthPotion::AHealthPotion()
 {
 	ItemName = "HealthPotion";
@@ -7,15 +9,12 @@ AHealthPotion::AHealthPotion()
 
 void AHealthPotion::Use(ACharacterBase* Player)
 {
-    if (Player)
+    if (ACharacterBase* UseChar = Cast<ACharacterBase>(Player))
     {
-        UEffectComponent* EffectComp = Player->FindComponentByClass<UEffectComponent>();
-        if (EffectComp)
+        UAbilitySystemComponent* ASC = UseChar->GetAbilitySystemComponent();
+        if (ASC && HealEffect)
         {
-            FEffectParams Params;
-			Params.Value = HealthRestore;
-            EffectComp->ApplyEffect(EEffectType::Heal, Params);
+            ASC->ApplyGameplayEffectToSelf(HealEffect->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
         }
-        Destroy();
     }
 }

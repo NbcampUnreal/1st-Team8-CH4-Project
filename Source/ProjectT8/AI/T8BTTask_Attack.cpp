@@ -25,6 +25,8 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	AActor* TargetActor = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(TargetKey.SelectedKeyName));
 	if (!TargetActor) return EBTNodeResult::Failed;
 
+	if (!AIChar->IsEnemy(TargetActor)) return EBTNodeResult::Failed;
+
 	if (!AIChar->bCanAttack)
 	{
 		return EBTNodeResult::Failed;

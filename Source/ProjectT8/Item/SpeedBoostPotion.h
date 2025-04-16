@@ -14,8 +14,6 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere)
-	float SpeedIncreaseRatio = 1.5f;
-
-	UPROPERTY(EditAnywhere)
 	float Duration = 5.0f;
+	float SpeedIncreaseRatio = 2.0f;
 };

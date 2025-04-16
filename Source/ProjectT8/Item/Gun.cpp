@@ -21,6 +21,7 @@ void AGun::Use(ACharacterBase* Player)
         Server_Use(Player);
         return;
     }
+
     if (CurrentAmmo > 0 && ProjectileClass)
     {
         UAnimInstance* AnimInstance = Player->GetMesh()->GetAnimInstance();
@@ -34,8 +35,11 @@ void AGun::Use(ACharacterBase* Player)
             AnimInstance->Montage_Play(GunAttackMontage);
         }
 
-        FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f; // 총구 위치 조정 必
-        FRotator SpawnRotation = GetActorRotation();
+        APlayerController* PC = Cast<APlayerController>(Player->GetController());
+        if (!PC) return;
+        FVector FacingDirection = Player->GetActorForwardVector(); // Z축 회전 기준
+        FVector SpawnLocation = GetActorLocation() + FacingDirection * 100.0f;
+        FRotator SpawnRotation = FacingDirection.Rotation();
 
         FActorSpawnParameters Params;
         Params.Owner = this;
