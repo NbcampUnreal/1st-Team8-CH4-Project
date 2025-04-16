@@ -68,6 +68,12 @@ public:
 	UPROPERTY()
 	UUserWidget* BurnWidgetInstance;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> FlashWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* FlashWidgetInstance;
+
 	void InitAbilityActorInfo();
 
 	UFUNCTION(BlueprintCallable)
@@ -92,6 +98,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	float GetMaxHealth() const;
 
+	void SpeedUpStart(float SpeedRatio);
+	void SpeedUpEnd();
 	// 죽음 관련
 	UPROPERTY(BlueprintAssignable, Category = "Character")
 	FOnCharacterDeathDelegate OnCharacterDeath;
@@ -176,12 +184,12 @@ protected:
 
 	void InitializeFloatingStatusWidget();
 	void UpdateHealthUI();
-
 private:
 	bool bIsRunning = false;
-
-	const float WalkSpeed = 150.f;
-	const float RunSpeed = 600.f;
+	bool bIsSpeedBoosted = false;
+	float SpeedBoostRatio = 1.5f;
+	float WalkSpeed = 150.f;
+	float RunSpeed = 600.f;
 
 public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

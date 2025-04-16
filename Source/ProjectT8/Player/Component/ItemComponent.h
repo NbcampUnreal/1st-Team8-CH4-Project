@@ -27,6 +27,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	ABaseItem* GetEquippedItem() const { return EquippedItem; }
 
+	void SetEquippedItem(ABaseItem* NewItem) { EquippedItem = NewItem; }
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 private:
 	UPROPERTY(Replicated)
