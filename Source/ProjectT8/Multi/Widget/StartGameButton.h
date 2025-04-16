@@ -21,6 +21,6 @@ public:
 	UButton* StartGameButton;
 
 	virtual void NativeConstruct() override;
-
+	UFUNCTION()
 	void OnStartGameButtonClicked();
 };
