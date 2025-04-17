@@ -7,6 +7,7 @@
 #include "TimerManager.h"
 #include "TankProjectile.h"
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 ATank::ATank()
 {
@@ -30,87 +31,107 @@ ATank::ATank()
 
 	DefalutRot = FRotator::ZeroRotator;
 
+	SetReplicates(true);
+	bAlwaysRelevant = true;
 }
 
 // Called when the game starts or when spawned
 void ATank::BeginPlay()
 {
 	Super::BeginPlay();
-	TArray<AActor*> FoundActors;
-
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACharacterBase::StaticClass(), FoundActors);
 	
-	if (FoundActors.Num() > 0)
-	{
-		PlayerCharacter = Cast<ACharacterBase>(FoundActors[0]);
-	}
-	//Delegate.BindUFunction(this, "InvertBool", bCanAiming);
-	//GetWorldTimerManager().SetTimer(TurnTimerHandle, Delegate, TurnRate, true);
-	GetWorldTimerManager().SetTimer(TurnTimerHandle, this, &ATank::Aiming, TurnRate, true);
+	PlayerCharacter = Cast<ACharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0));
+	GetWorldTimerManager().SetTimer(TurnTimerHandle, this, &ATank::CanAiming, TurnRate, true);
 }
 
-void ATank::TurnTurret(FVector LookAtTartget)
+
+void ATank::OnRep_TurnTurret()
 {
 	float DeltaSeconds = UGameplayStatics::GetWorldDeltaSeconds(this);
-	if (PlayerCharacter)
+	if (bCanAiming)
 	{
-		if (bCanAiming)
-		{
-			FVector ToTarget = LookAtTartget - TurretMesh->GetComponentLocation();
+		FVector ToTarget = PlayerCharacter->GetActorLocation() - TurretMesh->GetComponentLocation();
 			
-			FRotator LookAtRotation = FRotator(0.f, ToTarget.Rotation().Yaw - 90.f, 0.f); // Yaw -90.f
-			TurretMesh->SetWorldRotation(FMath::RInterpTo(TurretMesh->GetComponentRotation(),LookAtRotation, DeltaSeconds,5.f));
+		FRotator LookAtTurretRotation = FRotator(0.f, ToTarget.Rotation().Yaw - 90.f, 0.f); // Yaw -90.f
+		TurretMesh->SetWorldRotation(FMath::RInterpTo(TurretMesh->GetComponentRotation(), LookAtTurretRotation, DeltaSeconds,5.f));
 
-			FRotator LookAtCannonRotation = FRotator(0.f, ToTarget.Rotation().Yaw -90.f, ToTarget.Rotation().Pitch * -1); // Yaw -90.f Pitch * -1
-			CannonMesh->SetWorldRotation(FMath::RInterpTo(CannonMesh->GetComponentRotation(), LookAtCannonRotation, DeltaSeconds, 5.f));
+		FRotator LookAtCannonRotation = FRotator(0.f, ToTarget.Rotation().Yaw -90.f, ToTarget.Rotation().Pitch * -1); // Yaw -90.f Pitch * -1
+		CannonMesh->SetWorldRotation(FMath::RInterpTo(CannonMesh->GetComponentRotation(), LookAtCannonRotation, DeltaSeconds, 5.f));
 
-			Distance = FVector::Distance(PlayerCharacter->GetActorLocation(), RootComp->GetComponentLocation());
-			RollValue;
-			if (Distance > 1500)
-			{
-				RollValue = 7.f;
-			}
-			else if (Distance <= 1500)
-			{
-				RollValue = 15.f;
-			}
-			FRotator LookAtSpawnRot = FRotator(ToTarget.Rotation().Roll - RollValue, ToTarget.Rotation().Yaw, ((ToTarget.Rotation().Pitch * -1) -93.f)); //  ((Pitch * -1) -90.f)
-			ProjectileSpawnPoint->SetWorldRotation(FMath::RInterpTo(ProjectileSpawnPoint->GetComponentRotation(), LookAtSpawnRot, DeltaSeconds, 5.f));
-		}
-		else
-		{
-			TurretMesh->SetWorldRotation(FMath::RInterpTo(TurretMesh->GetComponentRotation(), DefalutRot, DeltaSeconds, 5.f));
-			CannonMesh->SetWorldRotation(FMath::RInterpTo(CannonMesh->GetComponentRotation(), DefalutRot, DeltaSeconds, 5.f));
-			ProjectileSpawnPoint->SetWorldRotation(FMath::RInterpTo(CannonMesh->GetComponentRotation(), DefalutRot, DeltaSeconds, 5.f));
-		}
+		Distance = FVector::Distance(PlayerCharacter->GetActorLocation(), RootComp->GetComponentLocation());
+
+		FRotator LookAtSpawnRot = FRotator(ToTarget.Rotation().Roll - DistanceToValue(Distance), ToTarget.Rotation().Yaw, ((ToTarget.Rotation().Pitch * -1) - 93.f)); //  ((Pitch * -1) -90.f)
+		ProjectileSpawnPoint->SetWorldRotation(FMath::RInterpTo(ProjectileSpawnPoint->GetComponentRotation(), LookAtSpawnRot, DeltaSeconds, 5.f));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerCharacter is null"));
+		TurretMesh->SetWorldRotation(FMath::RInterpTo(TurretMesh->GetComponentRotation(), DefalutRot, DeltaSeconds, 5.f));
+		CannonMesh->SetWorldRotation(FMath::RInterpTo(CannonMesh->GetComponentRotation(), DefalutRot, DeltaSeconds, 5.f));
+		ProjectileSpawnPoint->SetWorldRotation(FMath::RInterpTo(CannonMesh->GetComponentRotation(), DefalutRot, DeltaSeconds, 5.f));
 	}
+}
+
+bool ATank::Server_TurnTurret_Validate(ACharacterBase* Player)
+{
+	return true;
+}
+
+void ATank::Server_TurnTurret_Implementation(ACharacterBase* Player)
+{
+	PlayerCharacter = Player;
+	OnRep_TurnTurret();
+}
+void ATank::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ATank, PlayerCharacter);
+}
+
+bool ATank::Server_Fire_Validate()
+{
+	return true;
+}
+
+void ATank::Server_Fire_Implementation()
+{
+	Fire();
+}
+
+float ATank::DistanceToValue(float Value)
+{
+	if (Value > 1500)
+	{
+		return 7.f;
+	}
+	else if (Value <= 1500)
+	{
+		return 15.f;
+	}
+	else return 0.f;
 }
 
 // Called when the game starts or when spawned
 void ATank::Fire()
 {
-	if (ProjectileClass == nullptr)
+	if (ProjectileClass == nullptr) return;
+	if (HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ProjectileClass is null"));
-		return;
+		if (bCanAiming)
+		{
+			FVector Lot = ProjectileSpawnPoint->GetComponentLocation();
+			FRotator Rot = ProjectileSpawnPoint->GetComponentRotation();
+			GetWorld()->SpawnActor<ATankProjectile>(ProjectileClass, Lot, Rot);
+		}
 	}
-	FVector Lot = ProjectileSpawnPoint->GetComponentLocation();
-	FRotator Rot = ProjectileSpawnPoint->GetComponentRotation();
-	GetWorld()->SpawnActor<ATankProjectile>(ProjectileClass, Lot, Rot);
+	else
+	{
+		Server_Fire();
+	}
 }
 
 // Aiming
-void ATank::Aiming()
+void ATank::CanAiming()
 {
-	if (PlayerCharacter == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerCharacter is null"));
-		return;
-	}
 	if (bCanAiming)
 	{
 		bCanAiming = false;
@@ -126,7 +147,5 @@ void ATank::Aiming()
 void ATank::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	TurnTurret(PlayerCharacter->GetActorLocation());
+	OnRep_TurnTurret();
 }
-

@@ -18,12 +18,22 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_TurnTurret(ACharacterBase* Player);
+	UFUNCTION()
+	void OnRep_TurnTurret();
 
-	void TurnTurret(FVector LookAtTartget);
+	UFUNCTION(Server,Reliable,WithValidation)
+	void Server_Fire();
 
 	void Fire();
 
-	void Aiming();
+	void CanAiming();
+
+	float DistanceToValue(float Distance);
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -44,13 +54,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Tank")
 	USceneComponent* ProjectileSpawnPoint;
 
+	UPROPERTY(ReplicatedUsing = OnRep_TurnTurret)
 	class ACharacterBase* PlayerCharacter;
 
 	FRotator DefalutRot;
 
 	FTimerHandle TurnTimerHandle;
 	FTimerHandle FireTimerHandle;
-	FTimerDelegate Delegate;
 
 	UPROPERTY(EditAnywhere)
 	float TurnRate = 5.f;

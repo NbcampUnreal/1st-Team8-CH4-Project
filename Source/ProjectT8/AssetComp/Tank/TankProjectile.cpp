@@ -11,6 +11,8 @@ ATankProjectile::ATankProjectile()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	bReplicates = true;
+
 	ProjectileComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileComp"));
 	RootComponent = ProjectileComp;
 
@@ -61,6 +63,7 @@ void ATankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
 			}
 		}
 	}
+
 
 	DrawDebugSphere(GetWorld(), ProjectileComp->GetComponentLocation(), 150.f, 16, FColor::Green, false, 1.0f);
 
