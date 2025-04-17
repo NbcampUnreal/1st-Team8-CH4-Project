@@ -1,5 +1,6 @@
 #include "T8GameMode.h"
 #include "Player/CharacterBase.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/Common/T8PlayerState.h"
 #include "GameFramework/Character.h"
 #include "AI/T8AICharacter.h"
@@ -7,6 +8,7 @@
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
 #include "GameFramework/GameState/T8GameState.h"
+#include "GameFramework/GameState/ResultGameState.h"
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
 #include "Player/T8PlayerController.h"
@@ -101,12 +103,29 @@ bool AT8GameMode::CheckGameEnd()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Game Over: Team %d Won!"), WinningTeamID);
 
+			UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance());
+            if (GI)
+            {
+                for (FSlotInfo& Slot : GI->SavedLobbySlots)
+                {
+                    if (Slot.TeamNumber == WinningTeamID)
+                    {
+                        GI->WinningPlayerStatesResult.Add(Slot.PlayerState);
+                    }
+                }
+            }
+
             FTimerHandle GameEndTimerHandle;
             GetWorld()->GetTimerManager().SetTimer(
                 GameEndTimerHandle,
                 [this]()
             {
-                // 여기 게임 종료 UI나 뭔가 처리하는 로직 추가
+                UWorld* World = GetWorld();
+                if (World)
+                {
+                    UE_LOG(LogTemp, Log, TEXT("AT8GameMode: Timer finished. Executing ServerTravel to BattleLevel."));
+                    World->ServerTravel("ResultMap");
+                }
             }, 3.f, false);
 
 			return true;

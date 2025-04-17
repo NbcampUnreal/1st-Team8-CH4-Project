@@ -24,6 +24,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Game Data")
     ETeamSetup SavedTeamSetup;
 
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Game Result")
+    TArray<APlayerState*> WinningPlayerStatesResult;
+
     // LobbyGameState�� ������ GameInstance�� ����
     UFUNCTION(BlueprintCallable, Category = "Game Data")
     void SaveLobbyGameState(ALobbyGameState* LobbyGameState);
