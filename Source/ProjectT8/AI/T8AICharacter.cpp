@@ -70,7 +70,6 @@ void AT8AICharacter::BeginPlay()
 	}
 
 	InitializeFloatingStatusWidget();
-
 	CachedAIController = Cast<AAIController>(GetController());
 
 	if (InitEffectClass && AbilitySystemComponent)
@@ -98,24 +97,13 @@ void AT8AICharacter::BeginPlay()
 	{
 		if (ALobbyGameState* LobbyState = GetWorld()->GetGameState<ALobbyGameState>())
 		{
-			FString AIDisplayName = TeamIndicator ? TeamIndicator->Text.ToString() : TEXT("");
-			TeamID = LobbyState->GetTeamNumberForAI(AIDisplayName);
-
-			// 시각적으로 팀 번호를 표시
-			TeamIndicator->SetText(FText::FromString(FString::Printf(TEXT("T%d"), TeamID)));
-
-			// 팀 색상 설정 (선택)
-			switch (TeamID)
-			{
-			case 0: TeamIndicator->SetTextRenderColor(FColor::Blue); break;
-			case 1: TeamIndicator->SetTextRenderColor(FColor::Red); break;
-			case 2: TeamIndicator->SetTextRenderColor(FColor::Green); break;
-			case 3: TeamIndicator->SetTextRenderColor(FColor::Yellow); break;
-			default: TeamIndicator->SetTextRenderColor(FColor::White); break;
-			}
+			FString DisplayName = TeamIndicator ? TeamIndicator->Text.ToString() : TEXT("");
+			int32 AssignedTeam = LobbyState->GetTeamNumberForAI(DisplayName);
+			SetTeamID(AssignedTeam);
 		}
 	}
 }
+
 
 void AT8AICharacter::Tick(float DeltaTime)
 {
@@ -205,22 +193,6 @@ void AT8AICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AT8AICharacter, ItemComponent);
 }
 
-
-//void AT8AICharacter::Die()
-//{
-//	UE_LOG(LogTemp, Warning, TEXT("AI 사망 처리 시작"));
-//
-//	GetMesh()->SetSimulatePhysics(true);
-//	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-//
-//	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-//	GetCharacterMovement()->DisableMovement();
-//
-//	DetachFromControllerPendingDestroy();
-//
-//	SetLifeSpan(5.0f);
-//}
-
 bool AT8AICharacter::IsEnemy(AActor* OtherActor) const
 {
 	if (!OtherActor || OtherActor == this) return false;
@@ -244,23 +216,29 @@ int32 AT8AICharacter::GetTeamID() const
 	return TeamID;
 }
 
-//void AT8AICharacter::SetTeamID(int32 NewID)
-//{
-//	TeamID = NewID;
-//
-//	if (TeamIndicator)
-//	{
-//		TeamIndicator->SetText(FText::FromString(FString::Printf(TEXT("T%d"), TeamID)));
-//
-//		switch (TeamID)
-//		{
-//		case 0: TeamIndicator->SetTextRenderColor(FColor::Blue); break;
-//		case 1: TeamIndicator->SetTextRenderColor(FColor::Red); break;
-//		case 2: TeamIndicator->SetTextRenderColor(FColor::Green); break;
-//		default : TeamIndicator->SetTextRenderColor(FColor::White); break;
-//		}
-//	}
-//}
+void AT8AICharacter::SetTeamID(int32 NewID)
+{
+	TeamID = NewID;
+
+	if (TeamIndicator)
+	{
+		TeamIndicator->SetText(FText::FromString(FString::Printf(TEXT("T%d"), TeamID)));
+		TeamIndicator->SetTextRenderColor(GetColorForTeam(TeamID));
+	}
+}
+
+FColor AT8AICharacter::GetColorForTeam(int32 InTeamID) const
+{
+	switch (InTeamID)
+	{
+	case 0: return FColor::Blue;
+	case 1: return FColor::Red;
+	case 2: return FColor::Green;
+	case 3: return FColor::Yellow;
+	default: return FColor::White;
+	}
+}
+
 
 UAbilitySystemComponent* AT8AICharacter::GetAbilitySystemComponent() const
 {
