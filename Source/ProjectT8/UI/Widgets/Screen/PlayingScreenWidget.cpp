@@ -36,16 +36,16 @@ void UPlayingScreenWidget::NativeConstruct()
 			switch (GI->SavedTeamSetup)
 			{
 			case ETeamSetup::FreeForAll:
-				TeamModeText->SetText(FText::FromString("FreeForAll"));
+				TeamModeText->SetText(FText::FromString("SURVIVOR!"));
 				break;
 			case ETeamSetup::TwoTeams:
-				TeamModeText->SetText(FText::FromString("TwoTeams"));
+				TeamModeText->SetText(FText::FromString("RED vs BLUE"));
 				break;
 			case ETeamSetup::FourTeams:
-				TeamModeText->SetText(FText::FromString("FourTeams"));
+				TeamModeText->SetText(FText::FromString("RED vs BLUE vs GREEN vs YELLOW"));
 				break;
 			default:
-				TeamModeText->SetText(FText::FromString("FreeForAll"));
+				TeamModeText->SetText(FText::FromString("SURVIVOR!"));
 				break;
 			}
 		}
