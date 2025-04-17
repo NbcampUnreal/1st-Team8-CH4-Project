@@ -183,8 +183,6 @@ void ACharacterBase::BeginPlay()
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	
-
 	if (AttributeSet)
 	{
 		AttributeSet->OnHealthChanged.AddDynamic(this, &ACharacterBase::HandleHealthChanged);
@@ -196,7 +194,6 @@ void ACharacterBase::BeginPlay()
 
 		// 게임 상태 변경 이벤트 구독
 		GameState->OnPhaseChanged.AddDynamic(this, &ACharacterBase::OnGamePhaseChanged);
-		
 	}
 
 	StatusEffectTags = {
@@ -498,6 +495,7 @@ void ACharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	InitAbilityActorInfo();
+	InitializeFloatingStatusWidget();
 }
 
 EGamePhase ACharacterBase::GetCurrentGamePhase() const
@@ -515,14 +513,11 @@ void ACharacterBase::UpdatePlayerName()
 
 	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Character: %s"), *GetName());
-		UE_LOG(LogTemp, Warning, TEXT("PersonaName: %s"), *PS->PersonaName);
 		StatusWidget->SetPlayerName(PS->PersonaName);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Character: %s"), *GetName());
-		// PlayerState가 없는 경우 기본 이름 설정
 		StatusWidget->SetPlayerName(TEXT("Unknown"));
 	}
 }
@@ -570,7 +565,8 @@ void ACharacterBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
-
+	InitializeFloatingStatusWidget();
+	// 플레이어 외형 갱신
 	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
 	{
 		HandleAppearanceByPhase(GameState->CurPhase);
@@ -699,28 +695,14 @@ void ACharacterBase::MulticastDie_Implementation()
 		GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("root"), true, true);
 	}
 
-	// 무기가 있다면 물리 시뮬레이션 활성화
 	if (ItemComponent)
 	{
 		if (ABaseItem* EquippedItem = ItemComponent->GetEquippedItem())
 		{
-			// 무기의 컴포넌트들을 찾아서 물리 적용
-			TArray<UPrimitiveComponent*> WeaponComponents;
-			EquippedItem->GetComponents<UPrimitiveComponent>(WeaponComponents);
-
-			for (UPrimitiveComponent* Component : WeaponComponents)
-			{
-				if (Component)
-				{
-					Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					Component->SetSimulatePhysics(true);
-					Component->SetEnableGravity(true);
-				}
-			}
+			ItemComponent->DropItemToWorld();
 		}
 	}
 
-	// 델리게이트 브로드캐스트
 	OnCharacterDeath.Broadcast(this);
 }
 
