@@ -138,6 +138,12 @@ protected:
 
 	FColor GetColorForTeam(int32 InTeamID) const;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Team")
+	FString DisplayName;
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetDisplayName(const FString& NewName);
+
 	UPROPERTY()
 	class AAIController* CachedAIController;
 

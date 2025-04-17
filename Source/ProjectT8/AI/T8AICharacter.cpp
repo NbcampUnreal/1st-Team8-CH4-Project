@@ -31,14 +31,6 @@ AT8AICharacter::AT8AICharacter()
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	ItemComponent = CreateDefaultSubobject<UItemComponent>(TEXT("ItemComponent"));
 
-	/*TeamIndicator = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TeamIndicator"));
-	TeamIndicator->SetupAttachment(RootComponent);
-	TeamIndicator->SetHorizontalAlignment(EHTA_Center);
-	TeamIndicator->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
-	TeamIndicator->SetText(FText::FromString("T0"));
-	TeamIndicator->SetTextRenderColor(FColor::White);
-	TeamIndicator->SetWorldSize(30.0f);*/
-
 	TeamIndicator = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TeamIndicator"));
 	TeamIndicator->SetupAttachment(RootComponent);
 	TeamIndicator->SetHorizontalAlignment(EHTA_Center);
@@ -97,7 +89,6 @@ void AT8AICharacter::BeginPlay()
 	{
 		if (ALobbyGameState* LobbyState = GetWorld()->GetGameState<ALobbyGameState>())
 		{
-			FString DisplayName = TeamIndicator ? TeamIndicator->Text.ToString() : TEXT("");
 			int32 AssignedTeam = LobbyState->GetTeamNumberForAI(DisplayName);
 			SetTeamID(AssignedTeam);
 		}
@@ -236,6 +227,16 @@ FColor AT8AICharacter::GetColorForTeam(int32 InTeamID) const
 	case 2: return FColor::Green;
 	case 3: return FColor::Yellow;
 	default: return FColor::White;
+	}
+}
+
+void AT8AICharacter::SetDisplayName(const FString& NewName)
+{
+	DisplayName = NewName;
+
+	if (TeamIndicator)
+	{
+		TeamIndicator->SetText(FText::FromString(NewName));
 	}
 }
 
