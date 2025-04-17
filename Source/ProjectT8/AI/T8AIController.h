@@ -19,7 +19,7 @@ public:
 	AT8AIController();
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
-	AActor* GetTargetPlayer() const;
+	AActor* GetTarget() const;
 
 	UFUNCTION(BlueprintCallable)
 	void RunWeaponSearchQuery();

@@ -20,6 +20,7 @@
 #include "Item/Weapon.h"
 #include "UI/FloatingStatusWidget.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/GameMode/T8GameMode.h"
 
 
 // Constructor
@@ -183,6 +184,7 @@ void ACharacterBase::BeginPlay()
 		FGameplayTag::RequestGameplayTag("State.Poisoned"),
 		FGameplayTag::RequestGameplayTag("State.Burning"),
 		FGameplayTag::RequestGameplayTag("State.Shocked"),
+		FGameplayTag::RequestGameplayTag("State.Blinded"),
 	};
 
 	RegisterStatusEffectDelegates();
@@ -261,7 +263,22 @@ void ACharacterBase::ShowStatusWidget(const FGameplayTag& Tag)
 
 	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Shocked")))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("쇽 쇽 쇽!!!"));
+		GetCharacterMovement()->MaxWalkSpeed = 0.f;
+		UE_LOG(LogTemp, Warning, TEXT("쇽 쇽 쇽!!! 이동 불가"));
+	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Blinded")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("플래시 플래시!!!"));
+		if (!FlashWidgetInstance && FlashWidgetClass)
+		{
+			FlashWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), FlashWidgetClass);
+			if (FlashWidgetInstance)
+			{
+				FlashWidgetInstance->AddToViewport();
+				UE_LOG(LogTemp, Warning, TEXT("플래시 위젯 생성"));
+			}
+		}
 	}
 }
 
@@ -278,6 +295,24 @@ void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
 			UE_LOG(LogTemp, Warning, TEXT("불 위젯 제거"));
 		}
 	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Shocked")))
+	{
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		UE_LOG(LogTemp, Warning, TEXT("쇼크 해제 이동 가능"));
+	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Blinded")))
+	{
+		if (FlashWidgetInstance)
+		{
+			FlashWidgetInstance->RemoveFromParent();
+			FlashWidgetInstance = nullptr;
+			UE_LOG(LogTemp, Warning, TEXT("플래시 위젯 제거"));
+		}
+	}
+
+
 }
 
 
@@ -288,6 +323,9 @@ void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ACharacterBase, AbilitySystemComponent);
 	DOREPLIFETIME(ACharacterBase, CombatComponent);
 	DOREPLIFETIME(ACharacterBase, ItemComponent);
+	DOREPLIFETIME(ACharacterBase, bIsDead);
+	DOREPLIFETIME(ACharacterBase, TeamNumber);
+	DOREPLIFETIME(ACharacterBase, PlayerDisplayName);
 }
 
 // BeginPlay
@@ -326,13 +364,48 @@ void ACharacterBase::Move(const FInputActionValue& Value)
 void ACharacterBase::SprintStart()
 {
 	bIsRunning = true;
-	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+
+	float FinalSpeed = RunSpeed;
+	if (bIsSpeedBoosted)
+	{
+		FinalSpeed *= SpeedBoostRatio;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = FinalSpeed;
 }
 
 void ACharacterBase::SprintEnd()
 {
 	bIsRunning = false;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	float FinalSpeed = WalkSpeed;
+	if (bIsSpeedBoosted)
+	{
+		FinalSpeed *= SpeedBoostRatio;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = FinalSpeed;
+}
+
+void ACharacterBase::SpeedUpStart(float SpeedRatio)
+{
+	bIsSpeedBoosted = true;
+	SpeedBoostRatio = SpeedRatio;
+
+	if (bIsRunning)
+		SprintStart();
+	else
+		SprintEnd();
+}
+
+void ACharacterBase::SpeedUpEnd()
+{
+	bIsSpeedBoosted = false;
+
+	if (bIsRunning)
+		SprintStart();
+	else
+		SprintEnd();
 }
 
 // Attack
@@ -462,4 +535,108 @@ void ACharacterBase::UpdateHealthUI()
 		float MaxHealth = GetMaxHealth();
 		StatusWidget->UpdateHealthBar(CurrentHealth, MaxHealth);
 	}
+}
+
+void ACharacterBase::Die()
+{
+	if (HasAuthority())
+	{
+		bIsDead = true;
+		MulticastDie();
+
+		// 게임모드에 죽음 알림
+		if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
+		{
+			if (AT8GameMode* T8GameMode = Cast<AT8GameMode>(GameMode))
+			{
+				T8GameMode->NotifyPlayerDeath(this);
+			}
+		}
+	}
+}
+
+void ACharacterBase::MulticastDie_Implementation()
+{
+	// 모든 클라이언트에서 실행될 죽음 처리
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->DisableMovement();
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
+	// 메인 캐릭터 메시의 애니메이션 중지
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->StopAllMontages(0.0f);
+		AnimInstance->bReceiveNotifiesFromLinkedInstances = false;
+	}
+
+	// 장착된 장비들의 애니메이션도 중지
+	TArray<USkeletalMeshComponent*> EquipmentMeshes = {
+		HeadMesh, AccessoryMesh, GlovesMesh, TopMesh, BottomMesh, ShoesMesh
+	};
+
+	for (USkeletalMeshComponent* EquipmentMesh : EquipmentMeshes)
+	{
+		if (EquipmentMesh)
+		{
+			if (UAnimInstance* EquipAnimInstance = EquipmentMesh->GetAnimInstance())
+			{
+				EquipAnimInstance->StopAllMontages(0.0f);
+				EquipAnimInstance->bReceiveNotifiesFromLinkedInstances = false;
+			}
+			EquipmentMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			EquipmentMesh->SetSimulatePhysics(true);
+			EquipmentMesh->SetEnableGravity(true);
+		}
+	}
+
+	// 콜리전 설정
+	if (GetCapsuleComponent())
+	{
+		// 캡슐 콜리전은 블록으로 유지하되 크기를 줄임
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		
+		// 캡슐 크기를 줄여서 바닥에 눕게 함
+		GetCapsuleComponent()->SetCapsuleHalfHeight(20.0f);
+	}
+
+	// 메시에 물리 시뮬레이션 활성화
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetMesh()->SetCollisionResponseToAllChannels(ECR_Block);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetEnableGravity(true);
+		GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("root"), true, true);
+	}
+
+	// 무기가 있다면 물리 시뮬레이션 활성화
+	if (ItemComponent)
+	{
+		if (ABaseItem* EquippedItem = ItemComponent->GetEquippedItem())
+		{
+			// 무기의 컴포넌트들을 찾아서 물리 적용
+			TArray<UPrimitiveComponent*> WeaponComponents;
+			EquippedItem->GetComponents<UPrimitiveComponent>(WeaponComponents);
+
+			for (UPrimitiveComponent* Component : WeaponComponents)
+			{
+				if (Component)
+				{
+					Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+					Component->SetSimulatePhysics(true);
+					Component->SetEnableGravity(true);
+				}
+			}
+		}
+	}
+
+	// 델리게이트 브로드캐스트
+	OnCharacterDeath.Broadcast(this);
 }

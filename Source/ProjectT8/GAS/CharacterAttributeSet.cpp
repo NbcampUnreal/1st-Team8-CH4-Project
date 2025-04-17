@@ -1,6 +1,7 @@
 ﻿#include "GAS/CharacterAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
+#include "Player/CharacterBase.h"
 
 UCharacterAttributeSet::UCharacterAttributeSet()
 {
@@ -30,6 +31,14 @@ void UCharacterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 		SetHealth(NewHealth);
 		OnHealthChanged.Broadcast(NewHealth, GetMaxHealth());
 		UE_LOG(LogTemp, Warning, TEXT("Health Changed: %f"), NewHealth);
+
+		if (NewHealth <= 0.0f)
+		{
+			if (ACharacterBase* Character = Cast<ACharacterBase>(GetOwningActor()))
+			{
+				Character->Die();
+			}
+		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
@@ -41,6 +50,14 @@ void UCharacterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModC
 			SetHealth(NewHealth);
 			OnHealthChanged.Broadcast(NewHealth, GetMaxHealth());
 			UE_LOG(LogTemp, Warning, TEXT("Damage %f !!! Current Health: %f"), DamageDone, NewHealth);
+
+			if (NewHealth <= 0.0f)
+			{
+				if (ACharacterBase* Character = Cast<ACharacterBase>(GetOwningActor()))
+				{
+					Character->Die();
+				}
+			}
 		}
 	}
 }

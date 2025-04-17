@@ -45,24 +45,32 @@ void UCombatComponent::Multicast_PlayAttackMontage_Implementation()
 		UE_LOG(LogTemp, Error, TEXT("AnimInstance Is Nullptr"));
 	}
 
-	ABaseItem* BaseItem = Cast<ACharacterBase>(OwnerCharacter)->ItemComponent->GetEquippedItem();
-	AWeapon* Weapon = Cast<AWeapon>(BaseItem);
+	UItemComponent* ItemComp = OwnerCharacter->FindComponentByClass<UItemComponent>();
+	AWeapon* Weapon = nullptr;
 
-	if (BaseItem && Weapon)
+	if (ItemComp)
 	{
-		if (AnimInstance && !AnimInstance->Montage_IsPlaying(Weapon->AttackMontage))
+		ABaseItem* BaseItem = ItemComp->GetEquippedItem();
+		Weapon = Cast<AWeapon>(BaseItem);
+	}
+
+	if (Weapon && Weapon->AttackMontage)
+	{
+		if (!AnimInstance->Montage_IsPlaying(Weapon->AttackMontage))
 		{
 			AnimInstance->Montage_Play(Weapon->AttackMontage);
 		}
 	}
-	else 
+	else
 	{
-		if (AnimInstance && !AnimInstance->Montage_IsPlaying(DefaultAttackMontage))
+		if (!AnimInstance->Montage_IsPlaying(DefaultAttackMontage))
 		{
 			AnimInstance->Montage_Play(DefaultAttackMontage);
 		}
 	}
 }
+
+
 
 void UCombatComponent::HandleAttackNotify()
 {
@@ -71,12 +79,15 @@ void UCombatComponent::HandleAttackNotify()
 
 bool UCombatComponent::CanAttack() const
 {
-	if (ACharacterBase* CharBase = Cast<ACharacterBase>(OwnerCharacter))
-	{
-		return !CharBase->GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned"));
-	}
-	return true;
+	IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(OwnerCharacter);
+	if (!AbilityInterface) return true;
+
+	UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+	if (!ASC) return true;
+
+	return !ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned"));
 }
+
 
 void UCombatComponent::OnAttackHit()
 {
@@ -104,53 +115,58 @@ void UCombatComponent::DealDamageToActors(const TArray<FHitResult>& HitResults)
 {
 	for (const FHitResult& Hit : HitResults)
 	{
-		if (ACharacterBase* TargetCharacter = Cast<ACharacterBase>(Hit.GetActor()))
-		{
-			if (TargetCharacter != OwnerCharacter)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("타격 대상: %s"), *TargetCharacter->GetName());
+		ACharacter* TargetCharacter = Cast<ACharacter>(Hit.GetActor());
 
-				if (OwnerCharacter->HasAuthority())
-				{
-					if (CurrentDamageEffect)
-					{
-						ApplyGameplayEffectToTarget(TargetCharacter, CurrentDamageEffect);
-					}
-					ApplyKnockback(TargetCharacter);
-				}
-				else
-				{
-					if (CurrentDamageEffect)
-					{
-						Server_ApplyEffectToTarget(TargetCharacter, CurrentDamageEffect);
-					}
-					Server_ApplyKnockback(TargetCharacter);
-				}
+		if (!TargetCharacter || TargetCharacter == OwnerCharacter) continue;
+
+		if (OwnerCharacter->HasAuthority())
+		{
+			if (CurrentDamageEffect)
+			{
+				ApplyGameplayEffectToTarget(TargetCharacter, CurrentDamageEffect);
 			}
+			ApplyKnockback(TargetCharacter);
+		}
+		else
+		{
+			if (CurrentDamageEffect)
+			{
+				Server_ApplyEffectToTarget(TargetCharacter, CurrentDamageEffect);
+			}
+			Server_ApplyKnockback(TargetCharacter);
 		}
 	}
 }
 
+
 void UCombatComponent::ApplyGameplayEffectToTarget(ACharacter* Target, TSubclassOf<UGameplayEffect> EffectClass)
 {
 	if (!OwnerCharacter || !EffectClass || !Target) return;
-	UAbilitySystemComponent* ASC = Cast<ACharacterBase>(Target)->GetAbilitySystemComponent();
+
+	IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Target);
+	if (!AbilityInterface) return;
+
+	UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
 	if (!ASC) return;
 
 	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 	Context.AddSourceObject(Target);
-	
+
 	FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(EffectClass, 1.0f, Context);
 	if (Spec.IsValid())
 	{
-		Cast<ACharacterBase>(Target)->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 		UE_LOG(LogTemp, Warning, TEXT("%s 에게 이펙트 적용: %s"), *Target->GetName(), *EffectClass->GetName());
 	}
 }
 
+
 void UCombatComponent::ApplyKnockback(AActor* TargetActor)
 {	
-	if (!OwnerCharacter || !OwnerCharacter->HasAuthority()) return;
+	if (!OwnerCharacter || !OwnerCharacter->HasAuthority())
+	{
+		return;
+	}
 
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
 	if (!TargetCharacter) return;
@@ -166,9 +182,16 @@ void UCombatComponent::Multicast_ApplyKnockback_Implementation(AActor* TargetAct
 	ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
 	if (!TargetCharacter) return;
 
+	if (TargetCharacter->IsLocallyControlled())
+	{
+		TargetCharacter->LaunchCharacter(Direction * KnockbackStrength, true, true);
+		return;
+	}
+
 	FVector knockbackForce = Direction * KnockbackStrength;
 	TargetCharacter->LaunchCharacter(knockbackForce, true, true);
 }
+
 
 void UCombatComponent::Server_ApplyEffectToTarget_Implementation(ACharacter* Target, TSubclassOf<UGameplayEffect> EffectClass)
 {
