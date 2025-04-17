@@ -23,11 +23,16 @@ public:
 
 	void NotifyScreenRemoved(UUserWidget* Widget);
 
+	void OpenLevelForPhase(EGamePhase Phase);
+
 private:
 	UPROPERTY()
 	UPhaseInfoDataAsset* PhaseInfoDataAsset;
 
-    UPROPERTY()
+	UPROPERTY()
+	TMap<EGamePhase, FName> PhaseTargetNameMap;
+	
+	UPROPERTY()
     TMap<EGamePhase, TSubclassOf<UUserWidget>> PhaseWidgetMap;
 
 	UPROPERTY()

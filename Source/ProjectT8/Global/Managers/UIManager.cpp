@@ -21,10 +21,16 @@ void UUIManager::Initialize(FSubsystemCollectionBase& Collection)
     {
         return;
     }
-
-    // Initializing PhaseWidgetMap
+    
     for (UPhaseInfoItem* Item : PhaseInfoDataAsset->PhaseInfos)
     {
+        // Initializing PhaseTargetNameMap
+        if (Item/* && Item->MapName*/)
+        {
+            PhaseTargetNameMap.Add(Item->Phase, Item->MapName);
+        }
+
+        // Initializing PhaseWidgetMap
         if (Item && Item->WidgetClass)
         {
             PhaseWidgetMap.Add(Item->Phase, Item->WidgetClass);
@@ -103,4 +109,15 @@ void UUIManager::NotifyScreenRemoved(UUserWidget* Widget)
     {
         CurWidget = nullptr;
     }
+}
+
+void UUIManager::OpenLevelForPhase(EGamePhase Phase)
+{
+    if (const FName* FoundMapName = PhaseTargetNameMap.Find(Phase))
+    {
+        UGameplayStatics::OpenLevel(this, *FoundMapName);
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("OpenLevel failed: No map found for Phase %d"), (int32)Phase);
 }

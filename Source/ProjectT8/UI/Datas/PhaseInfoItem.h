@@ -19,7 +19,7 @@ public:
     EGamePhase Phase;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    TSoftObjectPtr<UWorld> TargetMap;
+    FName MapName;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TSubclassOf<UUserWidget> WidgetClass;
