@@ -1,5 +1,6 @@
 #include "T8GameMode.h"
 #include "Player/CharacterBase.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/Common/T8PlayerState.h"
 #include "GameFramework/Character.h"
 #include "AI/T8AICharacter.h"
@@ -106,7 +107,12 @@ bool AT8GameMode::CheckGameEnd()
                 GameEndTimerHandle,
                 [this]()
             {
-                // 여기 게임 종료 UI나 뭔가 처리하는 로직 추가
+                UWorld* World = GetWorld();
+                if (World)
+                {
+                    UE_LOG(LogTemp, Log, TEXT("AT8GameMode: Timer finished. Executing ServerTravel to BattleLevel."));
+                    World->ServerTravel("ResultMap");
+                }
             }, 3.f, false);
 
 			return true;
