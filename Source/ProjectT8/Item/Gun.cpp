@@ -17,7 +17,7 @@ void AGun::Use(ACharacterBase* Player)
     if (!Player) return;
 
     if (!HasAuthority())
-    {
+    {   //총소리 넣을거면 여따가
         Server_Use(Player);
         return;
     }
@@ -50,11 +50,6 @@ void AGun::Use(ACharacterBase* Player)
         --CurrentAmmo;
         if (CurrentAmmo <= 0) Destroy();
     }
-}
-
-void AGun::Server_Use_Implementation(ACharacterBase* Player)
-{
-    Use(Player);
 }
 
 void AGun::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
