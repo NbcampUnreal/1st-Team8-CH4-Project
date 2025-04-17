@@ -12,6 +12,7 @@
 #include "UserSlot.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "InputCoreTypes.h"
 #include "GameFramework/PlayerController/LobbyPlayerController.h"
 #include "Components/PanelWidget.h"
@@ -56,6 +57,50 @@ void USlotStructure::NativeConstruct()
     
     // 호스트 전용 버튼 바인딩
     BindHostButtonEvents();
+
+    APlayerController* OwningController = GetOwningPlayer();
+    // IsLocalPlayerHost() 함수를 사용해도 됩니다: if (!IsLocalPlayerHost())
+    if (OwningController && OwningController->GetLocalRole() < ENetRole::ROLE_Authority) // 권한이 없는 경우 (클라이언트)
+    {
+        const int32 TargetColumnSpan = 7; // 목표 ColumnSpan 값
+        UE_LOG(LogTemp, Log, TEXT("USlotStructure::NativeConstruct - Applying ColumnSpan %d because World is NOT Server."), TargetColumnSpan);
+
+        // --- FFAButtons 순회 및 ColumnSpan 설정 ---
+        for (UButton* Btn : FFAButtons)
+        {
+            if (Btn)
+            {
+                if (UGridSlot* ButtonSlot = UWidgetLayoutLibrary::SlotAsGridSlot(Btn))
+                {
+                    ButtonSlot->SetColumnSpan(TargetColumnSpan);
+                }
+            }
+        }
+
+        // --- TwoTeamsButtons 순회 및 ColumnSpan 설정 ---
+        for (UButton* Btn : TwoTeamsButtons)
+        {
+            if (Btn)
+            {
+                if (UGridSlot* ButtonSlot = UWidgetLayoutLibrary::SlotAsGridSlot(Btn))
+                {
+                    ButtonSlot->SetColumnSpan(TargetColumnSpan);
+                }
+            }
+        }
+
+        // --- FourTeamsButtons 순회 및 ColumnSpan 설정 ---
+        for (UButton* Btn : FourTeamsButtons)
+        {
+            if (Btn)
+            {
+                if (UGridSlot* ButtonSlot = UWidgetLayoutLibrary::SlotAsGridSlot(Btn))
+                {
+                    ButtonSlot->SetColumnSpan(TargetColumnSpan);
+                }
+            }
+        }
+    }
     
     // UI 초기화
     RefreshSlotWidgets();
