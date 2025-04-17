@@ -197,11 +197,17 @@ bool AT8AICharacter::IsEnemy(AActor* OtherActor) const
 
 	if (const AT8AICharacter* OtherAI = Cast<AT8AICharacter>(OtherActor))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] vs [%s] -> TeamID: %d vs %d"),
+			*GetName(), *OtherAI->GetName(), GetTeamID(), OtherAI->GetTeamID());
+
 		return OtherAI->GetTeamID() != GetTeamID();
 	}
 
 	if (const ACharacterBase* Player = Cast<ACharacterBase>(OtherActor))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] vs [Player %s] -> TeamID: %d vs %d"),
+			*GetName(), *Player->GetName(), GetTeamID(), Player->TeamNumber);
+
 		return Player->TeamNumber != GetTeamID();
 	}
 

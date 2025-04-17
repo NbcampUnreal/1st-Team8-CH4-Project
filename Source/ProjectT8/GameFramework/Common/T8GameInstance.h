@@ -25,11 +25,13 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Game Data")
     FString SavedSelectedMap;
 
-    // LobbyGameStateÀÇ Á¤º¸¸¦ GameInstance¿¡ ÀúÀå
+    // LobbyGameStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ GameInstanceï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     UFUNCTION(BlueprintCallable, Category = "Game Data")
     void SaveLobbyGameState(ALobbyGameState* LobbyGameState);
 
-    // BattleLevel¿ë GameState ÃÊ±âÈ­ ½Ã »ç¿ë
+    // BattleLevelï¿½ï¿½ GameState ï¿½Ê±ï¿½È­ ï¿½ï¿½ ï¿½ï¿½ï¿½
     UFUNCTION(BlueprintCallable, Category = "Game Data")
     int32 GetAICountForTeam(int32 TeamNumber) const;
+
+    const TArray<FSlotInfo>& GetSavedLobbySlots() const { return SavedLobbySlots; }
 };

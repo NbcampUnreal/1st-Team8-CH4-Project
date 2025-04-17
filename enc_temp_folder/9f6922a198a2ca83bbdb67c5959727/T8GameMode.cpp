@@ -92,16 +92,20 @@ void AT8GameMode::SpawnAllAIFromLobbySlots()
 
 void AT8GameMode::SpawnAIFromSlot(int32 SlotIndex)
 {
+    UE_LOG(LogTemp, Warning, TEXT("SpawnAIFromSlot() 진입: 슬롯 %d"), SlotIndex);
+
     ALobbyGameState* LobbyState = GetGameState<ALobbyGameState>();
     if (!LobbyState || !LobbyState->Slots.IsValidIndex(SlotIndex))
     {
+        UE_LOG(LogTemp, Error, TEXT("LobbyGameState 또는 슬롯 인덱스 오류"));
         return;
     }
 
-    const FSlotInfo& Slot = LobbyState->Slots[SlotIndex];
+    const FSlotInfo& Slot = LobbyState->Slots[SlotIndex]; // ★ 여기가 중요
 
     if (!Slot.bIsAI || !AIClass || !AIControllerClass)
     {
+        UE_LOG(LogTemp, Error, TEXT("AI 슬롯 아님 또는 AIClass/AIControllerClass 미지정"));
         return;
     }
 
@@ -110,6 +114,7 @@ void AT8GameMode::SpawnAIFromSlot(int32 SlotIndex)
 
     if (!NavSystem || !NavSystem->GetRandomPointInNavigableRadius(FVector::ZeroVector, 2000.f, NavLocation))
     {
+        UE_LOG(LogTemp, Error, TEXT("NavMesh 위치를 찾지 못했습니다. AI 스폰 실패."));
         return;
     }
 
@@ -119,6 +124,7 @@ void AT8GameMode::SpawnAIFromSlot(int32 SlotIndex)
     AT8AICharacter* AI = GetWorld()->SpawnActor<AT8AICharacter>(AIClass, SpawnTransform);
     if (!AI)
     {
+        UE_LOG(LogTemp, Error, TEXT("AI 스폰 실패: SpawnActor 반환값 null"));
         return;
     }
 
@@ -137,18 +143,21 @@ void AT8GameMode::SpawnAIFromSlotData(const FSlotInfo& Slot)
 {
     if (!AIClass || !AIControllerClass)
     {
+        UE_LOG(LogTemp, Error, TEXT("AIClass 또는 AIControllerClass가 설정되지 않았습니다."));
         return;
     }
 
     UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
     if (!NavSystem)
     {
+        UE_LOG(LogTemp, Error, TEXT("NavMesh 시스템 없음"));
         return;
     }
 
     FNavLocation NavLocation;
     if (!NavSystem->GetRandomPointInNavigableRadius(FVector::ZeroVector, 2000.f, NavLocation))
     {
+        UE_LOG(LogTemp, Error, TEXT("NavMesh 내 랜덤 위치 찾기 실패"));
         return;
     }
 
@@ -158,6 +167,7 @@ void AT8GameMode::SpawnAIFromSlotData(const FSlotInfo& Slot)
     AT8AICharacter* AI = GetWorld()->SpawnActor<AT8AICharacter>(AIClass, SpawnTransform);
     if (!AI)
     {
+        UE_LOG(LogTemp, Error, TEXT("AI Spawn 실패"));
         return;
     }
 
@@ -169,4 +179,6 @@ void AT8GameMode::SpawnAIFromSlotData(const FSlotInfo& Slot)
     {
         AICon->Possess(AI);
     }
+
+    UE_LOG(LogTemp, Warning, TEXT("AI Spawned from SavedSlot: %s (Team %d)"), *Slot.DisplayName, Slot.TeamNumber);
 }
