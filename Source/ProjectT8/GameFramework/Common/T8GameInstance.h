@@ -1,14 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/GameInstance.h"
+#include "AdvancedFriendsGameInstance.h"
 
 #include "T8GameInstance.generated.h"
 
 class UPhaseWidgetDataAsset;
 
 UCLASS()
-class PROJECTT8_API UT8GameInstance : public UGameInstance
+class PROJECTT8_API UT8GameInstance : public UAdvancedFriendsGameInstance
 {
 	GENERATED_BODY()
 
