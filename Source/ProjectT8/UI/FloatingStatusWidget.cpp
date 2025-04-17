@@ -16,27 +16,31 @@ void UFloatingStatusWidget::NativeDestruct()
     Super::NativeDestruct();
 }
 
-void UFloatingStatusWidget::SetOwnerCharacter(ACharacterBase* Character)
+void UFloatingStatusWidget::SetOwnerCharacter(ACharacter* InCharacter)
 {
-    OwnerCharacter = Character;
-    if (OwnerCharacter)
+    if (!InCharacter) return;
+
+    OwnerCharacter = Cast<ACharacterBase>(InCharacter); // Cast 시도
+
+    AbilitySystemComponent = nullptr;
+    AttributeSet = nullptr;
+
+    if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(InCharacter))
     {
-        AbilitySystemComponent = OwnerCharacter->GetAbilitySystemComponent();
+        AbilitySystemComponent = AbilityInterface->GetAbilitySystemComponent();
         if (AbilitySystemComponent)
         {
             const UAttributeSet* BaseAttributeSet = AbilitySystemComponent->GetAttributeSet(UCharacterAttributeSet::StaticClass());
             AttributeSet = const_cast<UCharacterAttributeSet*>(Cast<const UCharacterAttributeSet>(BaseAttributeSet));
             if (AttributeSet)
             {
-                // 초기 HP 설정
                 UpdateHealthBar(AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
-                
-                // Health 변경 델리게이트 바인딩
                 AttributeSet->OnHealthChanged.AddDynamic(this, &UFloatingStatusWidget::UpdateHealthBar);
             }
         }
     }
 }
+
 
 void UFloatingStatusWidget::UpdateHealthBar(float CurrentHealth, float MaxHealth)
 {
@@ -58,6 +62,6 @@ void UFloatingStatusWidget::SetPlayerName(const FString& Name)
 void UFloatingStatusWidget::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    
+
     DOREPLIFETIME(UFloatingStatusWidget, OwnerCharacter);
-} 
+}

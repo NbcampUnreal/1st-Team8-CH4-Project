@@ -83,6 +83,10 @@ public:
     void AssignPlayerToSlot(APlayerState* NewPlayer);
     void RemovePlayerFromSlot(APlayerState* LeavingPlayer);
     void UpdateTeamAssignments();
+
+    UFUNCTION(BlueprintCallable, Category = "Team")
+    int32 GetTeamNumberForAI(const FString& DisplayName) const;
+
 protected:
     /** AI 플레이어 추가시 이름 생성을 위한 인덱스 (서버 전용) */
     int32 NextAIIndex;
