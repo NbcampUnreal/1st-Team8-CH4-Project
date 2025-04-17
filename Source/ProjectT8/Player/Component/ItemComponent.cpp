@@ -30,7 +30,7 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	{
 		DropItemToWorld();
 	}
-
+	/*
 	if (NewItem->GetItemMesh())
 	{
 		NewItem->GetItemMesh()->SetSimulatePhysics(false);
@@ -40,7 +40,7 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	if (NewItem->InteractSphere)
 	{
 		NewItem->InteractSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+	}*/
 
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
@@ -96,13 +96,14 @@ void UItemComponent::DropItemToWorld()
 	EquippedItem->SetActorHiddenInGame(false);
 	EquippedItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
+	EquippedItem->SetActorLocation(OwnerCharacter->GetActorLocation() + DropOffset);
+
 	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(EquippedItem->GetRootComponent()))
 	{
 		Prim->SetSimulatePhysics(true);
+		Prim->SetEnableGravity(true);
+		Prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
-
-	EquippedItem->SetActorLocation(OwnerCharacter->GetActorLocation() + DropOffset);
-	
 	EquippedItem = nullptr;
 }
 
