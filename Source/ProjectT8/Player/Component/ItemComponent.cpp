@@ -30,18 +30,6 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	{
 		DropItemToWorld();
 	}
-	/*
-	if (NewItem->GetItemMesh())
-	{
-		NewItem->GetItemMesh()->SetSimulatePhysics(false);
-		NewItem->GetItemMesh()->SetEnableGravity(false);
-		NewItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	if (NewItem->InteractSphere)
-	{
-		NewItem->InteractSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}*/
-
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
 
@@ -70,15 +58,15 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 
 void UItemComponent::UseEquippedItem()
 {
-	if (!EquippedItem || !OwnerCharacter) return; //현재 아이템 없거나 오너캐릭터 없으면 리턴
-	if (OwnerCharacter->HasAuthority()) // 오너캐릭터가 서버면
+	if (!EquippedItem || !OwnerCharacter) return;
+	if (OwnerCharacter->HasAuthority())
 	{
 		EquippedItem->Use(Cast<ACharacterBase>(OwnerCharacter));
 		UE_LOG(LogTemp, Warning, TEXT("사용한 아이템: %s"), *GetNameSafe(EquippedItem));
 	}
 	else
 	{
-		Server_UseEquippedItem();//오너캐릭터가 클라면 server로 UseEquippedItem 호출
+		Server_UseEquippedItem();
 	}
 }
 
@@ -110,7 +98,6 @@ void UItemComponent::DropItemToWorld()
 void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 {
 	if (!Item || !OwnerCharacter) return;
-	UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Called for item: %s"), *GetNameSafe(Item));
 
 	Item->SetActorHiddenInGame(false);
 	Item->SetActorEnableCollision(false);
@@ -118,13 +105,10 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 
 	if (Item->GetItemMesh())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] ItemMesh exists: %s ** %s"), *GetNameSafe(Item->GetItemMesh()), *GetNameSafe(Item->GetItemMesh()->GetStaticMesh()));
 		Item->GetItemMesh()->SetVisibility(true);
 		Item->GetItemMesh()->SetSimulatePhysics(false);
 		Item->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Item->GetItemMesh()->SetEnableGravity(false);
-
-		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] ItemMesh transform: %s"), *Item->GetItemMesh()->GetComponentTransform().ToString());
 	}
 	else
 	{
@@ -132,24 +116,14 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	}
 	if (AThrowable* ThrowableItem = Cast<AThrowable>(Item))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Item is a Throwable"));
 		if (ThrowableItem->GetEffectCollision())
 		{
 			ThrowableItem->GetEffectCollision()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			UE_LOG(LogTemp, Warning, TEXT("[AttachItem] EffectCollision disabled"));
 		}
 	}
-	bool bHasSocket = OwnerCharacter->GetMesh()->DoesSocketExist(TEXT("WeaponSocket"));
-	UE_LOG(LogTemp, Warning, TEXT("[AttachItem] WeaponSocket exists: %s"), bHasSocket ? TEXT("true") : TEXT("false"));
 
 	Item->GetItemMesh()->SetWorldLocation(OwnerCharacter->GetActorLocation() + FVector(0, 0, 50));
-	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-	/*auto Mesh = Item->GetItemMesh();
-	UE_LOG(LogTemp, Warning, TEXT("Mesh valid: %s, Visible: %s, HiddenInGame: %s, StaticMesh: %s"),
-		Mesh ? TEXT("YES") : TEXT("NO"),
-		Mesh && Mesh->bVisible ? TEXT("true") : TEXT("false"),
-		Mesh && Mesh->bHiddenInGame ? TEXT("true") : TEXT("false"),
-		Mesh && Mesh->GetStaticMesh() ? *Mesh->GetStaticMesh()->GetName() : TEXT("NULL"));*/
+	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::KeepWorldTransform, TEXT("WeaponSocket"));
 
 	// 기본 AttachOffset 적용
 	FTransform ItemTransform = Item->AttachOffset;
@@ -159,14 +133,13 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	{
 		FRotator TypeRotation = Weapon->GetWeaponTypeRotation();
 		ItemTransform.SetRotation(FQuat(TypeRotation) * ItemTransform.GetRotation());
-		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Weapon type rotation applied: %s"), *TypeRotation.ToString());
 	}
+	ItemTransform.SetScale3D(Item->GetActorScale3D());
 	Item->SetActorRelativeTransform(ItemTransform);
-	UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Final relative transform: %s"), *ItemTransform.ToString());
 }
 
 void UItemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
+{ 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UItemComponent, EquippedItem);
 }
