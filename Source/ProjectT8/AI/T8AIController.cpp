@@ -32,14 +32,27 @@ void AT8AIController::Tick(float DeltaSeconds)
 	UBlackboardComponent* BB = GetBlackboardComponent();
 	if (!BB) return;
 
-	this->CurrentTarget = Cast<AActor>(BB->GetValueAsObject(TEXT("Target")));
+	AActor* Target = Cast<AActor>(BB->GetValueAsObject(TEXT("Target")));
+	CurrentTarget = Target;
 
-	if (this->CurrentTarget == nullptr || !LineOfSightTo(this->CurrentTarget))
+	if (Target == nullptr)
 	{
-		BB->ClearValue(TEXT("Target"));
-		RequestFindNewTarget();
+		RunTargetPriorityQuery();
+		return;
+	}
+
+	if (AT8AICharacter* TargetAI = Cast<AT8AICharacter>(Target))
+	{
+		if (TargetAI->IsDead())
+		{
+			BB->ClearValue(TEXT("Target"));
+			RunTargetPriorityQuery();
+			return;
+		}
 	}
 }
+
+
 
 
 AActor* AT8AIController::GetTarget() const
@@ -88,77 +101,63 @@ void AT8AIController::OnWeaponQueryFinished(UEnvQueryInstanceBlueprintWrapper* Q
 
 void AT8AIController::RunTargetPriorityQuery()
 {
-	if (!PriorityTargetQueryTemplate) return;
-
 	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
 		this,
-		PriorityTargetQueryTemplate,
+		TargetQueryTemplate,
 		this,
 		EEnvQueryRunMode::AllMatching,
 		nullptr
 	);
 
-	if (QueryInstance)
+	if (!QueryInstance)
 	{
-		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AT8AIController::OnTargetPriorityQueryFinished);
+		return;
 	}
+
+	QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AT8AIController::OnTargetPriorityQueryFinished);
 }
+
+
 
 void AT8AIController::OnTargetPriorityQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
 {
-	if (!QueryInstance || QueryStatus != EEnvQueryStatus::Success) return;
+	if (!QueryInstance || QueryStatus != EEnvQueryStatus::Success)
+	{
+		return;
+	}
 
 	TArray<AActor*> FoundActors;
 	QueryInstance->GetQueryResultsAsActors(FoundActors);
+
+	UE_LOG(LogTemp, Warning, TEXT("[TargetPriority] Found %d candidates"), FoundActors.Num());
 
 	AT8AICharacter* SelfChar = Cast<AT8AICharacter>(GetPawn());
 	if (!SelfChar) return;
 
 	AActor* BestTarget = nullptr;
-	float LowestHealth = MAX_flt;
 
 	for (AActor* Actor : FoundActors)
 	{
-		if (!SelfChar->IsEnemy(Actor)) continue;
-
-		ACharacterBase* TargetCharacter = Cast<ACharacterBase>(Actor);
-		if (TargetCharacter && TargetCharacter->IsDead()) continue;
-
-		if (SelfChar->LastDamager == Actor)
-		{
-			float TimeSinceDamaged = GetWorld()->GetTimeSeconds() - SelfChar->LastDamagerSetTime;
-			if (TimeSinceDamaged <= SelfChar->LastDamagerMemoryTime)
-			{
-				BestTarget = Actor;
-				break;
-			}
-		}
-
-		if (!BestTarget)
+		if (SelfChar->IsEnemy(Actor))
 		{
 			BestTarget = Actor;
+			break;
 		}
 	}
 
-	float Now = GetWorld()->GetTimeSeconds();
-	if (!CurrentTarget) LastTargetSetTime = 0.f;
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB) return;
 
-	if (CurrentTarget && (Now - LastTargetSetTime) < TargetHoldTime)
+	if (BestTarget)
 	{
-		GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), CurrentTarget);
+		BB->SetValueAsObject(TEXT("Target"), BestTarget);
+
+		UObject* SetTarget = BB->GetValueAsObject(TEXT("Target"));
 	}
 	else
 	{
-		CurrentTarget = BestTarget;
-		LastTargetSetTime = Now;
-
-		if (BestTarget)
-		{
-			GetBlackboardComponent()->SetValueAsObject(TEXT("Target"), BestTarget);
-		}
 	}
 }
-
 
 void AT8AIController::RequestFindNewTarget()
 {
