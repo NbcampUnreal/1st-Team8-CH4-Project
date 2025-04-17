@@ -3,8 +3,8 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "GameFramework/Common/T8GameInstance.h"
-#include "Global/Datas/PhaseWidgetDataAsset.h"
-#include "UI/Datas/PhaseWidgetItem.h"
+#include "Global/Datas/PhaseInfoDataAsset.h"
+#include "UI/Datas/PhaseInfoItem.h"
 #include "UI/Widgets/Base/ScreenBaseWidget.h"
 
 
@@ -15,16 +15,22 @@ void UUIManager::Initialize(FSubsystemCollectionBase& Collection)
     // Loading DataAsset
     if (const UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance()))
     {
-        WidgetDataAsset = GI->WidgetDataAsset;
+        PhaseInfoDataAsset = GI->PhaseInfoDataAsset;
     }
-    if (!WidgetDataAsset)
+    if (!PhaseInfoDataAsset)
     {
         return;
     }
-
-    // Initializing PhaseWidgetMap
-    for (UPhaseWidgetItem* Item : WidgetDataAsset->PhaseWidgets)
+    
+    for (UPhaseInfoItem* Item : PhaseInfoDataAsset->PhaseInfos)
     {
+        // Initializing PhaseTargetNameMap
+        if (Item/* && Item->MapName*/)
+        {
+            PhaseTargetNameMap.Add(Item->Phase, Item->MapName);
+        }
+
+        // Initializing PhaseWidgetMap
         if (Item && Item->WidgetClass)
         {
             PhaseWidgetMap.Add(Item->Phase, Item->WidgetClass);
@@ -79,7 +85,7 @@ void UUIManager::HideCurUI()
 
     if (UScreenBaseWidget* CurScreen = Cast<UScreenBaseWidget>(CurWidget))
     {
-        // ScreenBaseWidget을 상속받은 Screen일 경우, 연출 사용 후 Deactivate
+        // ScreenBaseWidget을 상속받은 Screen일 경우, FadeOut 연출 사용 후 Deactivate
         if (!CurScreen->FadeOutFinishedDelegate.IsBound())
         {
             FWidgetAnimationDynamicEvent ExternalFadeOutDelegate;
@@ -87,7 +93,6 @@ void UUIManager::HideCurUI()
             CurScreen->FadeOutFinishedDelegate = ExternalFadeOutDelegate;
         }
 
-        CurScreen->BindFadeOutFinished();
         CurScreen->OnScreenDeactivated();
     }
     else
@@ -104,4 +109,15 @@ void UUIManager::NotifyScreenRemoved(UUserWidget* Widget)
     {
         CurWidget = nullptr;
     }
+}
+
+void UUIManager::OpenLevelForPhase(EGamePhase Phase)
+{
+    if (const FName* FoundMapName = PhaseTargetNameMap.Find(Phase))
+    {
+        UGameplayStatics::OpenLevel(this, *FoundMapName);
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("OpenLevel failed: No map found for Phase %d"), (int32)Phase);
 }

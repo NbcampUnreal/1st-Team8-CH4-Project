@@ -16,5 +16,6 @@ void AHealthPotion::Use(ACharacterBase* Player)
         {
             ASC->ApplyGameplayEffectToSelf(HealEffect->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
         }
+        Super::Use(Player);
     }
 }
