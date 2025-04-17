@@ -1,5 +1,7 @@
 #include "UI/Widgets/Screen/LoadingScreenWidget.h"
 
+#include "GameFramework/PlayerController.h"
+
 #include "Global/Managers/UIManager.h"
 
 
@@ -20,9 +22,16 @@ void ULoadingScreenWidget::HandleProgressBarFinished()
         DelayHandle,
         FTimerDelegate::CreateLambda([this]()
             {
-                if (UUIManager* UI = GetGameInstance()->GetSubsystem<UUIManager>())
+                /*if (UUIManager* UI = GetGameInstance()->GetSubsystem<UUIManager>())
                 {
                     UI->OpenLevelForPhase(EGamePhase::Playing);
+                }*/
+
+                APlayerController* OwningController = GetOwningPlayer();
+                if (OwningController && OwningController->GetLocalRole() == ENetRole::ROLE_Authority)
+                {
+                    UWorld* World = GetWorld();
+                    World->ServerTravel("BattleLevel");
                 }
             }),
         1.5f,

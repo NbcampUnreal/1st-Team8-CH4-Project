@@ -32,6 +32,6 @@ void UStartGameButton::OnStartGameButtonClicked()
         }
 
         // bUseSeamlessTravel이 GameMode에서 true로 설정되어 있다고 가정
-        World->ServerTravel("BattleLevel");
+        World->ServerTravel("LoadingMap");
     }
 }
