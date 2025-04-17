@@ -19,7 +19,8 @@ AThrowable::AThrowable()
     EffectCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     EffectCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
     EffectCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-    EffectCollision->SetSphereRadius(300.f);
+    InteractSphere->SetSphereRadius(20.f);
+    EffectCollision->SetSphereRadius(50.f);
 
     ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
     ProjectileMovement->bAutoActivate = false;

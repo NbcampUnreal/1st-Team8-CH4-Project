@@ -109,25 +109,47 @@ void UItemComponent::DropItemToWorld()
 void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 {
 	if (!Item || !OwnerCharacter) return;
+	UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Called for item: %s"), *GetNameSafe(Item));
 
 	Item->SetActorHiddenInGame(false);
 	Item->SetActorEnableCollision(false);
 
+
 	if (Item->GetItemMesh())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] ItemMesh exists: %s ** %s"), *GetNameSafe(Item->GetItemMesh()), *GetNameSafe(Item->GetItemMesh()->GetStaticMesh()));
+		Item->GetItemMesh()->SetVisibility(true);
 		Item->GetItemMesh()->SetSimulatePhysics(false);
 		Item->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Item->GetItemMesh()->SetEnableGravity(false);
+
+		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] ItemMesh transform: %s"), *Item->GetItemMesh()->GetComponentTransform().ToString());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] WARNING: ItemMesh is nullptr for item: %s"), *GetNameSafe(Item));
 	}
 	if (AThrowable* ThrowableItem = Cast<AThrowable>(Item))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Item is a Throwable"));
 		if (ThrowableItem->GetEffectCollision())
 		{
 			ThrowableItem->GetEffectCollision()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			UE_LOG(LogTemp, Warning, TEXT("[AttachItem] EffectCollision disabled"));
 		}
 	}
+	bool bHasSocket = OwnerCharacter->GetMesh()->DoesSocketExist(TEXT("WeaponSocket"));
+	UE_LOG(LogTemp, Warning, TEXT("[AttachItem] WeaponSocket exists: %s"), bHasSocket ? TEXT("true") : TEXT("false"));
+
+	Item->GetItemMesh()->SetWorldLocation(OwnerCharacter->GetActorLocation() + FVector(0, 0, 50));
 	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-	
+	/*auto Mesh = Item->GetItemMesh();
+	UE_LOG(LogTemp, Warning, TEXT("Mesh valid: %s, Visible: %s, HiddenInGame: %s, StaticMesh: %s"),
+		Mesh ? TEXT("YES") : TEXT("NO"),
+		Mesh && Mesh->bVisible ? TEXT("true") : TEXT("false"),
+		Mesh && Mesh->bHiddenInGame ? TEXT("true") : TEXT("false"),
+		Mesh && Mesh->GetStaticMesh() ? *Mesh->GetStaticMesh()->GetName() : TEXT("NULL"));*/
+
 	// 기본 AttachOffset 적용
 	FTransform ItemTransform = Item->AttachOffset;
 	
@@ -136,9 +158,10 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	{
 		FRotator TypeRotation = Weapon->GetWeaponTypeRotation();
 		ItemTransform.SetRotation(FQuat(TypeRotation) * ItemTransform.GetRotation());
+		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Weapon type rotation applied: %s"), *TypeRotation.ToString());
 	}
-	
 	Item->SetActorRelativeTransform(ItemTransform);
+	UE_LOG(LogTemp, Warning, TEXT("[AttachItem] Final relative transform: %s"), *ItemTransform.ToString());
 }
 
 void UItemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
