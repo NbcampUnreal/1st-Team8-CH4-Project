@@ -2,10 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "AdvancedFriendsGameInstance.h"
-#include "GameFramework/GameState/LobbyGameState.h" 
+
+#include "GameFramework/GameState/LobbyGameState.h"
+
 #include "T8GameInstance.generated.h"
 
-class UPhaseWidgetDataAsset;
+class UPhaseInfoDataAsset;
 
 UCLASS()
 class PROJECTT8_API UT8GameInstance : public UAdvancedFriendsGameInstance
@@ -14,7 +16,7 @@ class PROJECTT8_API UT8GameInstance : public UAdvancedFriendsGameInstance
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	UPhaseWidgetDataAsset* WidgetDataAsset;
+    UPhaseInfoDataAsset* PhaseInfoDataAsset;
 
     UPROPERTY(BlueprintReadWrite, Category = "Game Data")
     TArray<FSlotInfo> SavedLobbySlots;

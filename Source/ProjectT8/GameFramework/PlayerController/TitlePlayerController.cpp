@@ -6,6 +6,9 @@
 #include "InputAction.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "GameFramework/Common/T8GameInstance.h"
+#include "Global/Managers/UIManager.h"
+
 
 void ATitlePlayerController::BeginPlay()
 {
@@ -38,5 +41,11 @@ void ATitlePlayerController::SetupInputComponent()
 
 void ATitlePlayerController::HandleStartInput()
 {
-    UGameplayStatics::OpenLevel(this, FName("PrivateLevel"));
+    if (UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance()))
+    {
+        if (UUIManager* UI = GI->GetSubsystem<UUIManager>())
+        {
+            UI->OpenLevelForPhase(EGamePhase::Room);
+        }
+    }
 }

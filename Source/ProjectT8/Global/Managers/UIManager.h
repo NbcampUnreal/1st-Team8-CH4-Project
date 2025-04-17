@@ -8,7 +8,7 @@
 #include "UIManager.generated.h"
 
 class UUserWidget;
-class UPhaseWidgetDataAsset;
+class UPhaseInfoDataAsset;
 
 UCLASS()
 class PROJECTT8_API UUIManager : public UGameInstanceSubsystem
@@ -23,11 +23,16 @@ public:
 
 	void NotifyScreenRemoved(UUserWidget* Widget);
 
+	void OpenLevelForPhase(EGamePhase Phase);
+
 private:
 	UPROPERTY()
-	UPhaseWidgetDataAsset* WidgetDataAsset;
+	UPhaseInfoDataAsset* PhaseInfoDataAsset;
 
-    UPROPERTY()
+	UPROPERTY()
+	TMap<EGamePhase, FName> PhaseTargetNameMap;
+	
+	UPROPERTY()
     TMap<EGamePhase, TSubclassOf<UUserWidget>> PhaseWidgetMap;
 
 	UPROPERTY()

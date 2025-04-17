@@ -16,11 +16,12 @@ void ACustomGameState::SetGamePhase(EGamePhase _NewPhase)
     if (CurPhase != _NewPhase)
     {
         CurPhase = _NewPhase;
-        OnPhaseChanged(_NewPhase);
+        OnPhaseChanged.Broadcast(_NewPhase);
+        HandlePhaseChanged(_NewPhase);
     }
 }
 
-void ACustomGameState::OnPhaseChanged_Implementation(EGamePhase _NewPhase)
+void ACustomGameState::HandlePhaseChanged_Implementation(EGamePhase _NewPhase)
 {
     if (UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance()))
     {

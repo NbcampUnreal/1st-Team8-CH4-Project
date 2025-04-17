@@ -15,6 +15,7 @@ AT8GameMode::AT8GameMode()
 	DefaultPawnClass = ACharacterBase::StaticClass();
 }
 
+
 void AT8GameMode::BeginPlay()
 {
     Super::BeginPlay();
@@ -59,6 +60,8 @@ void AT8GameMode::PostLogin(APlayerController* NewPlayer)
 		MyCharacter->ApplyApperance(PS->ApperanceData);
 	}
 }
+
+
 
 void AT8GameMode::NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter)
 {

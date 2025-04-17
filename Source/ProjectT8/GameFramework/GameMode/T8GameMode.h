@@ -13,6 +13,7 @@ class PROJECTT8_API AT8GameMode : public AGameMode
 	
 public:
 	AT8GameMode();
+
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
