@@ -6,6 +6,8 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "GameFramework/PlayerController/LobbyPlayerController.h"
+#include "Player/CharacterBase.h"
+#include "GameFramework/Common/T8PlayerState.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {

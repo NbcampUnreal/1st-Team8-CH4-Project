@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "Components/WidgetComponent.h"
+#include "Global/Enums/GamePhaseEnum.h"
 #include "CharacterBase.generated.h"
 
 // 캐릭터 죽음 델리게이트
@@ -30,6 +31,8 @@ class PROJECTT8_API ACharacterBase : public ACharacter, public IAbilitySystemInt
 
 public:
 	ACharacterBase();
+
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 	// GAS
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -129,6 +132,7 @@ protected:
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;  // PlayerState 복제 시 호출되는 함수
 
 	void Move(const FInputActionValue& Value);
 	void SprintStart();
@@ -184,6 +188,17 @@ protected:
 
 	void InitializeFloatingStatusWidget();
 	void UpdateHealthUI();
+	void UpdatePlayerName();
+	void UpdateAppearance();
+
+	EGamePhase GetCurrentGamePhase() const;
+	
+	UFUNCTION()
+	void OnGamePhaseChanged(EGamePhase NewPhase);
+
+	UFUNCTION()
+	void HandleHealthChanged(float CurrentHealth, float MaxHealth);
+
 private:
 	bool bIsRunning = false;
 	bool bIsSpeedBoosted = false;
