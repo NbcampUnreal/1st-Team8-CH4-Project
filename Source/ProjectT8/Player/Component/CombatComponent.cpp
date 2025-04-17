@@ -2,6 +2,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "AI/T8AICharacter.h"
 #include "Player/CharacterBase.h"
 #include "Player/Component/ItemComponent.h"
 #include "Item/Weapon.h"
@@ -28,6 +29,21 @@ void UCombatComponent::Attack()
 	}
 
 	Multicast_PlayAttackMontage();
+
+	AT8AICharacter* AIChar = Cast<AT8AICharacter>(OwnerCharacter);
+	if (AIChar)
+	{
+		AIChar->bCanAttack = false;
+		AIChar->bIsAttacking = true;
+
+		AIChar->GetWorldTimerManager().SetTimer(
+			AIChar->AttackCooldownTimer,
+			AIChar,
+			&AT8AICharacter::ResetCanAttack,
+			AIChar->AttackCooldown,
+			false
+		);
+	}
 }
 
 void UCombatComponent::Server_Attack_Implementation()
