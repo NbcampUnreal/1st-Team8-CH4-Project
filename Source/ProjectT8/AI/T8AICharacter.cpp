@@ -195,18 +195,20 @@ bool AT8AICharacter::IsEnemy(AActor* OtherActor) const
 {
 	if (!OtherActor || OtherActor == this) return false;
 
+	int32 OtherTeam = -1;
+
 	if (const AT8AICharacter* OtherAI = Cast<AT8AICharacter>(OtherActor))
 	{
-		return OtherAI->GetTeamID() != GetTeamID();
+		OtherTeam = OtherAI->GetTeamID();
 	}
-
-	if (const ACharacterBase* Player = Cast<ACharacterBase>(OtherActor))
+	else if (const ACharacterBase* Player = Cast<ACharacterBase>(OtherActor))
 	{
-		return Player->TeamNumber != GetTeamID();
+		OtherTeam = Player->TeamNumber;
 	}
 
-	return true;
+	return OtherTeam != TeamID;
 }
+
 
 
 

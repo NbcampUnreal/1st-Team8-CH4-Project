@@ -14,7 +14,7 @@ UT8BTTask_Attack::UT8BTTask_Attack()
 	}
 }
 
-EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* Nodememory)
+EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* AICon = OwnerComp.GetAIOwner();
 	if (!AICon) return EBTNodeResult::Failed;
@@ -23,9 +23,15 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	if (!AIChar || !AIChar->GetCombatComponent()) return EBTNodeResult::Failed;
 
 	AActor* TargetActor = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(TargetKey.SelectedKeyName));
-	if (!TargetActor) return EBTNodeResult::Failed;
+	if (!TargetActor)
+	{
+		return EBTNodeResult::Failed;
+	}
 
-	if (!AIChar->IsEnemy(TargetActor)) return EBTNodeResult::Failed;
+	if (!AIChar->IsEnemy(TargetActor))
+	{
+		return EBTNodeResult::Failed;
+	}
 
 	if (!AIChar->bCanAttack)
 	{
@@ -37,14 +43,6 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	AIChar->bCanAttack = false;
 	AIChar->bIsAttacking = true;
 
-	AIChar->GetWorldTimerManager().SetTimer(
-		AIChar->AttackCooldownTimer,
-		AIChar,
-		&AT8AICharacter::ResetCanAttack,
-		AIChar->AttackCooldown,
-		false
-	);
-
 	if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
 	{
 		BB->SetValueAsBool(TEXT("IsAttacking"), true);
@@ -52,6 +50,3 @@ EBTNodeResult::Type UT8BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 
 	return EBTNodeResult::Succeeded;
 }
-
-
-

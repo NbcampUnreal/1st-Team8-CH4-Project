@@ -7,6 +7,7 @@
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
+#include "EnvironmentQuery/EnvQuery.h"
 #include "T8AIController.generated.h"
 
 
@@ -60,6 +61,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Targeting")
 	float TargetHoldTime = 3.0f;
 
+	UPROPERTY(EditAnywhere, Category = "AI")
+	UEnvQuery* TargetQueryTemplate;
 	
 
 private:
