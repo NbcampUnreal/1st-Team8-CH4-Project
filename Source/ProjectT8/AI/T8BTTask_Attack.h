@@ -4,12 +4,10 @@
 #include "BehaviorTree/BTTaskNode.h"
 #include "T8BTTask_Attack.generated.h"
 
-
 UCLASS()
 class PROJECTT8_API UT8BTTask_Attack : public UBTTaskNode
 {
 	GENERATED_BODY()
-	
 
 public:
 	UT8BTTask_Attack();
@@ -19,4 +17,6 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	struct FBlackboardKeySelector TargetKey;
+
+
 };
