@@ -25,7 +25,8 @@ public class ProjectT8 : ModuleRules
 			"GameplayTags",
 			"GameplayTasks",
 			"Slate",
-			"SlateCore"
+			"SlateCore",
+            "NavigationSystem"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

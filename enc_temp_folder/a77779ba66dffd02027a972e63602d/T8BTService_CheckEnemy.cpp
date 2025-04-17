@@ -45,5 +45,9 @@ void UT8BTService_CheckEnemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	bool bIsEnemy = SelfAI->IsEnemy(Target);
 	Blackboard->SetValueAsBool("Target", bIsEnemy);
 
+	UE_LOG(LogTemp, Warning, TEXT("[BTService] %s → Target: %s → IsEnemy: %s"),
+		*SelfAI->GetName(),
+		*Target->GetName(),
+		bIsEnemy ? TEXT("True") : TEXT("False"));
 }
 

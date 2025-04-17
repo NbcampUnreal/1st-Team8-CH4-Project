@@ -132,6 +132,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Team")
 	UTextRenderComponent* TeamIndicator;
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetDisplayName(const FString& NewName);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
 	int32 TeamID = 0;
@@ -140,9 +144,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Team")
 	FString DisplayName;
-
-	UFUNCTION(BlueprintCallable, Category = "Team")
-	void SetDisplayName(const FString& NewName);
 
 	UPROPERTY()
 	class AAIController* CachedAIController;
