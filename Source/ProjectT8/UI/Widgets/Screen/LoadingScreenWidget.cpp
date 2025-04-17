@@ -3,17 +3,6 @@
 #include "Global/Managers/UIManager.h"
 
 
-void ULoadingScreenWidget::OnScreenActivated_Implementation()
-{
-    Super::OnScreenActivated_Implementation();
-
-    if (Anim_ProgressBar_Loading)
-    {
-        BindProgressBarFinished();
-        PlayAnimation(Anim_ProgressBar_Loading);
-    }
-}
-
 void ULoadingScreenWidget::BindProgressBarFinished()
 {
     if (Anim_ProgressBar_Loading)
@@ -24,10 +13,19 @@ void ULoadingScreenWidget::BindProgressBarFinished()
 
 void ULoadingScreenWidget::HandleProgressBarFinished()
 {
-    RemoveFromParent();
+    //RemoveFromParent();
 
-    if (UUIManager* UI = GetGameInstance()->GetSubsystem<UUIManager>())
-    {
-        UI->NotifyScreenRemoved(this);
-    }
+    FTimerHandle DelayHandle;
+    GetWorld()->GetTimerManager().SetTimer(
+        DelayHandle,
+        FTimerDelegate::CreateLambda([this]()
+            {
+                if (UUIManager* UI = GetGameInstance()->GetSubsystem<UUIManager>())
+                {
+                    UI->OpenLevelForPhase(EGamePhase::Playing);
+                }
+            }),
+        1.5f,
+        false
+    );
 }
