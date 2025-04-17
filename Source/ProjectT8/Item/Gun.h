@@ -10,8 +10,6 @@ class PROJECTT8_API AGun : public AWeapon
 	GENERATED_BODY()
 
 protected:
-    UFUNCTION(Server, Reliable)
-    void Server_Use(ACharacterBase* Player);
 
     UPROPERTY(Replicated)
     int32 CurrentAmmo = 5;

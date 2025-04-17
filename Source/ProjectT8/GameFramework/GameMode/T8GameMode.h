@@ -12,4 +12,9 @@ class PROJECTT8_API AT8GameMode : public AGameMode
 public:
 	AT8GameMode();
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	// 플레이어 죽음 처리
+	UFUNCTION(BlueprintNativeEvent, Category = "Game")
+	void NotifyPlayerDeath(ACharacter* DeadCharacter);
+	virtual void NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter);
 };

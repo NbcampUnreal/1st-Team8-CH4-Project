@@ -23,7 +23,9 @@ public class ProjectT8 : ModuleRules
             "Networking",
 			"GameplayAbilities",
 			"GameplayTags",
-			"GameplayTasks"
+			"GameplayTasks",
+			"Slate",
+			"SlateCore"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

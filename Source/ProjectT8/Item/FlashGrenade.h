@@ -10,5 +10,12 @@ class PROJECTT8_API AFlashGrenade : public AThrowable
 
 public:
     AFlashGrenade();
-    virtual void ApplyEffect(ACharacterBase* Target) override;
+
+protected:
+    UPROPERTY(EditDefaultsOnly, Category = "Effect")
+    TSubclassOf<UGameplayEffect> BlindEffect;
+    TSubclassOf<UGameplayEffect> GetEffectToApply() const override { return BlindEffect; }
+
+    UPROPERTY(EditDefaultsOnly, Category = "Effect")
+    float BlindRadius = 600.f;
 };

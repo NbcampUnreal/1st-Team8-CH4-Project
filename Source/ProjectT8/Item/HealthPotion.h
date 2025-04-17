@@ -13,6 +13,6 @@ public:
     virtual void Use(class ACharacterBase* Player) override;
 
 protected:
-    UPROPERTY(EditAnywhere)
-    float HealthRestore = 50.0f;
+    UPROPERTY(EditDefaultsOnly, Category = "Effect")
+    TSubclassOf<UGameplayEffect> HealEffect;
 };

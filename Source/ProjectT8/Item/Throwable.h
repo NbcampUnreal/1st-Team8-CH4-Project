@@ -3,6 +3,8 @@
 #include "Item/BaseItem.h"
 #include "Throwable.generated.h"
 
+class USphereComponent;
+class UGameplayEffect;
 UCLASS()
 class PROJECTT8_API AThrowable : public ABaseItem
 {
@@ -11,21 +13,26 @@ public:
     AThrowable();
 
     virtual void Use(class ACharacterBase* Player) override;
-    virtual void ApplyEffect(ACharacterBase* Target);
-    virtual void Tick(float DeltaTime) override;
-    virtual void BeginPlay() override;
-    virtual void Explode();
 
 protected:
-    UPROPERTY(EditAnywhere)
-    float ThrowForce = 1000.0f;
-    UPROPERTY(EditAnywhere)
-    float ThrowDuration = 0.0f;
-    UPROPERTY(EditAnywhere)
-    float EffectRadius = 500.0f; 
-    bool bIsThrown = false;
+    virtual void BeginPlay() override;
 
     UFUNCTION()
-    void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+    virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+    virtual TSubclassOf<UGameplayEffect> GetEffectToApply() const { return nullptr; }
+
+    UPROPERTY(EditDefaultsOnly, Category = "Throwable")
+    float ThrowForce = 1000.0f;
+
+    UPROPERTY(VisibleAnywhere, Category = "Throwable")
+    bool bIsThrown = false;
+
+    UPROPERTY(VisibleAnywhere, Category = "Throwable")
+    USphereComponent* EffectCollision;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Throwable")
+    float EffectRadius;
 
 };

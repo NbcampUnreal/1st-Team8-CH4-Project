@@ -38,5 +38,5 @@ void ALoadingPlayerController::SetupInputComponent()
 
 void ALoadingPlayerController::HandleNextPhaseInput()
 {
-    UGameplayStatics::OpenLevel(this, FName("PlayingMap"));
+    UGameplayStatics::OpenLevel(this, FName("BattleLevel"));
 }

@@ -1,21 +1,11 @@
 #include "Item/PoisonKnife.h"
+#include "Player/CharacterBase.h"
+#include "AbilitySystemComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/SphereComponent.h"
 
 APoisonKnife::APoisonKnife()
 {
     ItemName = "PoisonKnife";
-    ThrowDuration = 0.0f;
-}
-
-void APoisonKnife::ApplyEffect(ACharacterBase* Target)
-{
-    if (Target)
-    {
-        UEffectComponent* EffectComp = Target->FindComponentByClass<UEffectComponent>();
-        if (EffectComp)
-        {
-            FEffectParams Params;
-            Params.Duration = 5.0f;
-            EffectComp->ApplyEffect(EEffectType::Poison, Params);
-        }
-    }
+    EffectRadius = PoisonRadius;
 }

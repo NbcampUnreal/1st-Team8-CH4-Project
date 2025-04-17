@@ -6,6 +6,9 @@
 #include "Components/WidgetComponent.h"
 #include "CharacterBase.generated.h"
 
+// 캐릭터 죽음 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDeathDelegate, ACharacterBase*, DeadCharacter);
+
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -65,6 +68,12 @@ public:
 	UPROPERTY()
 	UUserWidget* BurnWidgetInstance;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> FlashWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* FlashWidgetInstance;
+
 	void InitAbilityActorInfo();
 
 	UFUNCTION(BlueprintCallable)
@@ -88,6 +97,31 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	float GetMaxHealth() const;
+
+	void SpeedUpStart(float SpeedRatio);
+	void SpeedUpEnd();
+	// 죽음 관련
+	UPROPERTY(BlueprintAssignable, Category = "Character")
+	FOnCharacterDeathDelegate OnCharacterDeath;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Character")
+	bool bIsDead = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Character")
+	virtual void Die();
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastDie();
+
+	UFUNCTION(BlueprintPure, Category = "Character")
+	virtual bool IsDead() const { return bIsDead; }
+
+	// 팀 정보
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Team")
+	int32 TeamNumber;
+
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Team")
+	FString PlayerDisplayName;
 
 protected:
 	// Input
@@ -150,12 +184,12 @@ protected:
 
 	void InitializeFloatingStatusWidget();
 	void UpdateHealthUI();
-
 private:
 	bool bIsRunning = false;
-
-	const float WalkSpeed = 150.f;
-	const float RunSpeed = 600.f;
+	bool bIsSpeedBoosted = false;
+	float SpeedBoostRatio;
+	float WalkSpeed = 250.f;
+	float RunSpeed = 600.f;
 
 public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
