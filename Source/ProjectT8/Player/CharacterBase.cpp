@@ -178,39 +178,25 @@ void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
 	}
 }
 
-void ACharacterBase::UpdateAppearance()
-{
-	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Appearance Update - Character: %s"), *GetName());
-		ApplyApperance(PS->ApperanceData);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Appearance Update - Character: %s"), *GetName());
-	}
-}
-
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	if (APlayerState* PS = GetPlayerState())
-	{
-		const FCharacterAppearanceData& Data = Cast<AT8PlayerState>(PS)->ApperanceData;
-		ApplyApperance(Data);
-	}
+	
 
 	if (AttributeSet)
 	{
 		AttributeSet->OnHealthChanged.AddDynamic(this, &ACharacterBase::HandleHealthChanged);
 	}
 
-	// 게임 상태 변경 이벤트 구독
 	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
 	{
+		HandleAppearanceByPhase(GameState->CurPhase);
+
+		// 게임 상태 변경 이벤트 구독
 		GameState->OnPhaseChanged.AddDynamic(this, &ACharacterBase::OnGamePhaseChanged);
+		
 	}
 
 	StatusEffectTags = {
@@ -512,7 +498,6 @@ void ACharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	InitAbilityActorInfo();
-	UpdateAppearance();
 }
 
 EGamePhase ACharacterBase::GetCurrentGamePhase() const
@@ -542,6 +527,31 @@ void ACharacterBase::UpdatePlayerName()
 	}
 }
 
+void ACharacterBase::HandleAppearanceByPhase(EGamePhase Phase)
+{
+	switch (Phase)
+	{
+	case EGamePhase::Room:
+		if (UCharacterAppearanceSubsystem* Sub = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
+		{
+			Sub->LoadAppearance();
+			ApplyApperance(Sub->CachedAppearanceData);
+		}
+		break;
+	case EGamePhase::Lobby:
+	case EGamePhase::Playing:
+	case EGamePhase::Result:
+		if (APlayerState* PS = GetPlayerState())
+		{
+			FCharacterAppearanceData& Data = Cast<AT8PlayerState>(PS)->ApperanceData;
+			ApplyApperance(Data);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void ACharacterBase::InitializeFloatingStatusWidget()
 {
 	if (FloatingStatusWidget)
@@ -560,7 +570,6 @@ void ACharacterBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
-	UpdateAppearance();
 }
 
 void ACharacterBase::OnGamePhaseChanged(EGamePhase NewPhase)
