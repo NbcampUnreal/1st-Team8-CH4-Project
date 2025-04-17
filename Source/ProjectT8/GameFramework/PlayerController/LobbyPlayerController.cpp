@@ -114,6 +114,14 @@ void ALobbyPlayerController::RemoveAIFromSlot(int32 SlotIndex)
     UE_LOG(LogTemp, Log, TEXT("RemoveAIFromSlot: AI removed from slot %d"), SlotIndex);
 }
 
+void ALobbyPlayerController::ClientTravelToPrivateLevel_Implementation()
+{
+    UE_LOG(LogTemp, Log, TEXT("Client kicked from lobby, returning to PrivateLevel"));
+
+    // 클라이언트 측에서 PrivateLevel로 이동
+    UGameplayStatics::OpenLevel(this, FName("PrivateLevel"));
+}
+
 void ALobbyPlayerController::BeginPlay()
 {
     Super::BeginPlay();
