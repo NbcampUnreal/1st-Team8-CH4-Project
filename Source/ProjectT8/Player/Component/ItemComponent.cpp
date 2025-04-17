@@ -13,6 +13,7 @@ UItemComponent::UItemComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
+	EquippedItem = nullptr;
 }
 
 void UItemComponent::Init(ACharacter* InOwner)
@@ -57,11 +58,21 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 
 void UItemComponent::UseEquippedItem()
 {
-	if (EquippedItem)
+	if (!EquippedItem || !OwnerCharacter) return; //현재 아이템 없거나 오너캐릭터 없으면 리턴
+	if (OwnerCharacter->HasAuthority()) // 오너캐릭터가 서버면
 	{
 		EquippedItem->Use(Cast<ACharacterBase>(OwnerCharacter));
 		UE_LOG(LogTemp, Warning, TEXT("사용한 아이템: %s"), *GetNameSafe(EquippedItem));
 	}
+	else
+	{
+		Server_UseEquippedItem();//오너캐릭터가 클라면 server로 UseEquippedItem 호출
+	}
+}
+
+void UItemComponent::Server_UseEquippedItem_Implementation()
+{
+	UseEquippedItem();
 }
 
 void UItemComponent::DropItemToWorld()

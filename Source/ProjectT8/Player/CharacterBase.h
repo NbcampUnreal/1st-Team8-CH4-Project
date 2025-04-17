@@ -187,8 +187,8 @@ protected:
 private:
 	bool bIsRunning = false;
 	bool bIsSpeedBoosted = false;
-	float SpeedBoostRatio = 1.5f;
-	float WalkSpeed = 150.f;
+	float SpeedBoostRatio;
+	float WalkSpeed = 250.f;
 	float RunSpeed = 600.f;
 
 public:
