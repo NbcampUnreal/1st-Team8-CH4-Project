@@ -92,6 +92,10 @@ void AT8GameState::InitializePlayerUIList(const TArray<FSlotInfo>& SlotList)
         case 1: UIData.TeamColor = FLinearColor::Blue; break;
         case 2: UIData.TeamColor = FLinearColor::Green; break;
         case 3: UIData.TeamColor = FLinearColor::Yellow; break;
+        case 4: UIData.TeamColor = FLinearColor(1.f, 0.5f, 0.f); break;   // 주황색 (Orange)
+        case 5: UIData.TeamColor = FLinearColor(0.5f, 0.f, 1.f); break;   // 보라색 (Purple)
+        case 6: UIData.TeamColor = FLinearColor(0.f, 1.f, 1.f); break;    // 시안 (Cyan)
+        case 7: UIData.TeamColor = FLinearColor(1.f, 0.f, 1.f); break;    // 마젠타 (Magenta)
         default: UIData.TeamColor = FLinearColor::Gray; break;
         }
 
