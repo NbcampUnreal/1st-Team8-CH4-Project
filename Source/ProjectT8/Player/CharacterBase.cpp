@@ -571,6 +571,7 @@ void ACharacterBase::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
 
+	// 플레이어 외형 갱신
 	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
 	{
 		HandleAppearanceByPhase(GameState->CurPhase);
@@ -699,28 +700,14 @@ void ACharacterBase::MulticastDie_Implementation()
 		GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("root"), true, true);
 	}
 
-	// 무기가 있다면 물리 시뮬레이션 활성화
 	if (ItemComponent)
 	{
 		if (ABaseItem* EquippedItem = ItemComponent->GetEquippedItem())
 		{
-			// 무기의 컴포넌트들을 찾아서 물리 적용
-			TArray<UPrimitiveComponent*> WeaponComponents;
-			EquippedItem->GetComponents<UPrimitiveComponent>(WeaponComponents);
-
-			for (UPrimitiveComponent* Component : WeaponComponents)
-			{
-				if (Component)
-				{
-					Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					Component->SetSimulatePhysics(true);
-					Component->SetEnableGravity(true);
-				}
-			}
+			ItemComponent->DropItemToWorld();
 		}
 	}
 
-	// 델리게이트 브로드캐스트
 	OnCharacterDeath.Broadcast(this);
 }
 
