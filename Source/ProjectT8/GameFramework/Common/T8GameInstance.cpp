@@ -1,4 +1,5 @@
 #include "T8GameInstance.h"
+
 #include "GameFramework/GameState/LobbyGameState.h"
 
 void UT8GameInstance::SaveLobbyGameState(ALobbyGameState* LobbyGameState)
@@ -9,7 +10,6 @@ void UT8GameInstance::SaveLobbyGameState(ALobbyGameState* LobbyGameState)
     // LobbyGameState�� ���� ����
     SavedLobbySlots = LobbyGameState->Slots;
     SavedTeamSetup = LobbyGameState->TeamSetup;
-    SavedSelectedMap = LobbyGameState->SelectedMap;
 
     for (int32 i = 0; i < SavedLobbySlots.Num(); ++i)
     {

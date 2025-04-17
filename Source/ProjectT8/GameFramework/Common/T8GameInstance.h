@@ -2,10 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "AdvancedFriendsGameInstance.h"
-#include "GameFramework/GameState/LobbyGameState.h" 
+
+#include "GameFramework/GameState/LobbyGameState.h"
+
 #include "T8GameInstance.generated.h"
 
-class UPhaseWidgetDataAsset;
+class UPhaseInfoDataAsset;
 
 UCLASS()
 class PROJECTT8_API UT8GameInstance : public UAdvancedFriendsGameInstance
@@ -14,7 +16,7 @@ class PROJECTT8_API UT8GameInstance : public UAdvancedFriendsGameInstance
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	UPhaseWidgetDataAsset* WidgetDataAsset;
+    UPhaseInfoDataAsset* PhaseInfoDataAsset;
 
     UPROPERTY(BlueprintReadWrite, Category = "Game Data")
     TArray<FSlotInfo> SavedLobbySlots;
@@ -22,14 +24,13 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Game Data")
     ETeamSetup SavedTeamSetup;
 
-    UPROPERTY(BlueprintReadWrite, Category = "Game Data")
-    FString SavedSelectedMap;
-
-    // LobbyGameStateÀÇ Á¤º¸¸¦ GameInstance¿¡ ÀúÀå
+    // LobbyGameStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ GameInstanceï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     UFUNCTION(BlueprintCallable, Category = "Game Data")
     void SaveLobbyGameState(ALobbyGameState* LobbyGameState);
 
-    // BattleLevel¿ë GameState ÃÊ±âÈ­ ½Ã »ç¿ë
+    // BattleLevelï¿½ï¿½ GameState ï¿½Ê±ï¿½È­ ï¿½ï¿½ ï¿½ï¿½ï¿½
     UFUNCTION(BlueprintCallable, Category = "Game Data")
     int32 GetAICountForTeam(int32 TeamNumber) const;
+
+    const TArray<FSlotInfo>& GetSavedLobbySlots() const { return SavedLobbySlots; }
 };

@@ -25,6 +25,7 @@ class UFloatingStatusWidget;
 UCLASS()
 class PROJECTT8_API AT8AICharacter : public ACharacter, public IAbilitySystemInterface
 {
+public:
 	GENERATED_BODY()
 
 public:
@@ -122,11 +123,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Team")
 	bool IsEnemy(AActor* OtherActor) const;
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	int32 GetTeamID() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetTeamID(int32 NewID);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Team")
+	UTextRenderComponent* TeamIndicator;
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetDisplayName(const FString& NewName);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
 	int32 TeamID = 0;
 
-	
+	FColor GetColorForTeam(int32 InTeamID) const;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Team")
+	FString DisplayName;
 
 	UPROPERTY()
 	class AAIController* CachedAIController;
@@ -140,13 +157,4 @@ protected:
 	void InitializeFloatingStatusWidget();
 	void UpdateHealthUI();
 
-public:
-	UFUNCTION(BlueprintCallable, Category = "Team")
-	int32 GetTeamID() const;
-
-	/*UFUNCTION(BlueprintCallable, Category = "Team")
-	void SetTeamID(int32 NewID);*/
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Team")
-	UTextRenderComponent* TeamIndicator;
 };
