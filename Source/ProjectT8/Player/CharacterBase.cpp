@@ -23,6 +23,7 @@
 #include "GameFramework/GameMode/T8GameMode.h"
 #include "GameFramework/Common/CustomGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "Player/Customize/FCharacterAppearanceData.h"
 
 
 // Constructor
@@ -195,15 +196,10 @@ void ACharacterBase::BeginPlay()
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	// 서버나 독립 실행 환경에서만 실행
-	if (HasAuthority() || GetWorld()->IsNetMode(NM_Standalone))
+	if (APlayerState* PS = GetPlayerState())
 	{
-		if (UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
-		{
-			ApperanceSybsystem->LoadAppearance();
-			ApplyApperance(ApperanceSybsystem->CachedAppearanceData);
-			UE_LOG(LogTemp, Warning, TEXT("Character constructed with appearance data"));
-		}
+		const FCharacterAppearanceData& Data = Cast<AT8PlayerState>(PS)->ApperanceData;
+		ApplyApperance(Data);
 	}
 
 	if (AttributeSet)
