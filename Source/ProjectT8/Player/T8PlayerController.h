@@ -25,9 +25,6 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     UInputAction* NextPhaseAction;
 
-	UFUNCTION(Server, Reliable)
-	void ServerSetAppearanceData(const FCharacterAppearanceData& InData);
-
 private:
 	void HandleNextPhaseInput();
 };
