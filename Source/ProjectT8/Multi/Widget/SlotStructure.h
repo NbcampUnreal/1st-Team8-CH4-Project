@@ -5,7 +5,6 @@
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "SlotStructure.generated.h"
 
-// Forward declarations
 class ALobbyGameState;
 class APlayerState;
 class UButton;
@@ -80,10 +79,10 @@ private:
     /** Free-for-all 모드 그리드 패널 (GridPanel, BP에서 구현될) */
     UPROPERTY(meta = (BindWidgetOptional))
     UGridPanel* FreeForAllGrid;
-    /** Two Teams 모드 그리드 패널 (UniformGridPanel, BP에서 구현될) */
+    /** Two Teams 모드 그리드 패널 (GridPanel, BP에서 구현될) */
     UPROPERTY(meta = (BindWidgetOptional))
     UGridPanel* TwoTeamsGrid;
-    /** Four Teams 모드 그리드 패널 (UniformGridPanel, BP에서 구현될) */
+    /** Four Teams 모드 그리드 패널 (GridPanel, BP에서 구현될) */
     UPROPERTY(meta = (BindWidgetOptional))
     UGridPanel* FourTeamsGrid;
 

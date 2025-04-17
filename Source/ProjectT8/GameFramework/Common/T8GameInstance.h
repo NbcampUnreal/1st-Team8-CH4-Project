@@ -24,9 +24,6 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Game Data")
     ETeamSetup SavedTeamSetup;
 
-    UPROPERTY(BlueprintReadWrite, Category = "Game Data")
-    FString SavedSelectedMap;
-
     // LobbyGameState�� ������ GameInstance�� ����
     UFUNCTION(BlueprintCallable, Category = "Game Data")
     void SaveLobbyGameState(ALobbyGameState* LobbyGameState);

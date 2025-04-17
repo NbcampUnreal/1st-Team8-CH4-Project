@@ -15,18 +15,15 @@ void UGameSettings::NativeConstruct()
     {
         // UI 초기화
         UpdateTeamModeUI(LobbyState->TeamSetup);
-        if (MapText) MapText->SetText(FText::FromString(LobbyState->SelectedMap));
 
         // 델리게이트 바인딩
         LobbyState->OnTeamModeChanged.RemoveAll(this);
         LobbyState->OnTeamModeChanged.AddDynamic(this, &UGameSettings::OnTeamModeChanged);
-        LobbyState->OnSelectedMapChanged.AddDynamic(this, &UGameSettings::OnMapChanged);
 
         // 호스트만 설정 변경 가능
         APlayerController* PC = GetOwningPlayer();
         bool bIsHost = PC && PC->HasAuthority();
         if (TeamModeButton) TeamModeButton->SetIsEnabled(bIsHost);
-        if (MapButton) MapButton->SetIsEnabled(bIsHost);
     }
     else
     {
@@ -37,10 +34,6 @@ void UGameSettings::NativeConstruct()
     if (TeamModeButton)
     {
         TeamModeButton->OnClicked.AddDynamic(this, &UGameSettings::OnTeamModeButtonClicked);
-    }
-    if (MapButton)
-    {
-        MapButton->OnClicked.AddDynamic(this, &UGameSettings::OnMapButtonClicked);
     }
 }
 
@@ -67,14 +60,6 @@ void UGameSettings::OnTeamModeChanged()
     UpdateTeamModeUI(LobbyState->TeamSetup);
     
     UE_LOG(LogTemp, Log, TEXT("Team mode changed to: %d"), (int32)LobbyState->TeamSetup);
-}
-
-void UGameSettings::OnMapChanged()
-{
-    if (!LobbyState || !MapText) return;
-    
-    MapText->SetText(FText::FromString(LobbyState->SelectedMap));
-    UE_LOG(LogTemp, Log, TEXT("Map changed to: %s"), *LobbyState->SelectedMap);
 }
 
 void UGameSettings::OnTeamModeButtonClicked()
@@ -107,22 +92,4 @@ void UGameSettings::OnTeamModeButtonClicked()
     // 주의: SlotStructure.UpdateTeamMode는 직접 호출할 필요 없음
     // LobbyGameState에서 OnTeamModeChanged 델리게이트를 브로드캐스트하여 
     // SlotStructure가 자동으로 업데이트되도록 함
-}
-
-void UGameSettings::OnMapButtonClicked()
-{
-    if (!LobbyState) return;
-    
-    // 호스트 체크
-    APlayerController* PC = GetOwningPlayer();
-    bool bIsHost = PC && PC->HasAuthority();
-    if (!bIsHost) 
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Only host can change map!"));
-        return;
-    }
-
-    // 다음 맵으로 순환
-    LobbyState->CycleMapChoice();
-    UE_LOG(LogTemp, Log, TEXT("Map cycling to: %s"), *LobbyState->SelectedMap);
 }
