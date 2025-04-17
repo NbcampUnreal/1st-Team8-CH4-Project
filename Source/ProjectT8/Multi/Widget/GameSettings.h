@@ -23,23 +23,15 @@ protected:
     UTextBlock* TeamModeText;
     UPROPERTY(meta = (BindWidget))
     UButton* TeamModeButton;
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* MapText;
-    UPROPERTY(meta = (BindWidget))
-    UButton* MapButton;
 
     UPROPERTY(meta = (BindWidget))
     USlotStructure* SlotStructure;
 
     UFUNCTION()
     void OnTeamModeButtonClicked();
-    UFUNCTION()
-    void OnMapButtonClicked();
     
     UFUNCTION()
     void OnTeamModeChanged();
-    UFUNCTION()
-    void OnMapChanged();
     
     void UpdateTeamModeUI(ETeamSetup TeamMode);
 

@@ -21,10 +21,29 @@ void UT8BTService_CheckEnemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 
 	if (!SelfAI || !Target)
 	{
-		Blackboard->SetValueAsBool("IsTargetEnemy", false);
+		Blackboard->SetValueAsBool("Target", false);
 		return;
 	}
 
+	if (ACharacterBase* TargetChar = Cast<ACharacterBase>(Target))
+	{
+		if (TargetChar->IsDead())
+		{
+			Blackboard->SetValueAsBool("Target", false);
+			return;
+		}
+	}
+	else if (AT8AICharacter* TargetAI = Cast<AT8AICharacter>(Target))
+	{
+		if (TargetAI->IsDead())
+		{
+			Blackboard->SetValueAsBool("Target", false);
+			return;
+		}
+	}
+
 	bool bIsEnemy = SelfAI->IsEnemy(Target);
-	Blackboard->SetValueAsBool("IsTargetEnemy", bIsEnemy);
+	Blackboard->SetValueAsBool("Target", bIsEnemy);
+
 }
+

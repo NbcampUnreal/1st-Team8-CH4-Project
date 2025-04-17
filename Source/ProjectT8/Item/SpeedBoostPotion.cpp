@@ -2,7 +2,9 @@
 
 ASpeedBoostPotion::ASpeedBoostPotion()
 {
-	ItemName = "SpeedBoostPotion";
+	ItemName = "SpeedBoostPotion";	
+    ItemMesh->SetWorldScale3D(FVector(3.4f));
+    InteractSphere->SetSphereRadius(20.0f);
 }
 
 void ASpeedBoostPotion::Use(ACharacterBase* Player)

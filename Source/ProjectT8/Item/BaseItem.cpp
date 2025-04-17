@@ -8,20 +8,20 @@ ABaseItem::ABaseItem()
 	bReplicates = true;
 	SetReplicateMovement(true);
 
-	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	RootComponent = RootComp;
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	ItemMesh->SetupAttachment(RootComponent);
 	ItemMesh->SetSimulatePhysics(true);
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	ItemMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	ItemMesh->SetCollisionObjectType(ECC_PhysicsBody);
+	ItemMesh->SetEnableGravity(true);
+	SetRootComponent(ItemMesh);
 
 	InteractSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractSphere"));
 	InteractSphere->SetupAttachment(ItemMesh);
-	InteractSphere->SetSphereRadius(200.0f);
+	InteractSphere->SetSphereRadius(40.0f);
 	InteractSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	InteractSphere->SetGenerateOverlapEvents(true);
 
 	ItemName = "DefaultItem";
 	PrimaryActorTick.bCanEverTick = false;
@@ -30,6 +30,7 @@ ABaseItem::ABaseItem()
 void ABaseItem::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)

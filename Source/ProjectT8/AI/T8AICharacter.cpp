@@ -87,10 +87,17 @@ void AT8AICharacter::BeginPlay()
 
 	if (HasAuthority())
 	{
-		if (ALobbyGameState* LobbyState = GetWorld()->GetGameState<ALobbyGameState>())
+		if (!DisplayName.IsEmpty()) 
 		{
-			int32 AssignedTeam = LobbyState->GetTeamNumberForAI(DisplayName);
-			SetTeamID(AssignedTeam);
+			if (ALobbyGameState* LobbyState = GetWorld()->GetGameState<ALobbyGameState>())
+			{
+				int32 AssignedTeam = LobbyState->GetTeamNumberForAI(DisplayName);
+				SetTeamID(AssignedTeam);
+			}
+		}
+		else
+		{
+			SetTeamID(TeamID);
 		}
 	}
 }
@@ -200,6 +207,7 @@ bool AT8AICharacter::IsEnemy(AActor* OtherActor) const
 
 	return true;
 }
+
 
 
 int32 AT8AICharacter::GetTeamID() const

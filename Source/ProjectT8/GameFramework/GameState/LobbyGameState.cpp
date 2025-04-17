@@ -23,7 +23,6 @@ ALobbyGameState::ALobbyGameState()
     }
 
     TeamSetup = ETeamSetup::FreeForAll;
-    SelectedMap = TEXT("DefaultMap");
 }
 
 void ALobbyGameState::BeginPlay()
@@ -36,7 +35,6 @@ void ALobbyGameState::BeginPlay()
     if (HasAuthority())
     {
         TeamSetup = ETeamSetup::FreeForAll;
-        SelectedMap = TEXT("Map1");
         UpdateTeamAssignments();
     }
 }
@@ -47,7 +45,6 @@ void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
     DOREPLIFETIME(ALobbyGameState, Slots);
     DOREPLIFETIME(ALobbyGameState, TeamSetup);
-    DOREPLIFETIME(ALobbyGameState, SelectedMap);
 }
 
 void ALobbyGameState::OnRep_Slots()
@@ -58,11 +55,6 @@ void ALobbyGameState::OnRep_Slots()
 void ALobbyGameState::OnRep_TeamSetup()
 {
     OnTeamModeChanged.Broadcast();
-}
-
-void ALobbyGameState::OnRep_SelectedMap()
-{
-    OnSelectedMapChanged.Broadcast();
 }
 
 void ALobbyGameState::UpdateTeamAssignments()
@@ -303,21 +295,6 @@ void ALobbyGameState::SetTeamSetup(ETeamSetup NewSetup)
     
     // 주의: 슬롯 재배치는 SlotStructure 클래스에서 처리
     // 이 브로드캐스트를 통해 SlotStructure::UpdateTeamMode가 호출됨
-}
-
-void ALobbyGameState::CycleMapChoice()
-{
-    if (!HasAuthority()) return;
-
-    static const TArray<FString> MapList = { TEXT("Map1"), TEXT("Map2"), TEXT("Map3") };///////////////////이거 바꿔야됨
-    int32 CurrentIndex = MapList.IndexOfByKey(SelectedMap);
-    if (CurrentIndex == INDEX_NONE)
-    {
-        CurrentIndex = 0;
-    }
-    int32 NextIndex = (CurrentIndex + 1) % MapList.Num();
-    SelectedMap = MapList[NextIndex];
-    OnSelectedMapChanged.Broadcast();
 }
 
 void ALobbyGameState::AssignPlayerToSlot(APlayerState* NewPlayer)

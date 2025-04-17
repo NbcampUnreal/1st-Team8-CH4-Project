@@ -8,4 +8,6 @@ AFlashGrenade::AFlashGrenade()
 {
 	ItemName = "FlashGrenade";
     EffectRadius = BlindRadius;
+	ItemMesh->SetWorldScale3D(FVector(3.5f));
+	InteractSphere->SetSphereRadius(15.0f);
 }

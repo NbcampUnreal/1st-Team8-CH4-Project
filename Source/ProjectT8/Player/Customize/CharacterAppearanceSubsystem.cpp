@@ -40,18 +40,6 @@ void UCharacterAppearanceSubsystem::SaveAppearance()
 
 void UCharacterAppearanceSubsystem::LoadAppearance()
 {	
-	auto GetRandomID = [](const FString& Prefix, int32 Min, int32 Max) -> FString {
-		int32 RandomNum = FMath::RandRange(Min, Max);
-		return FString::Printf(TEXT("%s_%02d"), *Prefix, RandomNum);
-	};
-
-	const FString DefaultHeadID = GetRandomID("Head", 1, 3);
-	const FString DefaultAccessoryID = GetRandomID("Accessory", 1, 7);
-	const FString DefaultGlovesID = GetRandomID("Gloves", 1, 2);
-	const FString DefaultTopID = GetRandomID("Top", 1, 5);
-	const FString DefaultBottomID = GetRandomID("Bottom", 1, 3);
-	const FString DefaultShoesID = GetRandomID("Shoes", 1, 3);
-
 	if (UGameplayStatics::DoesSaveGameExist(SaveSlot, 0))
 	{
 		UCharacterAppearanceSaveGame* Loaded = Cast<UCharacterAppearanceSaveGame>(
@@ -60,28 +48,28 @@ void UCharacterAppearanceSubsystem::LoadAppearance()
 		if (Loaded)
 		{
 			CachedAppearanceData = Loaded->AppearanceData;
-			
-			// 저장된 데이터가 있어도 빈 값이 있다면 랜덤 기본값으로 설정
-			if (CachedAppearanceData.HeadID.IsEmpty()) CachedAppearanceData.HeadID = DefaultHeadID;
-			if (CachedAppearanceData.AccessoryID.IsEmpty()) CachedAppearanceData.AccessoryID = DefaultAccessoryID;
-			if (CachedAppearanceData.GlovesID.IsEmpty()) CachedAppearanceData.GlovesID = DefaultGlovesID;
-			if (CachedAppearanceData.TopID.IsEmpty()) CachedAppearanceData.TopID = DefaultTopID;
-			if (CachedAppearanceData.BottomID.IsEmpty()) CachedAppearanceData.BottomID = DefaultBottomID;
-			if (CachedAppearanceData.ShoesID.IsEmpty()) CachedAppearanceData.ShoesID = DefaultShoesID;
-
-			UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 외형 정보 불러오기 완료!"));
+			UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보를 불러왔습니다!"));
+			return;
 		}
 	}
-	else
-	{
-		CachedAppearanceData.HeadID = DefaultHeadID;
-		CachedAppearanceData.AccessoryID = DefaultAccessoryID;
-		CachedAppearanceData.GlovesID = DefaultGlovesID;
-		CachedAppearanceData.TopID = DefaultTopID;
-		CachedAppearanceData.BottomID = DefaultBottomID;
-		CachedAppearanceData.ShoesID = DefaultShoesID;
-		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보 없음! 기본값 설정"));
-	}
+
+	// 저장된 데이터가 없을 경우에만 랜덤 값 생성
+	UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보 없음! 기본값 설정"));
+	
+	auto GetRandomID = [](const FString& Prefix, int32 Min, int32 Max) -> FString {
+		int32 RandomNum = FMath::RandRange(Min, Max);
+		return FString::Printf(TEXT("%s_%02d"), *Prefix, RandomNum);
+	};
+
+	CachedAppearanceData.HeadID = GetRandomID("Head", 1, 3);
+	CachedAppearanceData.AccessoryID = GetRandomID("Accessory", 1, 7);
+	CachedAppearanceData.GlovesID = GetRandomID("Gloves", 1, 2);
+	CachedAppearanceData.TopID = GetRandomID("Top", 1, 5);
+	CachedAppearanceData.BottomID = GetRandomID("Bottom", 1, 3);
+	CachedAppearanceData.ShoesID = GetRandomID("Shoes", 1, 3);
+
+	// 새로 생성된 랜덤 값을 저장
+	SaveAppearance();
 }
 
 USkeletalMesh* UCharacterAppearanceSubsystem::GetCostumeMeshByID(const FString& ItemID)
