@@ -8,8 +8,10 @@ ABaseItem::ABaseItem()
 	bReplicates = true;
 	SetReplicateMovement(true);
 
+	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = RootComp;
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	RootComponent = ItemMesh;
+	ItemMesh->SetupAttachment(RootComponent);
 	ItemMesh->SetSimulatePhysics(true);
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	ItemMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);

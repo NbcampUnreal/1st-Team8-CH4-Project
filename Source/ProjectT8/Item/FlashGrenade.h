@@ -12,11 +12,10 @@ public:
     AFlashGrenade();
 
 protected:
-    virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
-
     UPROPERTY(EditDefaultsOnly, Category = "Effect")
     TSubclassOf<UGameplayEffect> BlindEffect;
+    TSubclassOf<UGameplayEffect> GetEffectToApply() const override { return BlindEffect; }
 
     UPROPERTY(EditDefaultsOnly, Category = "Effect")
-    float FlashRadius = 600.f;
+    float BlindRadius = 600.f;
 };
