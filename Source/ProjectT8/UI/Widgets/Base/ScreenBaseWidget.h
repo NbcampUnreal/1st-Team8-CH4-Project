@@ -21,6 +21,9 @@ public:
 
     void BindFadeOutFinished();
 
+    UPROPERTY(meta = (BindWidgetAnim), Transient)
+    UWidgetAnimation* Anim_FadeOut_Screen;
+
     UPROPERTY()
     FWidgetAnimationDynamicEvent FadeOutFinishedDelegate;
 
@@ -30,7 +33,4 @@ public:
 protected:
     UPROPERTY(meta = (BindWidgetAnim), Transient)
     UWidgetAnimation* Anim_FadeIn_Screen;
-
-    UPROPERTY(meta = (BindWidgetAnim), Transient)
-    UWidgetAnimation* Anim_FadeOut_Screen;
 };

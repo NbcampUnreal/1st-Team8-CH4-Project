@@ -17,5 +17,5 @@ protected:
     TSubclassOf<UGameplayEffect> GetEffectToApply() const override { return BlindEffect; }
 
     UPROPERTY(EditDefaultsOnly, Category = "Effect")
-    float BlindRadius = 600.f;
+    float BlindRadius = 40.f;
 };

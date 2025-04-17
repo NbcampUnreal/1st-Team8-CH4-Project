@@ -1,6 +1,7 @@
 ﻿#include "Player/Customize/CharacterAppearanceSubsystem.h"
 #include "CharacterAppearanceSaveGame.h"
 #include "Data/CostumeItemDataRow.h"
+#include "GameFramework/Common/T8PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
 const FString SaveSlot = TEXT("CharacterAppearanceSlot");
@@ -28,38 +29,59 @@ void UCharacterAppearanceSubsystem::SaveAppearance()
 	if (SaveObj)
 	{	
 		SaveObj->AppearanceData = CachedAppearanceData;
-		UGameplayStatics::SaveGameToSlot(SaveObj, SaveSlot, 0);
-		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 외형 정보 저장 완료!"));
+
+		FString DynamicSlot = GetDynamicSaveSlot();
+		UGameplayStatics::SaveGameToSlot(SaveObj, DynamicSlot, 0);
+		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 외형 정보 저장 완료! (%s)"), *DynamicSlot);
 	}
 }
 
-// 지윤님 확인!
-// auto* Subsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
-// Subsystem->CachedAppearanceData.TopID = "Top_03";
-// Subsystem->SaveAppearance();
-
 void UCharacterAppearanceSubsystem::LoadAppearance()
 {	
-	if (UGameplayStatics::DoesSaveGameExist(SaveSlot, 0))
+	FString DynamicSlot = GetDynamicSaveSlot();
+
+	if (UGameplayStatics::DoesSaveGameExist(DynamicSlot, 0))
 	{
 		UCharacterAppearanceSaveGame* Loaded = Cast<UCharacterAppearanceSaveGame>(
-			UGameplayStatics::LoadGameFromSlot(SaveSlot, 0));
+			UGameplayStatics::LoadGameFromSlot(DynamicSlot, 0));
 	
 		if (Loaded)
 		{
 			CachedAppearanceData = Loaded->AppearanceData;
-			UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보를 불러왔습니다!"));
+			UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보를 불러왔습니다! (%s)"), *DynamicSlot);
 			return;
 		}
 	}
-
-	// 저장된 데이터가 없을 경우에만 랜덤 값 생성
-	UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보 없음! 기본값 설정"));
 	
+	GenerateRandomAppearance();
+	SaveAppearance();
+}
+
+FString UCharacterAppearanceSubsystem::GetDynamicSaveSlot() const
+{
+	FString SlotPrefix = SaveSlot;
+
+	// 가장 먼저 PlayerController -> PlayerState 기반 ID
+	if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (AT8PlayerState* PS = Cast<AT8PlayerState>(PC->PlayerState))
+		{
+			// 가장 좋은 방식: PlayerName 기반
+			return FString::Printf(TEXT("%s_%s"), *SlotPrefix, *PS->GetPlayerName());
+		}
+	}
+
+	// 아니면 FPlatformMisc 기준 fallback
+	FString DeviceId = FPlatformMisc::GetDeviceId();
+	return FString::Printf(TEXT("%s_%s"), *SlotPrefix, *DeviceId);
+}
+
+void UCharacterAppearanceSubsystem::GenerateRandomAppearance()
+{
 	auto GetRandomID = [](const FString& Prefix, int32 Min, int32 Max) -> FString {
 		int32 RandomNum = FMath::RandRange(Min, Max);
 		return FString::Printf(TEXT("%s_%02d"), *Prefix, RandomNum);
-	};
+		};
 
 	CachedAppearanceData.HeadID = GetRandomID("Head", 1, 3);
 	CachedAppearanceData.AccessoryID = GetRandomID("Accessory", 1, 7);
@@ -67,9 +89,6 @@ void UCharacterAppearanceSubsystem::LoadAppearance()
 	CachedAppearanceData.TopID = GetRandomID("Top", 1, 5);
 	CachedAppearanceData.BottomID = GetRandomID("Bottom", 1, 3);
 	CachedAppearanceData.ShoesID = GetRandomID("Shoes", 1, 3);
-
-	// 새로 생성된 랜덤 값을 저장
-	SaveAppearance();
 }
 
 USkeletalMesh* UCharacterAppearanceSubsystem::GetCostumeMeshByID(const FString& ItemID)

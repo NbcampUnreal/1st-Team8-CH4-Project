@@ -12,6 +12,7 @@
 #include "UserSlot.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "InputCoreTypes.h"
 #include "GameFramework/PlayerController/LobbyPlayerController.h"
 #include "Components/PanelWidget.h"
@@ -59,6 +60,49 @@ void USlotStructure::NativeConstruct()
     
     // UI 초기화
     RefreshSlotWidgets();
+
+    APlayerController* OwningController = GetOwningPlayer();
+    if (OwningController && OwningController->GetLocalRole() < ENetRole::ROLE_Authority) // 권한이 없는 경우 (클라이언트)
+    {
+        const int32 TargetColumnSpan = 7; // 목표 ColumnSpan 값
+        UE_LOG(LogTemp, Log, TEXT("USlotStructure::NativeConstruct - Applying ColumnSpan %d because World is NOT Server."), TargetColumnSpan);
+
+        // --- FFAButtons 순회 및 ColumnSpan 설정 ---
+        for (UButton* Btn : FFAButtons)
+        {
+            if (Btn)
+            {
+                if (UGridSlot* ButtonSlot = UWidgetLayoutLibrary::SlotAsGridSlot(Btn))
+                {
+                    ButtonSlot->SetColumnSpan(TargetColumnSpan);
+                }
+            }
+        }
+
+        // --- TwoTeamsButtons 순회 및 ColumnSpan 설정 ---
+        for (UButton* Btn : TwoTeamsButtons)
+        {
+            if (Btn)
+            {
+                if (UGridSlot* ButtonSlot = UWidgetLayoutLibrary::SlotAsGridSlot(Btn))
+                {
+                    ButtonSlot->SetColumnSpan(TargetColumnSpan);
+                }
+            }
+        }
+
+        // --- FourTeamsButtons 순회 및 ColumnSpan 설정 ---
+        for (UButton* Btn : FourTeamsButtons)
+        {
+            if (Btn)
+            {
+                if (UGridSlot* ButtonSlot = UWidgetLayoutLibrary::SlotAsGridSlot(Btn))
+                {
+                    ButtonSlot->SetColumnSpan(TargetColumnSpan);
+                }
+            }
+        }
+    }
 }
 
 void USlotStructure::FindGameState()
@@ -1020,11 +1064,6 @@ void USlotStructure::RemoveAIFromSlot(int32 SlotIndex)
 
 void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
 {
-    /*if (IsLocalPlayerHost())
-    {
-		UE_LOG(LogTemp, Log, TEXT("Host can't be kicked"));
-        return;
-    }*/
     if (!IsSlotPlayer(SlotIndex))
     {
         UE_LOG(LogTemp, Warning, TEXT("KickPlayerFromSlot: No player in slot %d"), SlotIndex);
@@ -1039,7 +1078,6 @@ void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
         return;
     }
 
-    // 플레이어 컨트롤러 가져오기
     APlayerController* PlayerToKick = nullptr;
     if (LobbyGS->Slots[SlotIndex].PlayerState)
     {
@@ -1052,7 +1090,6 @@ void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
         return;
     }
 
-    // LobbyPlayerController로 캐스팅
     ALobbyPlayerController* LobbyKickPC = Cast<ALobbyPlayerController>(PlayerToKick);
     if (!LobbyKickPC)
     {

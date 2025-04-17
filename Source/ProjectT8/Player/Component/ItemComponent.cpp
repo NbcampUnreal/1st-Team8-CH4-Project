@@ -7,6 +7,7 @@
 #include "Player/CharacterBase.h"
 #include "AI/T8AICharacter.h"
 #include "Item/Weapon.h"
+#include "Item/Throwable.h"
 
 
 UItemComponent::UItemComponent()
@@ -29,7 +30,6 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	{
 		DropItemToWorld();
 	}
-
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
 
@@ -50,7 +50,7 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 
 	if (OwnerCharacter->HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
+		UE_LOG(LogTemp, Warning, TEXT("HasAuthority : AttachItem - %s"), *GetNameSafe(NewItem));
 		Multicast_AttachItem(NewItem);
 	}
 }
@@ -58,15 +58,15 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 
 void UItemComponent::UseEquippedItem()
 {
-	if (!EquippedItem || !OwnerCharacter) return; //현재 아이템 없거나 오너캐릭터 없으면 리턴
-	if (OwnerCharacter->HasAuthority()) // 오너캐릭터가 서버면
+	if (!EquippedItem || !OwnerCharacter) return;
+	if (OwnerCharacter->HasAuthority())
 	{
 		EquippedItem->Use(Cast<ACharacterBase>(OwnerCharacter));
 		UE_LOG(LogTemp, Warning, TEXT("사용한 아이템: %s"), *GetNameSafe(EquippedItem));
 	}
 	else
 	{
-		Server_UseEquippedItem();//오너캐릭터가 클라면 server로 UseEquippedItem 호출
+		Server_UseEquippedItem();
 	}
 }
 
@@ -84,13 +84,14 @@ void UItemComponent::DropItemToWorld()
 	EquippedItem->SetActorHiddenInGame(false);
 	EquippedItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
+	EquippedItem->SetActorLocation(OwnerCharacter->GetActorLocation() + DropOffset);
+
 	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(EquippedItem->GetRootComponent()))
 	{
 		Prim->SetSimulatePhysics(true);
+		Prim->SetEnableGravity(true);
+		Prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
-
-	EquippedItem->SetActorLocation(OwnerCharacter->GetActorLocation() + DropOffset);
-	
 	EquippedItem = nullptr;
 }
 
@@ -101,14 +102,29 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	Item->SetActorHiddenInGame(false);
 	Item->SetActorEnableCollision(false);
 
-	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Item->GetRootComponent()))
+
+	if (Item->GetItemMesh())
 	{
-		Prim->SetSimulatePhysics(false);
-		Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Item->GetItemMesh()->SetVisibility(true);
+		Item->GetItemMesh()->SetSimulatePhysics(false);
+		Item->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Item->GetItemMesh()->SetEnableGravity(false);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] WARNING: ItemMesh is nullptr for item: %s"), *GetNameSafe(Item));
+	}
+	if (AThrowable* ThrowableItem = Cast<AThrowable>(Item))
+	{
+		if (ThrowableItem->GetEffectCollision())
+		{
+			ThrowableItem->GetEffectCollision()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
 	}
 
-	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-	
+	Item->GetItemMesh()->SetWorldLocation(OwnerCharacter->GetActorLocation() + FVector(0, 0, 50));
+	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::KeepWorldTransform, TEXT("WeaponSocket"));
+
 	// 기본 AttachOffset 적용
 	FTransform ItemTransform = Item->AttachOffset;
 	
@@ -118,12 +134,12 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 		FRotator TypeRotation = Weapon->GetWeaponTypeRotation();
 		ItemTransform.SetRotation(FQuat(TypeRotation) * ItemTransform.GetRotation());
 	}
-	
+	ItemTransform.SetScale3D(Item->GetActorScale3D());
 	Item->SetActorRelativeTransform(ItemTransform);
 }
 
 void UItemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
+{ 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UItemComponent, EquippedItem);
 }

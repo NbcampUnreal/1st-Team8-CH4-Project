@@ -39,6 +39,8 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* InteractSphere;
 
+	UStaticMeshComponent* GetItemMesh() const { return ItemMesh; }
+
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

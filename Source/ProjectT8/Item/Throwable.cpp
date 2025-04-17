@@ -19,7 +19,14 @@ AThrowable::AThrowable()
     EffectCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     EffectCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
     EffectCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-    EffectCollision->SetSphereRadius(300.f);
+    InteractSphere->SetSphereRadius(20.f);
+    EffectCollision->SetSphereRadius(50.f);
+
+    ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+    ProjectileMovement->bAutoActivate = false;
+    ProjectileMovement->bRotationFollowsVelocity = true;
+    ProjectileMovement->bShouldBounce = true;
+    ProjectileMovement->ProjectileGravityScale = 1.f;
 }
 
 void AThrowable::BeginPlay()
@@ -34,8 +41,12 @@ void AThrowable::Use(ACharacterBase* Player)
     FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
     DetachFromActor(DetachRules);
 
+    ItemMesh->SetSimulatePhysics(false);
+    ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
     FVector ThrowDirection = Player->GetActorForwardVector() + FVector(0, 0, 0.3f);
-    ItemMesh->AddImpulse(ThrowDirection * ThrowForce, NAME_None, true);
+    ProjectileMovement->Velocity = ThrowDirection * ThrowForce;
+    ProjectileMovement->Activate();
 
     bIsThrown = true;
 

@@ -5,6 +5,8 @@
 
 class USphereComponent;
 class UGameplayEffect;
+class UProjectileMovementComponent;
+
 UCLASS()
 class PROJECTT8_API AThrowable : public ABaseItem
 {
@@ -13,6 +15,7 @@ public:
     AThrowable();
 
     virtual void Use(class ACharacterBase* Player) override;
+    USphereComponent* GetEffectCollision() { return EffectCollision; }
 
 protected:
     virtual void BeginPlay() override;
@@ -20,6 +23,9 @@ protected:
     UFUNCTION()
     virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+    UPROPERTY(VisibleAnywhere)
+    UProjectileMovementComponent* ProjectileMovement;
 
     virtual TSubclassOf<UGameplayEffect> GetEffectToApply() const { return nullptr; }
 
@@ -34,5 +40,4 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, Category = "Throwable")
     float EffectRadius;
-
 };
