@@ -7,6 +7,7 @@
 #include "Player/CharacterBase.h"
 #include "AI/T8AICharacter.h"
 #include "Item/Weapon.h"
+#include "Item/Throwable.h"
 
 
 UItemComponent::UItemComponent()
@@ -30,6 +31,17 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 		DropItemToWorld();
 	}
 
+	if (NewItem->GetItemMesh())
+	{
+		NewItem->GetItemMesh()->SetSimulatePhysics(false);
+		NewItem->GetItemMesh()->SetEnableGravity(false);
+		NewItem->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	if (NewItem->InteractSphere)
+	{
+		NewItem->InteractSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
 
@@ -50,7 +62,7 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 
 	if (OwnerCharacter->HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HasAuthority"));
+		UE_LOG(LogTemp, Warning, TEXT("HasAuthority : AttachItem - %s"), *GetNameSafe(NewItem));
 		Multicast_AttachItem(NewItem);
 	}
 }
@@ -101,12 +113,19 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	Item->SetActorHiddenInGame(false);
 	Item->SetActorEnableCollision(false);
 
-	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Item->GetRootComponent()))
+	if (Item->GetItemMesh())
 	{
-		Prim->SetSimulatePhysics(false);
-		Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Item->GetItemMesh()->SetSimulatePhysics(false);
+		Item->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Item->GetItemMesh()->SetEnableGravity(false);
 	}
-
+	if (AThrowable* ThrowableItem = Cast<AThrowable>(Item))
+	{
+		if (ThrowableItem->GetEffectCollision())
+		{
+			ThrowableItem->GetEffectCollision()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
 	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
 	
 	// 기본 AttachOffset 적용

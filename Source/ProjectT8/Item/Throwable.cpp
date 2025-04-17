@@ -40,6 +40,9 @@ void AThrowable::Use(ACharacterBase* Player)
     FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
     DetachFromActor(DetachRules);
 
+    ItemMesh->SetSimulatePhysics(false);
+    ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
     FVector ThrowDirection = Player->GetActorForwardVector() + FVector(0, 0, 0.3f);
     ProjectileMovement->Velocity = ThrowDirection * ThrowForce;
     ProjectileMovement->Activate();

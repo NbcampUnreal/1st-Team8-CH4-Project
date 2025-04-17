@@ -30,6 +30,7 @@ ABaseItem::ABaseItem()
 void ABaseItem::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 void ABaseItem::Interact_Implementation(ACharacterBase* Player)

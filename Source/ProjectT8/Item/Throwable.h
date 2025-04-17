@@ -15,6 +15,7 @@ public:
     AThrowable();
 
     virtual void Use(class ACharacterBase* Player) override;
+    USphereComponent* GetEffectCollision() { return EffectCollision; }
 
 protected:
     virtual void BeginPlay() override;
