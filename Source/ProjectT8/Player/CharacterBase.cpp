@@ -177,6 +177,35 @@ void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
 	}
 }
 
+void ACharacterBase::UpdateAppearance()
+{
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Appearance Update - Character: %s"), *GetName());
+		ApplyApperance(PS->ApperanceData);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Appearance Update - Character: %s"), *GetName());
+	}
+}
+
+void ACharacterBase::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	// 서버나 독립 실행 환경에서만 실행
+	if (HasAuthority() || GetWorld()->IsNetMode(NM_Standalone))
+	{
+		if (UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
+		{
+			ApperanceSybsystem->LoadAppearance();
+			ApplyApperance(ApperanceSybsystem->CachedAppearanceData);
+			UE_LOG(LogTemp, Warning, TEXT("Character constructed with appearance data"));
+		}
+	}
+}
+
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -202,18 +231,7 @@ void ACharacterBase::BeginPlay()
 
 	RegisterStatusEffectDelegates();
 
-	// PlayerState가 있을 때만 외형 적용 시도
-	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Character: %s"), *GetName());
-		UE_LOG(LogTemp, Warning, TEXT("PersonaName: %s"), *PS->PersonaName);
-		ApplyApperance(PS->ApperanceData);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Character: %s"), *GetName());
-	}
-
+	// 초기 설정
 	InitializeFloatingStatusWidget();
 }
 
@@ -502,14 +520,8 @@ void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
 void ACharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
-	// PlayerState가 있다면 외형 적용
-	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Character: %s"), *GetName());
-		UE_LOG(LogTemp, Warning, TEXT("PersonaName: %s"), *PS->PersonaName);
-		ApplyApperance(PS->ApperanceData);
-	}
+	InitAbilityActorInfo();
+	UpdateAppearance();
 }
 
 EGamePhase ACharacterBase::GetCurrentGamePhase() const
@@ -556,10 +568,8 @@ void ACharacterBase::InitializeFloatingStatusWidget()
 void ACharacterBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
-	// PlayerState가 설정되거나 변경될 때마다 이름 업데이트
-	UE_LOG(LogTemp, Warning, TEXT("OnRep_PlayerState Called for Character: %s"), *GetName());
-	UpdatePlayerName();
+	InitAbilityActorInfo();
+	UpdateAppearance();
 }
 
 void ACharacterBase::OnGamePhaseChanged(EGamePhase NewPhase)
