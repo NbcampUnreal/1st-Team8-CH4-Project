@@ -50,3 +50,11 @@ void AT8PlayerState::RetrieveSteamID()
         PersonaName = TEXT("Steam Subsystem Unavailable");
     }
 }
+
+void AT8PlayerState::OnRep_AppearanceData()
+{
+    if (ACharacterBase* MyChar = Cast<ACharacterBase>(GetPawn()))
+    {
+        MyChar->ApplyApperance(ApperanceData);
+    }
+}

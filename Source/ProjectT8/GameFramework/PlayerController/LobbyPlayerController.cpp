@@ -13,6 +13,7 @@
 #include "Player/Customize/CharacterAppearanceSubsystem.h"
 #include "Player/Customize/FCharacterAppearanceData.h"
 #include "GameFramework/Common/T8PlayerState.h"
+#include "Player/CharacterBase.h"
 
 ALobbyPlayerController::ALobbyPlayerController()
 {
@@ -140,6 +141,11 @@ void ALobbyPlayerController::Server_SendMyAppearance_Implementation(const FChara
     if (PS)
     {
         PS->ApperanceData = Data;
+
+        if (ACharacterBase* MyChar = Cast<ACharacterBase>(PS->GetPawn()))
+        {
+            MyChar->ApplyApperance(Data);
+        }
     }
 }
 

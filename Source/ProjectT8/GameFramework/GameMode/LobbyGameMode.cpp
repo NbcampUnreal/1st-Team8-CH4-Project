@@ -36,6 +36,16 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
     // Call parent implementation first
     Super::PostLogin(NewPlayer);
 
+    ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(NewPlayer);
+    if (PC)
+    {
+        PC->Client_TriggerSendAppearance();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ERROR LobbyGameMode-ALobbyPlayerController Is nullptr"));
+    }
+
     if (!NewPlayer || !NewPlayer->PlayerState)
     {
         UE_LOG(LogTemp, Error, TEXT("PostLogin: Invalid player or player state!"));
@@ -98,15 +108,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         UE_LOG(LogTemp, Error, TEXT("PostLogin: LobbyGameState is NULL!"));
     }
 
-    ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(NewPlayer);
-    if (PC)
-    {
-        PC->Client_TriggerSendAppearance();
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("ERROR LobbyGameMode-ALobbyPlayerController Is nullptr"));
-    }
+    
 }
 
 // Handle logout to remove player from slot when they disconnect

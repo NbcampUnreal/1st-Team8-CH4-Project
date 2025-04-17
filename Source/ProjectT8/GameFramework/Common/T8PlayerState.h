@@ -18,11 +18,14 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "Lobby")
     int32 TeamNumber;
     
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = OnRep_AppearanceData)
     FCharacterAppearanceData ApperanceData;
 
     UFUNCTION(BlueprintCallable, Category = "Steam")
     void RetrieveSteamID();
+
+    UFUNCTION()
+    void OnRep_AppearanceData();
 
 protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

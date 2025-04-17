@@ -570,6 +570,11 @@ void ACharacterBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
+
+	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
+	{
+		HandleAppearanceByPhase(GameState->CurPhase);
+	}
 }
 
 void ACharacterBase::OnGamePhaseChanged(EGamePhase NewPhase)
