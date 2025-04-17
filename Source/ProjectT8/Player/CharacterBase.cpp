@@ -21,6 +21,8 @@
 #include "UI/FloatingStatusWidget.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/GameMode/T8GameMode.h"
+#include "GameFramework/Common/CustomGameState.h"
+#include "GameFramework/Common/T8GameInstance.h"
 
 
 // Constructor
@@ -175,10 +177,45 @@ void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
 	}
 }
 
+void ACharacterBase::UpdateAppearance()
+{
+	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Appearance Update - Character: %s"), *GetName());
+		ApplyApperance(PS->ApperanceData);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Appearance Update - Character: %s"), *GetName());
+	}
+}
+
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	InitAbilityActorInfo();
+
+	// 서버나 독립 실행 환경에서만 실행
+	if (HasAuthority() || GetWorld()->IsNetMode(NM_Standalone))
+	{
+		if (UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
+		{
+			ApperanceSybsystem->LoadAppearance();
+			ApplyApperance(ApperanceSybsystem->CachedAppearanceData);
+			UE_LOG(LogTemp, Warning, TEXT("Character constructed with appearance data"));
+		}
+	}
+
+	if (AttributeSet)
+	{
+		AttributeSet->OnHealthChanged.AddDynamic(this, &ACharacterBase::HandleHealthChanged);
+	}
+
+	// 게임 상태 변경 이벤트 구독
+	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
+	{
+		GameState->OnPhaseChanged.AddDynamic(this, &ACharacterBase::OnGamePhaseChanged);
+	}
 
 	StatusEffectTags = {
 		FGameplayTag::RequestGameplayTag("State.Poisoned"),
@@ -189,12 +226,7 @@ void ACharacterBase::BeginPlay()
 
 	RegisterStatusEffectDelegates();
 
-	// PlayerState가 있을 때만 외형 적용 시도
-	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
-	{
-		ApplyApperance(PS->ApperanceData);
-	}
-
+	// 초기 설정
 	InitializeFloatingStatusWidget();
 }
 
@@ -483,11 +515,34 @@ void ACharacterBase::Server_Interact_Implementation(AActor* InteractableActor)
 void ACharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	InitAbilityActorInfo();
+	UpdateAppearance();
+}
 
-	// PlayerState가 있다면 외형 적용
+EGamePhase ACharacterBase::GetCurrentGamePhase() const
+{
+	if (const ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
+	{
+		return GameState->CurPhase;
+	}
+	return EGamePhase::None;
+}
+
+void ACharacterBase::UpdatePlayerName()
+{
+	if (!StatusWidget) return;
+
 	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
 	{
-		ApplyApperance(PS->ApperanceData);
+		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Character: %s"), *GetName());
+		UE_LOG(LogTemp, Warning, TEXT("PersonaName: %s"), *PS->PersonaName);
+		StatusWidget->SetPlayerName(PS->PersonaName);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Character: %s"), *GetName());
+		// PlayerState가 없는 경우 기본 이름 설정
+		StatusWidget->SetPlayerName(TEXT("Unknown"));
 	}
 }
 
@@ -499,7 +554,25 @@ void ACharacterBase::InitializeFloatingStatusWidget()
 		if (StatusWidget)
 		{
 			StatusWidget->SetOwnerCharacter(this);
+			UpdatePlayerName();  // 플레이어 이름 업데이트
+			StatusWidget->SetHealthBarVisibility(GetCurrentGamePhase() == EGamePhase::Playing);
 		}
+	}
+}
+
+void ACharacterBase::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	InitAbilityActorInfo();
+	UpdateAppearance();
+}
+
+void ACharacterBase::OnGamePhaseChanged(EGamePhase NewPhase)
+{
+	if (FloatingStatusWidget && StatusWidget)
+	{
+		// HP바의 가시성만 게임 상태에 따라 조절
+		StatusWidget->SetHealthBarVisibility(NewPhase == EGamePhase::Playing);
 	}
 }
 
@@ -639,4 +712,12 @@ void ACharacterBase::MulticastDie_Implementation()
 
 	// 델리게이트 브로드캐스트
 	OnCharacterDeath.Broadcast(this);
+}
+
+void ACharacterBase::HandleHealthChanged(float CurrentHealth, float MaxHealth)
+{
+	if (StatusWidget)
+	{
+		StatusWidget->UpdateHealthBar(CurrentHealth, MaxHealth);
+	}
 }

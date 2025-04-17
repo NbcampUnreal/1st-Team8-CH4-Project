@@ -1,6 +1,7 @@
 ﻿#include "Player/Customize/CharacterAppearanceSubsystem.h"
 #include "CharacterAppearanceSaveGame.h"
 #include "Data/CostumeItemDataRow.h"
+#include "GameFramework/Common/T8PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
 const FString SaveSlot = TEXT("CharacterAppearanceSlot");
@@ -28,60 +29,66 @@ void UCharacterAppearanceSubsystem::SaveAppearance()
 	if (SaveObj)
 	{	
 		SaveObj->AppearanceData = CachedAppearanceData;
-		UGameplayStatics::SaveGameToSlot(SaveObj, SaveSlot, 0);
-		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 외형 정보 저장 완료!"));
+
+		FString DynamicSlot = GetDynamicSaveSlot();
+		UGameplayStatics::SaveGameToSlot(SaveObj, DynamicSlot, 0);
+		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 외형 정보 저장 완료! (%s)"), *DynamicSlot);
 	}
 }
 
-// 지윤님 확인!
-// auto* Subsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
-// Subsystem->CachedAppearanceData.TopID = "Top_03";
-// Subsystem->SaveAppearance();
-
 void UCharacterAppearanceSubsystem::LoadAppearance()
 {	
-	auto GetRandomID = [](const FString& Prefix, int32 Min, int32 Max) -> FString {
-		int32 RandomNum = FMath::RandRange(Min, Max);
-		return FString::Printf(TEXT("%s_%02d"), *Prefix, RandomNum);
-	};
+	FString DynamicSlot = GetDynamicSaveSlot();
 
-	const FString DefaultHeadID = GetRandomID("Head", 1, 3);
-	const FString DefaultAccessoryID = GetRandomID("Accessory", 1, 7);
-	const FString DefaultGlovesID = GetRandomID("Gloves", 1, 2);
-	const FString DefaultTopID = GetRandomID("Top", 1, 5);
-	const FString DefaultBottomID = GetRandomID("Bottom", 1, 3);
-	const FString DefaultShoesID = GetRandomID("Shoes", 1, 3);
-
-	if (UGameplayStatics::DoesSaveGameExist(SaveSlot, 0))
+	if (UGameplayStatics::DoesSaveGameExist(DynamicSlot, 0))
 	{
 		UCharacterAppearanceSaveGame* Loaded = Cast<UCharacterAppearanceSaveGame>(
-			UGameplayStatics::LoadGameFromSlot(SaveSlot, 0));
+			UGameplayStatics::LoadGameFromSlot(DynamicSlot, 0));
 	
 		if (Loaded)
 		{
 			CachedAppearanceData = Loaded->AppearanceData;
-			
-			// 저장된 데이터가 있어도 빈 값이 있다면 랜덤 기본값으로 설정
-			if (CachedAppearanceData.HeadID.IsEmpty()) CachedAppearanceData.HeadID = DefaultHeadID;
-			if (CachedAppearanceData.AccessoryID.IsEmpty()) CachedAppearanceData.AccessoryID = DefaultAccessoryID;
-			if (CachedAppearanceData.GlovesID.IsEmpty()) CachedAppearanceData.GlovesID = DefaultGlovesID;
-			if (CachedAppearanceData.TopID.IsEmpty()) CachedAppearanceData.TopID = DefaultTopID;
-			if (CachedAppearanceData.BottomID.IsEmpty()) CachedAppearanceData.BottomID = DefaultBottomID;
-			if (CachedAppearanceData.ShoesID.IsEmpty()) CachedAppearanceData.ShoesID = DefaultShoesID;
-
-			UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 외형 정보 불러오기 완료!"));
+			UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보를 불러왔습니다! (%s)"), *DynamicSlot);
+			return;
 		}
 	}
-	else
+	
+	GenerateRandomAppearance();
+	SaveAppearance();
+}
+
+FString UCharacterAppearanceSubsystem::GetDynamicSaveSlot() const
+{
+	FString SlotPrefix = SaveSlot;
+
+	// 가장 먼저 PlayerController -> PlayerState 기반 ID
+	if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
-		CachedAppearanceData.HeadID = DefaultHeadID;
-		CachedAppearanceData.AccessoryID = DefaultAccessoryID;
-		CachedAppearanceData.GlovesID = DefaultGlovesID;
-		CachedAppearanceData.TopID = DefaultTopID;
-		CachedAppearanceData.BottomID = DefaultBottomID;
-		CachedAppearanceData.ShoesID = DefaultShoesID;
-		UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보 없음! 기본값 설정"));
+		if (AT8PlayerState* PS = Cast<AT8PlayerState>(PC->PlayerState))
+		{
+			// 가장 좋은 방식: PlayerName 기반
+			return FString::Printf(TEXT("%s_%s"), *SlotPrefix, *PS->GetPlayerName());
+		}
 	}
+
+	// 아니면 FPlatformMisc 기준 fallback
+	FString DeviceId = FPlatformMisc::GetDeviceId();
+	return FString::Printf(TEXT("%s_%s"), *SlotPrefix, *DeviceId);
+}
+
+void UCharacterAppearanceSubsystem::GenerateRandomAppearance()
+{
+	auto GetRandomID = [](const FString& Prefix, int32 Min, int32 Max) -> FString {
+		int32 RandomNum = FMath::RandRange(Min, Max);
+		return FString::Printf(TEXT("%s_%02d"), *Prefix, RandomNum);
+		};
+
+	CachedAppearanceData.HeadID = GetRandomID("Head", 1, 3);
+	CachedAppearanceData.AccessoryID = GetRandomID("Accessory", 1, 7);
+	CachedAppearanceData.GlovesID = GetRandomID("Gloves", 1, 2);
+	CachedAppearanceData.TopID = GetRandomID("Top", 1, 5);
+	CachedAppearanceData.BottomID = GetRandomID("Bottom", 1, 3);
+	CachedAppearanceData.ShoesID = GetRandomID("Shoes", 1, 3);
 }
 
 USkeletalMesh* UCharacterAppearanceSubsystem::GetCostumeMeshByID(const FString& ItemID)

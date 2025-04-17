@@ -29,9 +29,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Steam")
     void RetrieveSteamID();
 
+    UFUNCTION(Server, Reliable)
+    void ServerSetAppearanceData(const FCharacterAppearanceData& NewData);
+
 protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     
+    virtual void BeginPlay() override;
     // 지연된 외형 적용을 위한 함수들
     void TryApplyAppearanceWithDelay();
     void StartApplyAppearanceTimer();

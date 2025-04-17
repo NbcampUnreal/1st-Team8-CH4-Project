@@ -7,6 +7,8 @@
 
 #include "CustomGameState.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGamePhaseChanged, EGamePhase, NewPhase);
+
 UCLASS()
 class PROJECTT8_API ACustomGameState : public AGameState
 {
@@ -18,9 +20,17 @@ public:
     UPROPERTY(BlueprintReadOnly)
     EGamePhase CurPhase = EGamePhase::None;
 
+    UPROPERTY(BlueprintAssignable, Category = "Game")
+    FOnGamePhaseChanged OnPhaseChanged;
+
     UFUNCTION(BlueprintCallable)
     void SetGamePhase(EGamePhase _NewPhase);
 
-    UFUNCTION(BlueprintNativeEvent)
-    void OnPhaseChanged(EGamePhase _NewPhase);
+protected:
+    
+    // 페이즈 전환시 이벤트 감지
+    UFUNCTION(BlueprintNativeEvent, Category = "Game")
+    void HandlePhaseChanged(EGamePhase _NewPhase);
+    virtual void HandlePhaseChanged_Implementation(EGamePhase _NewPhase);
 };
+
