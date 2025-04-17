@@ -16,7 +16,6 @@ void UScreenBaseWidget::OnScreenDeactivated_Implementation()
     // FadeOut 애니메이션 Delegate 연결 후, 재생
     if (Anim_FadeOut_Screen)
     {
-        BindFadeOutFinished();
         PlayAnimation(Anim_FadeOut_Screen);
     }
     else

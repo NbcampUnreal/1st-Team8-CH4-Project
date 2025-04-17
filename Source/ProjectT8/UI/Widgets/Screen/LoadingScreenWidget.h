@@ -11,9 +11,10 @@ class PROJECTT8_API ULoadingScreenWidget : public UScreenBaseWidget
 	GENERATED_BODY()
 	
 public:
-    virtual void OnScreenActivated_Implementation() override;
-
     void BindProgressBarFinished();
+
+    UPROPERTY(meta = (BindWidgetAnim), Transient)
+    UWidgetAnimation* Anim_ProgressBar_Loading;
 
     UPROPERTY()
     FWidgetAnimationDynamicEvent ProgressBarFinishedDelegate;
@@ -22,6 +23,5 @@ public:
     void HandleProgressBarFinished();
 
 protected:
-    UPROPERTY(meta = (BindWidgetAnim), Transient)
-    UWidgetAnimation* Anim_ProgressBar_Loading;
+
 };

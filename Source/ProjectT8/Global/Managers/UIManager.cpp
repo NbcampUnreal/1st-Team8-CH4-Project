@@ -6,6 +6,7 @@
 #include "Global/Datas/PhaseInfoDataAsset.h"
 #include "UI/Datas/PhaseInfoItem.h"
 #include "UI/Widgets/Base/ScreenBaseWidget.h"
+#include "UI/Widgets/Screen/LoadingScreenWidget.h"
 
 
 void UUIManager::Initialize(FSubsystemCollectionBase& Collection)
@@ -40,10 +41,10 @@ void UUIManager::Initialize(FSubsystemCollectionBase& Collection)
 
 void UUIManager::ShowUI(EGamePhase Phase)
 {
-    // Hide Current UI
+    // Current Screen 지우기
     HideCurUI(); 
 
-    // Searching for New UI
+    // New Phase에 따른 New Screen 검색
     if (TSubclassOf<UUserWidget>* WidgetClassPtr = PhaseWidgetMap.Find(Phase))
     {
         UWorld* World = GetWorld();
@@ -58,20 +59,35 @@ void UUIManager::ShowUI(EGamePhase Phase)
             return;
         }
 
+        // New Screen 그리기
         UUserWidget* NewWidget = CreateWidget<UUserWidget>(PC, *WidgetClassPtr);
 
         if (NewWidget)
         {
-            // Show New UI
             CurWidget = NewWidget;
             CurWidget->AddToViewport();
-            //PC->SetInputMode(FInputModeUIOnly());
-            //PC->SetShowMouseCursor(true);
             
             if (UScreenBaseWidget* CurScreen = Cast<UScreenBaseWidget>(CurWidget))
             {
                 CurScreen->OnScreenActivated();
             }
+        }
+
+        // New Screen이 LoadingScreen인 경우: ProgressBar 연출 사용
+        if (ULoadingScreenWidget* LoadingScreen = Cast<ULoadingScreenWidget>(NewWidget))
+        {
+            // External Delegate <-> Handle Method
+            FWidgetAnimationDynamicEvent ExternalProgressBarDelegate;
+            ExternalProgressBarDelegate.BindDynamic(LoadingScreen, &ULoadingScreenWidget::HandleProgressBarFinished);
+            
+            // Internal Delegate <-> External Delegate
+            LoadingScreen->ProgressBarFinishedDelegate = ExternalProgressBarDelegate;
+
+            // Widget Animaation <-> Internal Delegate
+            LoadingScreen->BindProgressBarFinished();
+
+            // Now Play Animation!
+            LoadingScreen->PlayAnimation(LoadingScreen->Anim_ProgressBar_Loading);
         }
     }
 }
@@ -85,19 +101,21 @@ void UUIManager::HideCurUI()
 
     if (UScreenBaseWidget* CurScreen = Cast<UScreenBaseWidget>(CurWidget))
     {
-        // ScreenBaseWidget을 상속받은 Screen일 경우, FadeOut 연출 사용 후 Deactivate
-        if (!CurScreen->FadeOutFinishedDelegate.IsBound())
-        {
-            FWidgetAnimationDynamicEvent ExternalFadeOutDelegate;
-            ExternalFadeOutDelegate.BindDynamic(CurScreen, &UScreenBaseWidget::HandleFadeOutFinished);
-            CurScreen->FadeOutFinishedDelegate = ExternalFadeOutDelegate;
-        }
+        // Current Screen이 ScreenBaseWidget을 상속받은 경우: FadeOut 연출 사용
+        CurScreen->FadeOutFinishedDelegate.Unbind();
+
+        FWidgetAnimationDynamicEvent ExternalFadeOutDelegate;
+        ExternalFadeOutDelegate.BindDynamic(CurScreen, &UScreenBaseWidget::HandleFadeOutFinished);
+
+        CurScreen->FadeOutFinishedDelegate = ExternalFadeOutDelegate;
+
+        CurScreen->BindFadeOutFinished();
 
         CurScreen->OnScreenDeactivated();
     }
     else
     {
-        // ScreenBaseWidget을 상속받은 Screen이 아닐 경우, 그냥 삭제
+        // Current Screen이 ScreenBaseWidget을 상속받지 않았을 경우: 바로 삭제
         CurWidget->RemoveFromParent();
         CurWidget = nullptr;
     }
