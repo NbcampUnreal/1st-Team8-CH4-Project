@@ -6,6 +6,7 @@
 #include "AI/T8AIController.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "GameFramework/GameState/T8GameState.h"
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
 #include "Player/T8PlayerController.h"
@@ -67,18 +68,52 @@ void AT8GameMode::PostLogin(APlayerController* NewPlayer)
 
 void AT8GameMode::NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter)
 {
-	// 여기에서 게임 로직에 따른 죽음 처리를 구현
-	// 예: 점수 계산, 게임 종료 조건 체크 등
-	
-	// CharacterBase로 캐스팅이 필요한 경우
+	UE_LOG(LogTemp, Warning, TEXT("NotifyPlayerDeath_Implementation called for %s"), *DeadCharacter->GetName());
+	int32 TeamID = -1;
+
 	if (ACharacterBase* BaseCharacter = Cast<ACharacterBase>(DeadCharacter))
 	{
-		// CharacterBase 특정 기능 사용
+        TeamID = BaseCharacter->TeamNumber;
+        BaseCharacter->bIsDead = true;
 	}
     else if (AT8AICharacter* AICharacter = Cast<AT8AICharacter>(DeadCharacter))
     {
-        // AI 전용 로직
+        TeamID = AICharacter->GetTeamID();
+		AICharacter->bIsDead = true;
     }
+
+    if (TeamID >= 0)
+    {
+		if (AT8GameState* GameState = GetGameState<AT8GameState>())
+		{
+			GameState->RemovePlayerFromTeam(TeamID);
+            CheckGameEnd();
+		}
+    }
+}
+
+bool AT8GameMode::CheckGameEnd()
+{
+    if (AT8GameState* GameState = GetGameState<AT8GameState>())
+    {
+		int32 WinningTeamID = -1;
+		if (GameState->IsOnlyOneTeamRemaining(WinningTeamID))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Game Over: Team %d Won!"), WinningTeamID);
+
+            FTimerHandle GameEndTimerHandle;
+            GetWorld()->GetTimerManager().SetTimer(
+                GameEndTimerHandle,
+                [this]()
+            {
+                // 여기 게임 종료 UI나 뭔가 처리하는 로직 추가
+            }, 3.f, false);
+
+			return true;
+		}
+    }
+
+    return false;
 }
 
 void AT8GameMode::SpawnAllAIFromLobbySlots()

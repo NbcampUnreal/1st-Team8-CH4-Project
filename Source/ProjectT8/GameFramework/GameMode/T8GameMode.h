@@ -21,6 +21,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Game")
 	void NotifyPlayerDeath(ACharacter* DeadCharacter);
 	virtual void NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter);
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	bool CheckGameEnd();
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	void SpawnAIFromSlot(int32 SlotIndex);
