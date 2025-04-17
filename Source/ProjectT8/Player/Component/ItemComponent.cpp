@@ -26,6 +26,9 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 {
 	if (!OwnerCharacter || !NewItem) return;
 
+	// 아이템의 주인이 있을 경우 종료
+	if (NewItem->GetOwner()) return;
+
 	if (EquippedItem)
 	{
 		DropItemToWorld();

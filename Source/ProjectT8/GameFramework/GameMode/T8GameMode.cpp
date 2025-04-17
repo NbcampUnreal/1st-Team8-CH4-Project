@@ -9,6 +9,7 @@
 #include "GameFramework/GameState/T8GameState.h"
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
+#include "Player/T8PlayerController.h"
 
 
 AT8GameMode::AT8GameMode()
@@ -52,14 +53,15 @@ void AT8GameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	ACharacterBase* MyCharacter = Cast<ACharacterBase>(NewPlayer->GetPawn());
-	AT8PlayerState* PS = NewPlayer->GetPlayerState<AT8PlayerState>();
-
-	if (MyCharacter && PS)
-	{
-		UE_LOG(LogTemp, Display, TEXT(""));
-		MyCharacter->ApplyApperance(PS->ApperanceData);
-	}
+    AT8PlayerController* PC = Cast<AT8PlayerController>(NewPlayer);
+    if (PC)
+    {
+        PC->Client_TriggerSendAppearance();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ERROR AT8GameMode-AT8PlayerController Is nullptr"));
+    }
 }
 
 

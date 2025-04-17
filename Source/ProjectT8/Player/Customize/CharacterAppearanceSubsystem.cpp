@@ -78,6 +78,8 @@ FString UCharacterAppearanceSubsystem::GetDynamicSaveSlot() const
 
 void UCharacterAppearanceSubsystem::GenerateRandomAppearance()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[Subsystem] 저장된 외형 정보가 없습니다!"));
+
 	auto GetRandomID = [](const FString& Prefix, int32 Min, int32 Max) -> FString {
 		int32 RandomNum = FMath::RandRange(Min, Max);
 		return FString::Printf(TEXT("%s_%02d"), *Prefix, RandomNum);

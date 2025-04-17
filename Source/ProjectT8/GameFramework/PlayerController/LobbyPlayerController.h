@@ -10,6 +10,7 @@
 
 class UInputMappingContext;
 class UInputAction;
+struct FCharacterAppearanceData;
 
 UCLASS()
 class PROJECTT8_API ALobbyPlayerController : public APlayerController
@@ -39,6 +40,12 @@ public:
 
     UFUNCTION(Client, Reliable)
     void ClientTravelToPrivateLevel();
+
+    UFUNCTION(Server, Reliable)
+    void Server_SendMyAppearance(const FCharacterAppearanceData& MyData);
+
+    UFUNCTION(Client, Reliable)
+    void Client_TriggerSendAppearance();
 
 protected:
     virtual void BeginPlay() override;

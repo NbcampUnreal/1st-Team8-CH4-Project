@@ -23,6 +23,7 @@
 #include "GameFramework/GameMode/T8GameMode.h"
 #include "GameFramework/Common/CustomGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "Player/Customize/FCharacterAppearanceData.h"
 
 
 // Constructor
@@ -177,43 +178,21 @@ void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
 	}
 }
 
-void ACharacterBase::UpdateAppearance()
-{
-	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Appearance Update - Character: %s"), *GetName());
-		ApplyApperance(PS->ApperanceData);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Appearance Update - Character: %s"), *GetName());
-	}
-}
-
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	InitAbilityActorInfo();
-
-	// 서버나 독립 실행 환경에서만 실행
-	if (HasAuthority() || GetWorld()->IsNetMode(NM_Standalone))
-	{
-		if (UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
-		{
-			ApperanceSybsystem->LoadAppearance();
-			ApplyApperance(ApperanceSybsystem->CachedAppearanceData);
-			UE_LOG(LogTemp, Warning, TEXT("Character constructed with appearance data"));
-		}
-	}
 
 	if (AttributeSet)
 	{
 		AttributeSet->OnHealthChanged.AddDynamic(this, &ACharacterBase::HandleHealthChanged);
 	}
 
-	// 게임 상태 변경 이벤트 구독
 	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
 	{
+		HandleAppearanceByPhase(GameState->CurPhase);
+
+		// 게임 상태 변경 이벤트 구독
 		GameState->OnPhaseChanged.AddDynamic(this, &ACharacterBase::OnGamePhaseChanged);
 	}
 
@@ -516,7 +495,7 @@ void ACharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	InitAbilityActorInfo();
-	UpdateAppearance();
+	InitializeFloatingStatusWidget();
 }
 
 EGamePhase ACharacterBase::GetCurrentGamePhase() const
@@ -534,15 +513,37 @@ void ACharacterBase::UpdatePlayerName()
 
 	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Character: %s"), *GetName());
-		UE_LOG(LogTemp, Warning, TEXT("PersonaName: %s"), *PS->PersonaName);
 		StatusWidget->SetPlayerName(PS->PersonaName);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Character: %s"), *GetName());
-		// PlayerState가 없는 경우 기본 이름 설정
 		StatusWidget->SetPlayerName(TEXT("Unknown"));
+	}
+}
+
+void ACharacterBase::HandleAppearanceByPhase(EGamePhase Phase)
+{
+	switch (Phase)
+	{
+	case EGamePhase::Room:
+		if (UCharacterAppearanceSubsystem* Sub = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
+		{
+			Sub->LoadAppearance();
+			ApplyApperance(Sub->CachedAppearanceData);
+		}
+		break;
+	case EGamePhase::Lobby:
+	case EGamePhase::Playing:
+	case EGamePhase::Result:
+		if (APlayerState* PS = GetPlayerState())
+		{
+			FCharacterAppearanceData& Data = Cast<AT8PlayerState>(PS)->ApperanceData;
+			ApplyApperance(Data);
+		}
+		break;
+	default:
+		break;
 	}
 }
 
@@ -564,7 +565,12 @@ void ACharacterBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
-	UpdateAppearance();
+	InitializeFloatingStatusWidget();
+	// 플레이어 외형 갱신
+	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
+	{
+		HandleAppearanceByPhase(GameState->CurPhase);
+	}
 }
 
 void ACharacterBase::OnGamePhaseChanged(EGamePhase NewPhase)
@@ -689,28 +695,14 @@ void ACharacterBase::MulticastDie_Implementation()
 		GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("root"), true, true);
 	}
 
-	// 무기가 있다면 물리 시뮬레이션 활성화
 	if (ItemComponent)
 	{
 		if (ABaseItem* EquippedItem = ItemComponent->GetEquippedItem())
 		{
-			// 무기의 컴포넌트들을 찾아서 물리 적용
-			TArray<UPrimitiveComponent*> WeaponComponents;
-			EquippedItem->GetComponents<UPrimitiveComponent>(WeaponComponents);
-
-			for (UPrimitiveComponent* Component : WeaponComponents)
-			{
-				if (Component)
-				{
-					Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					Component->SetSimulatePhysics(true);
-					Component->SetEnableGravity(true);
-				}
-			}
+			ItemComponent->DropItemToWorld();
 		}
 	}
 
-	// 델리게이트 브로드캐스트
 	OnCharacterDeath.Broadcast(this);
 }
 

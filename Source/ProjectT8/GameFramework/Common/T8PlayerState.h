@@ -21,28 +21,12 @@ public:
     UPROPERTY(ReplicatedUsing = OnRep_AppearanceData)
     FCharacterAppearanceData ApperanceData;
 
-    UFUNCTION()
-    void OnRep_AppearanceData();
-
-    void SetAppearanceData(const FCharacterAppearanceData& NewData);
-
     UFUNCTION(BlueprintCallable, Category = "Steam")
     void RetrieveSteamID();
 
-    UFUNCTION(Server, Reliable)
-    void ServerSetAppearanceData(const FCharacterAppearanceData& NewData);
+    UFUNCTION()
+    void OnRep_AppearanceData();
 
 protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    
-    virtual void BeginPlay() override;
-    // 지연된 외형 적용을 위한 함수들
-    void TryApplyAppearanceWithDelay();
-    void StartApplyAppearanceTimer();
-    void StopApplyAppearanceTimer();
-    
-    FTimerHandle ApplyAppearanceTimerHandle;
-    static const float ApplyAppearanceCheckInterval;
-    static const float MaxApplyAppearanceWaitTime;
-    float ElapsedWaitTime;
 };
