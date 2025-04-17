@@ -37,6 +37,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Lobby|Admin")
     void RemoveAIFromSlot(int32 SlotIndex);
 
+    UFUNCTION(Client, Reliable)
+    void ClientTravelToPrivateLevel();
+
 protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
