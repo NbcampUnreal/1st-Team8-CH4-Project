@@ -8,6 +8,7 @@
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
 #include "GameFramework/GameState/T8GameState.h"
+#include "GameFramework/GameState/ResultGameState.h"
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
 #include "Player/T8PlayerController.h"
@@ -101,6 +102,18 @@ bool AT8GameMode::CheckGameEnd()
 		if (GS->IsOnlyOneTeamRemaining(WinningTeamID))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Game Over: Team %d Won!"), WinningTeamID);
+
+			UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance());
+            if (GI)
+            {
+                for (FSlotInfo& Slot : GI->SavedLobbySlots)
+                {
+                    if (Slot.TeamNumber == WinningTeamID)
+                    {
+                        GI->WinningPlayerStatesResult.Add(Slot.PlayerState);
+                    }
+                }
+            }
 
             FTimerHandle GameEndTimerHandle;
             GetWorld()->GetTimerManager().SetTimer(
