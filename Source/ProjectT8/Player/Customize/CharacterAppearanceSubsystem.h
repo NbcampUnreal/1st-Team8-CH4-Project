@@ -20,6 +20,8 @@ public:
 	void SaveAppearance();
 	UFUNCTION(BlueprintCallable)
 	void LoadAppearance();
+	UFUNCTION(BlueprintCallable)
+	FString GetDynamicSaveSlot() const;
 
 	UDataTable* ItemTable;
 
