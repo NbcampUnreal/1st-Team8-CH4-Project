@@ -194,16 +194,16 @@ void ACharacterBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	// 서버나 독립 실행 환경에서만 실행
-	if (HasAuthority() || GetWorld()->IsNetMode(NM_Standalone))
-	{
-		if (UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
-		{
-			ApperanceSybsystem->LoadAppearance();
-			ApplyApperance(ApperanceSybsystem->CachedAppearanceData);
-			UE_LOG(LogTemp, Warning, TEXT("Character constructed with appearance data"));
-		}
-	}
+	//// 서버나 독립 실행 환경에서만 실행
+	//if (HasAuthority() || GetWorld()->IsNetMode(NM_Standalone))
+	//{
+	//	if (UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
+	//	{
+	//		ApperanceSybsystem->LoadAppearance();
+	//		ApplyApperance(ApperanceSybsystem->CachedAppearanceData);
+	//		UE_LOG(LogTemp, Warning, TEXT("Character constructed with appearance data"));
+	//	}
+	//}
 }
 
 void ACharacterBase::BeginPlay()
