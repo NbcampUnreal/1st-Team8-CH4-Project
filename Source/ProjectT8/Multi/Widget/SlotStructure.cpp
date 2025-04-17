@@ -516,7 +516,7 @@ void USlotStructure::RefreshSlotWidgets()
                         
                         // 추방 버튼 표시
                         kickButton->SetVisibility(ESlateVisibility::Visible);
-                        kickButton->SetToolTipText(FText::FromString(TEXT("AI 제거 전용")));
+                        kickButton->SetToolTipText(FText::FromString(TEXT("플레이어 추방")));
                     }
                     // AI 슬롯이면
                     else if (bIsAIForButton)
@@ -645,12 +645,6 @@ void USlotStructure::OnSlotButtonClicked()
     {
         UE_LOG(LogTemp, Warning, TEXT("Slot %d is already occupied"), clickedIndex);
     }
-}
-
-void USlotStructure::ServerRequestMoveToSlot(int32 SlotIndex)
-{
-    // 이 함수는 이제 사용하지 않습니다 - 모든 요청은 T8PlayerController를 통해 처리
-    UE_LOG(LogTemp, Warning, TEXT("ServerRequestMoveToSlot is deprecated. Use T8PlayerController::RequestMoveToSlot instead"));
 }
 
 void USlotStructure::ShowAddAIOption(int32 SlotIndex)
@@ -995,8 +989,7 @@ void USlotStructure::OnKickButtonClicked()
     // 플레이어인 경우 아무 동작도 하지 않음
     else if (IsSlotPlayer(SlotIndex))
     {
-        UE_LOG(LogTemp, Log, TEXT("OnKickButtonClicked: Cannot remove human player from slot %d"), SlotIndex);
-        // 아무 동작도 하지 않음
+		KickPlayerFromSlot(SlotIndex);
     }
 }
 
@@ -1023,4 +1016,63 @@ void USlotStructure::RemoveAIFromSlot(int32 SlotIndex)
     
     // 컨트롤러에 요청 전달
     LobbyPC->RemoveAIFromSlot(SlotIndex);
+}
+
+void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
+{
+    /*if (IsLocalPlayerHost())
+    {
+		UE_LOG(LogTemp, Log, TEXT("Host can't be kicked"));
+        return;
+    }*/
+    if (!IsSlotPlayer(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("KickPlayerFromSlot: No player in slot %d"), SlotIndex);
+        return;
+    }
+
+    UWorld* World = GetWorld();
+    ALobbyGameState* LobbyGS = World->GetGameState<ALobbyGameState>();
+    if (!LobbyGS)
+    {
+        UE_LOG(LogTemp, Error, TEXT("KickPlayerFromSlot: Failed to get LobbyGameState"));
+        return;
+    }
+
+    // 플레이어 컨트롤러 가져오기
+    APlayerController* PlayerToKick = nullptr;
+    if (LobbyGS->Slots[SlotIndex].PlayerState)
+    {
+        PlayerToKick = LobbyGS->Slots[SlotIndex].PlayerState->GetPlayerController();
+    }
+
+    if (!PlayerToKick)
+    {
+        UE_LOG(LogTemp, Error, TEXT("KickPlayerFromSlot: Failed to get PlayerController for slot %d"), SlotIndex);
+        return;
+    }
+
+    // LobbyPlayerController로 캐스팅
+    ALobbyPlayerController* LobbyKickPC = Cast<ALobbyPlayerController>(PlayerToKick);
+    if (!LobbyKickPC)
+    {
+        UE_LOG(LogTemp, Error, TEXT("KickPlayerFromSlot: Failed to cast to LobbyPlayerController"));
+        return;
+    }
+
+    // 우리 자신의 컨트롤러를 가져와서 서버 권한 확인 (이미 IsLocalPlayerHost에서 확인했지만 이중 확인)
+    ALobbyPlayerController* OurPC = Cast<ALobbyPlayerController>(GetOwningPlayer());
+    if (!OurPC || !OurPC->HasAuthority())
+    {
+        UE_LOG(LogTemp, Error, TEXT("KickPlayerFromSlot: Not authorized to kick players"));
+        return;
+    }
+
+    // 1. 먼저 슬롯에서 플레이어 정보 제거
+    LobbyGS->RemovePlayerFromSlot(LobbyGS->Slots[SlotIndex].PlayerState);
+
+    // 2. 해당 플레이어에게 PrivateLevel로 이동하도록 알림
+    LobbyKickPC->ClientTravelToPrivateLevel();
+
+    UE_LOG(LogTemp, Log, TEXT("KickPlayerFromSlot: Player kicked from slot %d"), SlotIndex);
 }

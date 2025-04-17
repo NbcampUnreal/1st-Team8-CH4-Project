@@ -57,9 +57,7 @@ protected:
     
     /** Maps slots between different team mode layouts */
     int32 DetermineNewSlotIndex(int32 OldIndex, ETeamSetup NewMode);
-    
-    // 클라이언트가 서버에 슬롯 이동 요청
-    void ServerRequestMoveToSlot(int32 SlotIndex);
+
 
 private:
     /** LobbyGameState 레퍼런스 (실시간 데이터 접근) */
@@ -128,6 +126,9 @@ private:
     /** AI를 제거합니다 */
     UFUNCTION(BlueprintCallable, Category = "Slot")
     void RemoveAIFromSlot(int32 SlotIndex);
+
+    UFUNCTION(BlueprintCallable, Category = "Slot")
+    void KickPlayerFromSlot(int32 SlotIndex);
     
     /** Checks if the local player is the host */
     bool IsLocalPlayerHost() const;
