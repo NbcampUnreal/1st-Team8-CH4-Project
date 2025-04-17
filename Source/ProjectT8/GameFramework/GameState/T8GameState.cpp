@@ -1,6 +1,8 @@
 #include "GameFramework/GameState/T8GameState.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "UI/TeamStatusBar.h"
+#include "Net/UnrealNetwork.h"
 
 void AT8GameState::BeginPlay()
 {
@@ -63,4 +65,36 @@ int32 AT8GameState::GetActiveTeamCount() const
         return ActiveTeamCounts.Num();
     }
     return 0;
+}
+
+void AT8GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AT8GameState, PlayerUIList);
+}
+
+void AT8GameState::InitializePlayerUIList(const TArray<FSlotInfo>& SlotList)
+{
+    PlayerUIList.Empty();
+
+    for (const FSlotInfo& Slot : SlotList)
+    {
+        FPlayerStatusUIData UIData;
+
+        UIData.DisplayName = Slot.DisplayName;
+        UIData.bIsAlive = true;
+        UIData.bIsAI = Slot.bIsAI;
+
+        switch (Slot.TeamNumber)
+        {
+        case 0: UIData.TeamColor = FLinearColor::Red; break;
+        case 1: UIData.TeamColor = FLinearColor::Blue; break;
+        case 2: UIData.TeamColor = FLinearColor::Green; break;
+        case 3: UIData.TeamColor = FLinearColor::Yellow; break;
+        default: UIData.TeamColor = FLinearColor::Gray; break;
+        }
+
+        PlayerUIList.Add(UIData);
+    }
 }
