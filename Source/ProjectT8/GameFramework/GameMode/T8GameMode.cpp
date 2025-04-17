@@ -84,9 +84,9 @@ void AT8GameMode::NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter)
 
     if (TeamID >= 0)
     {
-		if (AT8GameState* GameState = GetGameState<AT8GameState>())
+		if (AT8GameState* GS = GetGameState<AT8GameState>())
 		{
-			GameState->RemovePlayerFromTeam(TeamID);
+            GS->RemovePlayerFromTeam(TeamID);
             CheckGameEnd();
 		}
     }
@@ -94,10 +94,10 @@ void AT8GameMode::NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter)
 
 bool AT8GameMode::CheckGameEnd()
 {
-    if (AT8GameState* GameState = GetGameState<AT8GameState>())
+    if (AT8GameState* GS = GetGameState<AT8GameState>())
     {
 		int32 WinningTeamID = -1;
-		if (GameState->IsOnlyOneTeamRemaining(WinningTeamID))
+		if (GS->IsOnlyOneTeamRemaining(WinningTeamID))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Game Over: Team %d Won!"), WinningTeamID);
 
