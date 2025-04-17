@@ -44,3 +44,26 @@ void AT8PlayerController::HandleNextPhaseInput()
 {
 	UGameplayStatics::OpenLevel(this, FName("ResultMap"));
 }
+
+void AT8PlayerController::Client_TriggerSendAppearance_Implementation()
+{
+	UCharacterAppearanceSubsystem* Sub = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+	if (Sub)
+	{
+		Server_SendMyAppearance(Sub->CachedAppearanceData);
+	}
+}
+
+void AT8PlayerController::Server_SendMyAppearance_Implementation(const FCharacterAppearanceData& Data)
+{
+	AT8PlayerState* PS = GetPlayerState<AT8PlayerState>();
+	if (PS)
+	{
+		PS->ApperanceData = Data;
+
+		if (ACharacterBase* MyChar = Cast<ACharacterBase>(PS->GetPawn()))
+		{
+			MyChar->ApplyApperance(Data);
+		}
+	}
+}
