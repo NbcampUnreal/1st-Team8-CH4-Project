@@ -8,7 +8,7 @@
 #include "UIManager.generated.h"
 
 class UUserWidget;
-class UPhaseWidgetDataAsset;
+class UPhaseInfoDataAsset;
 
 UCLASS()
 class PROJECTT8_API UUIManager : public UGameInstanceSubsystem
@@ -25,7 +25,7 @@ public:
 
 private:
 	UPROPERTY()
-	UPhaseWidgetDataAsset* WidgetDataAsset;
+	UPhaseInfoDataAsset* PhaseInfoDataAsset;
 
     UPROPERTY()
     TMap<EGamePhase, TSubclassOf<UUserWidget>> PhaseWidgetMap;
