@@ -183,8 +183,6 @@ void ACharacterBase::BeginPlay()
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	
-
 	if (AttributeSet)
 	{
 		AttributeSet->OnHealthChanged.AddDynamic(this, &ACharacterBase::HandleHealthChanged);
@@ -196,7 +194,6 @@ void ACharacterBase::BeginPlay()
 
 		// 게임 상태 변경 이벤트 구독
 		GameState->OnPhaseChanged.AddDynamic(this, &ACharacterBase::OnGamePhaseChanged);
-		
 	}
 
 	StatusEffectTags = {
@@ -498,6 +495,7 @@ void ACharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	InitAbilityActorInfo();
+	InitializeFloatingStatusWidget();
 }
 
 EGamePhase ACharacterBase::GetCurrentGamePhase() const
@@ -515,14 +513,11 @@ void ACharacterBase::UpdatePlayerName()
 
 	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Character: %s"), *GetName());
-		UE_LOG(LogTemp, Warning, TEXT("PersonaName: %s"), *PS->PersonaName);
 		StatusWidget->SetPlayerName(PS->PersonaName);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Character: %s"), *GetName());
-		// PlayerState가 없는 경우 기본 이름 설정
 		StatusWidget->SetPlayerName(TEXT("Unknown"));
 	}
 }
@@ -570,7 +565,7 @@ void ACharacterBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
-
+	InitializeFloatingStatusWidget();
 	// 플레이어 외형 갱신
 	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
 	{
