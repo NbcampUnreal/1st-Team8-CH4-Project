@@ -27,6 +27,8 @@ public:
 	void DealDamageToActors(const TArray<FHitResult>& HitResults);
 	void ApplyGameplayEffectToTarget(ACharacter* Target, TSubclassOf<UGameplayEffect> EffectClass);
 	void ApplyKnockback(AActor* TargetActor);
+	UFUNCTION()
+	void OnAttackMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSubclassOf<UGameplayEffect> CurrentDamageEffect;
@@ -52,4 +54,6 @@ public:
 private:
 	UPROPERTY()
 	ACharacter* OwnerCharacter;
+
+	bool bAlreadyHit = false;
 };
