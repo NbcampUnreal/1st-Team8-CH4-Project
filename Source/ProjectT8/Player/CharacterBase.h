@@ -32,8 +32,6 @@ class PROJECTT8_API ACharacterBase : public ACharacter, public IAbilitySystemInt
 public:
 	ACharacterBase();
 
-	virtual void OnConstruction(const FTransform& Transform) override;
-
 	// GAS
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
