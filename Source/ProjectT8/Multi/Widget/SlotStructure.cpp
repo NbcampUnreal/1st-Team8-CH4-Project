@@ -1020,11 +1020,6 @@ void USlotStructure::RemoveAIFromSlot(int32 SlotIndex)
 
 void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
 {
-    /*if (IsLocalPlayerHost())
-    {
-		UE_LOG(LogTemp, Log, TEXT("Host can't be kicked"));
-        return;
-    }*/
     if (!IsSlotPlayer(SlotIndex))
     {
         UE_LOG(LogTemp, Warning, TEXT("KickPlayerFromSlot: No player in slot %d"), SlotIndex);
@@ -1039,7 +1034,6 @@ void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
         return;
     }
 
-    // 플레이어 컨트롤러 가져오기
     APlayerController* PlayerToKick = nullptr;
     if (LobbyGS->Slots[SlotIndex].PlayerState)
     {
@@ -1052,7 +1046,6 @@ void USlotStructure::KickPlayerFromSlot(int32 SlotIndex)
         return;
     }
 
-    // LobbyPlayerController로 캐스팅
     ALobbyPlayerController* LobbyKickPC = Cast<ALobbyPlayerController>(PlayerToKick);
     if (!LobbyKickPC)
     {
