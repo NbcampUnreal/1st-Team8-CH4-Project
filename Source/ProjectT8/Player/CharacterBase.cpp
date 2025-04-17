@@ -23,6 +23,7 @@
 #include "GameFramework/GameMode/T8GameMode.h"
 #include "GameFramework/Common/CustomGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "Player/Customize/FCharacterAppearanceData.h"
 
 
 // Constructor
@@ -177,44 +178,25 @@ void ACharacterBase::ApplyApperance(const FCharacterAppearanceData& Data)
 	}
 }
 
-void ACharacterBase::UpdateAppearance()
-{
-	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState Found for Appearance Update - Character: %s"), *GetName());
-		ApplyApperance(PS->ApperanceData);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState is NULL for Appearance Update - Character: %s"), *GetName());
-	}
-}
-
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	InitAbilityActorInfo();
 
-	// 서버나 독립 실행 환경에서만 실행
-	if (HasAuthority() || GetWorld()->IsNetMode(NM_Standalone))
-	{
-		if (UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
-		{
-			ApperanceSybsystem->LoadAppearance();
-			ApplyApperance(ApperanceSybsystem->CachedAppearanceData);
-			UE_LOG(LogTemp, Warning, TEXT("Character constructed with appearance data"));
-		}
-	}
+	
 
 	if (AttributeSet)
 	{
 		AttributeSet->OnHealthChanged.AddDynamic(this, &ACharacterBase::HandleHealthChanged);
 	}
 
-	// 게임 상태 변경 이벤트 구독
 	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
 	{
+		HandleAppearanceByPhase(GameState->CurPhase);
+
+		// 게임 상태 변경 이벤트 구독
 		GameState->OnPhaseChanged.AddDynamic(this, &ACharacterBase::OnGamePhaseChanged);
+		
 	}
 
 	StatusEffectTags = {
@@ -516,7 +498,6 @@ void ACharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	InitAbilityActorInfo();
-	UpdateAppearance();
 }
 
 EGamePhase ACharacterBase::GetCurrentGamePhase() const
@@ -546,6 +527,31 @@ void ACharacterBase::UpdatePlayerName()
 	}
 }
 
+void ACharacterBase::HandleAppearanceByPhase(EGamePhase Phase)
+{
+	switch (Phase)
+	{
+	case EGamePhase::Room:
+		if (UCharacterAppearanceSubsystem* Sub = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>())
+		{
+			Sub->LoadAppearance();
+			ApplyApperance(Sub->CachedAppearanceData);
+		}
+		break;
+	case EGamePhase::Lobby:
+	case EGamePhase::Playing:
+	case EGamePhase::Result:
+		if (APlayerState* PS = GetPlayerState())
+		{
+			FCharacterAppearanceData& Data = Cast<AT8PlayerState>(PS)->ApperanceData;
+			ApplyApperance(Data);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void ACharacterBase::InitializeFloatingStatusWidget()
 {
 	if (FloatingStatusWidget)
@@ -564,7 +570,11 @@ void ACharacterBase::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilityActorInfo();
-	UpdateAppearance();
+
+	if (ACustomGameState* GameState = GetWorld()->GetGameState<ACustomGameState>())
+	{
+		HandleAppearanceByPhase(GameState->CurPhase);
+	}
 }
 
 void ACharacterBase::OnGamePhaseChanged(EGamePhase NewPhase)
