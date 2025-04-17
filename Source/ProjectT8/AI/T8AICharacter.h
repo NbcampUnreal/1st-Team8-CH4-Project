@@ -156,5 +156,6 @@ protected:
 
 	void InitializeFloatingStatusWidget();
 	void UpdateHealthUI();
-
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override; 
 };

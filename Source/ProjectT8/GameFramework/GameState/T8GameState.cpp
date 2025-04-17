@@ -62,4 +62,5 @@ int32 AT8GameState::GetActiveTeamCount() const
     {
         return ActiveTeamCounts.Num();
     }
+    return 0;
 }
