@@ -36,4 +36,6 @@ public:
     int32 GetAICountForTeam(int32 TeamNumber) const;
 
     const TArray<FSlotInfo>& GetSavedLobbySlots() const { return SavedLobbySlots; }
+
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

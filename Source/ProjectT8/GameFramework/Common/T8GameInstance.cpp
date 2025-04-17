@@ -1,5 +1,5 @@
 #include "T8GameInstance.h"
-
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 
 void UT8GameInstance::SaveLobbyGameState(ALobbyGameState* LobbyGameState)
@@ -41,4 +41,10 @@ int32 UT8GameInstance::GetAICountForTeam(int32 TeamNumber) const
         }
     }
     return Count;
+}
+
+void UT8GameInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UT8GameInstance, WinningPlayerStatesResult);
 }

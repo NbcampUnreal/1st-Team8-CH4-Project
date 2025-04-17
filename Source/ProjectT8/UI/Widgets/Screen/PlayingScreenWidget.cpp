@@ -3,74 +3,51 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "GameFramework/GameState/T8GameState.h"
 #include "GameFramework/Character.h"
 #include "Player/CharacterBase.h"
-
+#include "Kismet/GameplayStatics.h"
 
 
 void UPlayingScreenWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance());
-	if (!GI) return;
+	AT8GameState* GS = Cast<AT8GameState>(UGameplayStatics::GetGameState(GetWorld()));
 
-	TArray<FPlayerStatusUIData> PlayerUIList;
+	if (!GS) return;
+
+	TArray<FPlayerStatusUIData> PUIList = GS->PlayerUIList;
 	
-	for (const FSlotInfo& EachSlot : GI->SavedLobbySlots)
+	for (const FPlayerStatusUIData& Data : PUIList)
 	{
-		FPlayerStatusUIData UIData;
-
-		/*if (GEngine)
-		{
-			FString LogMessage = FString::Printf(
-				TEXT("EachSlot DisplayName: %s, bIsAI: %s, TeamNumber: %d"),
-				*EachSlot.DisplayName,
-				EachSlot.bIsAI ? TEXT("True") : TEXT("False"),
-				EachSlot.TeamNumber
-			);
-
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, LogMessage);
-		}*/
-
-		UIData.DisplayName = EachSlot.DisplayName;
-		UIData.bIsAlive = true;
-		UIData.bIsAI = EachSlot.bIsAI;
-
-		switch (EachSlot.TeamNumber)
-		{
-			case 0 : UIData.TeamColor = FLinearColor::Red; break;
-			case 1: UIData.TeamColor = FLinearColor::Blue; break;
-			case 2: UIData.TeamColor = FLinearColor::Green; break;
-			case 3: UIData.TeamColor = FLinearColor::Yellow; break;
-			default: UIData.TeamColor = FLinearColor::Gray; break;
-		}
-
-		PlayerUIList.Add(UIData);
-		PlayerStatusMap.Add(EachSlot.DisplayName, UIData);
+		PlayerStatusMap.Add(Data.DisplayName, Data);
 	}
 
 	if (TeamStatusBar)
 	{
-		TeamStatusBar->InitPlayerIcons(PlayerUIList);
+		TeamStatusBar->InitPlayerIcons(PUIList);
 	}
-
-	if (TeamModeText)
+	
+	if (UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance()))
 	{
-		switch (GI->SavedTeamSetup)	
+		if (TeamModeText)
 		{
+			switch (GI->SavedTeamSetup)
+			{
 			case ETeamSetup::FreeForAll:
-				TeamModeText->SetText(FText::FromString("FreeForAll"));
+				TeamModeText->SetText(FText::FromString("SURVIVOR!"));
 				break;
 			case ETeamSetup::TwoTeams:
-				TeamModeText->SetText(FText::FromString("TwoTeams"));
+				TeamModeText->SetText(FText::FromString("RED vs BLUE"));
 				break;
 			case ETeamSetup::FourTeams:
-				TeamModeText->SetText(FText::FromString("FourTeams"));
+				TeamModeText->SetText(FText::FromString("RED vs BLUE vs GREEN vs YELLOW"));
 				break;
 			default:
-				TeamModeText->SetText(FText::FromString("FreeForAll"));
+				TeamModeText->SetText(FText::FromString("SURVIVOR!"));
 				break;
+			}
 		}
 	}
 }

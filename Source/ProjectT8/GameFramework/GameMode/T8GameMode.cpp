@@ -47,6 +47,12 @@ void AT8GameMode::BeginPlay()
             SpawnAIFromSlotData(Slot);
         }
     }
+
+    if (AT8GameState* GS = GetGameState<AT8GameState>())
+    {
+        GS->InitializePlayerUIList(GameInstance->SavedLobbySlots);
+    }
+
 }
 
 
