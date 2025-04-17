@@ -360,6 +360,10 @@ void AT8AICharacter::OnRep_PlayerState()
 
 void AT8AICharacter::HandleHealthChanged(float NewHealth, float MaxHealth)
 {
+	if (StatusWidget)
+	{
+		StatusWidget->UpdateHealthBar(NewHealth, MaxHealth);
+	}
 	if (!bIsDead && NewHealth <= 0.0f)
 	{
 		Die();
