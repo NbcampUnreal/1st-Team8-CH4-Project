@@ -8,20 +8,6 @@ AT8GameMode::AT8GameMode()
 	DefaultPawnClass = ACharacterBase::StaticClass();
 }
 
-void AT8GameMode::PostLogin(APlayerController* NewPlayer)
-{
-	Super::PostLogin(NewPlayer);
-
-	ACharacterBase* MyCharacter = Cast<ACharacterBase>(NewPlayer->GetPawn());
-	AT8PlayerState* PS = NewPlayer->GetPlayerState<AT8PlayerState>();
-
-	if (MyCharacter && PS)
-	{
-		UE_LOG(LogTemp, Display, TEXT(""));
-		MyCharacter->ApplyApperance(PS->ApperanceData);
-	}
-}
-
 void AT8GameMode::NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter)
 {
 	// 여기에서 게임 로직에 따른 죽음 처리를 구현

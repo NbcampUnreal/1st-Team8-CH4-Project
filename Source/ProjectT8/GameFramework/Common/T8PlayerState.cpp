@@ -3,6 +3,7 @@
 #include "OnlineSubsystem.h"
 #include "Player/CharacterBase.h"
 #include "Interfaces/OnlineIdentityInterface.h"
+#include "Player/Customize/CharacterAppearanceSubsystem.h"
 
 // 상수 정의 추가
 const float AT8PlayerState::ApplyAppearanceCheckInterval = 0.1f;
@@ -118,4 +119,26 @@ void AT8PlayerState::RetrieveSteamID()
     {
         PersonaName = TEXT("Steam Subsystem Unavailable");
     }
+}
+
+void AT8PlayerState::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // 클라이언트에서만 실행
+    if (GetWorld()->IsNetMode(NM_Client))
+    {
+        UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+        if (ApperanceSybsystem)
+        {
+            ApperanceSybsystem->LoadAppearance();
+            UE_LOG(LogTemp, Warning, TEXT("Calling ServerSetAppearanceData from client"));
+            ServerSetAppearanceData(ApperanceSybsystem->CachedAppearanceData);
+        }
+    }
+}
+
+void AT8PlayerState::ServerSetAppearanceData_Implementation(const FCharacterAppearanceData& NewData)
+{
+    SetAppearanceData(NewData);
 }

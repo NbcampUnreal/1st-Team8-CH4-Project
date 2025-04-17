@@ -19,8 +19,7 @@ class PROJECTT8_API UFloatingStatusWidget : public UUserWidget
 
 public:
     virtual void NativeConstruct() override;
-    virtual bool IsNameStableForNetworking() const override { return true; }
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void NativeDestruct() override;
 
     void SetOwnerCharacter(ACharacter* InCharacter);
 
@@ -30,9 +29,10 @@ public:
     UFUNCTION(BlueprintCallable)
     void SetPlayerName(const FString& Name);
 
-protected:
-    virtual void NativeDestruct() override;
+    UFUNCTION()
+    void SetHealthBarVisibility(bool bIsVisible);
 
+protected:
     // GAS 관련
     void BindAttributeChanges();
     void UnbindAttributeChanges();
@@ -47,7 +47,7 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* PlayerNameText;
 
-    UPROPERTY(Replicated)
+    UPROPERTY()
     ACharacterBase* OwnerCharacter;
 
     UPROPERTY()

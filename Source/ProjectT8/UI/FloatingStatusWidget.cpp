@@ -4,7 +4,6 @@
 #include "Player/CharacterBase.h"
 #include "AbilitySystemComponent.h"
 #include "GAS/CharacterAttributeSet.h"
-#include "Net/UnrealNetwork.h"
 
 void UFloatingStatusWidget::NativeConstruct()
 {
@@ -14,18 +13,21 @@ void UFloatingStatusWidget::NativeConstruct()
 void UFloatingStatusWidget::NativeDestruct()
 {
     Super::NativeDestruct();
+    UnbindAttributeChanges();
 }
 
 void UFloatingStatusWidget::SetOwnerCharacter(ACharacter* InCharacter)
 {
     if (!InCharacter) return;
 
-    OwnerCharacter = Cast<ACharacterBase>(InCharacter); // Cast 시도
+    // 이전 바인딩 해제
+    UnbindAttributeChanges();
 
-    AbilitySystemComponent = nullptr;
-    AttributeSet = nullptr;
+    OwnerCharacter = Cast<ACharacterBase>(InCharacter);
+    if (!OwnerCharacter) return;
 
-    if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(InCharacter))
+    // GAS 컴포넌트 설정
+    if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(OwnerCharacter))
     {
         AbilitySystemComponent = AbilityInterface->GetAbilitySystemComponent();
         if (AbilitySystemComponent)
@@ -34,13 +36,31 @@ void UFloatingStatusWidget::SetOwnerCharacter(ACharacter* InCharacter)
             AttributeSet = const_cast<UCharacterAttributeSet*>(Cast<const UCharacterAttributeSet>(BaseAttributeSet));
             if (AttributeSet)
             {
+                // 초기 상태 설정
                 UpdateHealthBar(AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
-                AttributeSet->OnHealthChanged.AddDynamic(this, &UFloatingStatusWidget::UpdateHealthBar);
+                
+                // 델리게이트 바인딩
+                BindAttributeChanges();
             }
         }
     }
 }
 
+void UFloatingStatusWidget::BindAttributeChanges()
+{
+    if (AttributeSet)
+    {
+        AttributeSet->OnHealthChanged.AddDynamic(this, &UFloatingStatusWidget::UpdateHealthBar);
+    }
+}
+
+void UFloatingStatusWidget::UnbindAttributeChanges()
+{
+    if (AttributeSet)
+    {
+        AttributeSet->OnHealthChanged.RemoveDynamic(this, &UFloatingStatusWidget::UpdateHealthBar);
+    }
+}
 
 void UFloatingStatusWidget::UpdateHealthBar(float CurrentHealth, float MaxHealth)
 {
@@ -59,9 +79,10 @@ void UFloatingStatusWidget::SetPlayerName(const FString& Name)
     }
 }
 
-void UFloatingStatusWidget::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UFloatingStatusWidget::SetHealthBarVisibility(bool bIsVisible)
 {
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    DOREPLIFETIME(UFloatingStatusWidget, OwnerCharacter);
+    if (HealthBar)
+    {
+        HealthBar->SetVisibility(bIsVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+    }
 }

@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -13,5 +11,5 @@ UCLASS()
 class PROJECTT8_API ARoomGameMode : public AGameMode
 {
 	GENERATED_BODY()
-	
+	ARoomGameMode();
 };
