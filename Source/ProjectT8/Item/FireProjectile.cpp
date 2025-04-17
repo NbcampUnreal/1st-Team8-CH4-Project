@@ -18,6 +18,6 @@ void AFireProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
         if (ASC && BurnEffect)
         {
             ASC->ApplyGameplayEffectToSelf(BurnEffect->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
-        }    
+        }
     }
 }
