@@ -5,10 +5,11 @@ APoisonProjectile::APoisonProjectile()
 {
 	if (MovementComp)
 	{
-		MovementComp->InitialSpeed = Speed;
-		MovementComp->MaxSpeed = Speed;
-		MovementComp->bRotationFollowsVelocity = true;
-		MovementComp->bShouldBounce = true;            
+		MovementComp->InitialSpeed = 1000.f;
+		MovementComp->MaxSpeed = 1000.f;
 		MovementComp->ProjectileGravityScale = 1.f;
+		MovementComp->bShouldBounce = true;
+		MovementComp->bRotationFollowsVelocity = true;
+		MovementComp->bAutoActivate = true;
 	}
 }

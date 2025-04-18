@@ -10,8 +10,15 @@ AThrowable::AThrowable()
 
 void AThrowable::Use(ACharacterBase* Player)
 {
-	if (!Player || !ProjectileClass) return;
+	if (!Player) return;
 
+	if (!HasAuthority()) {
+		Server_Use(Player);
+		return;
+	}
+
+	if (ProjectileClass)
+	{
 	APlayerController* PC = Cast<APlayerController>(Player->GetController());
 	if (!PC) return;
 	FVector FacingDirection = Player->GetActorForwardVector(); // Z축 회전 기준
@@ -19,6 +26,10 @@ void AThrowable::Use(ACharacterBase* Player)
 	FRotator SpawnRotation = FacingDirection.Rotation();
 
 	AProjectile* Projectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
-
+	if (Projectile)
+	{
+	UE_LOG(LogTemp, Warning, TEXT("[8888888 Projectile SpawnWorld 88888888]"));
+	}
 	Destroy();
+	}
 }
