@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "GameFramework/Common/CustomPlayerController.h"
 #include "LobbyPlayerController.generated.h"
 
 /**
@@ -12,7 +12,7 @@ class UInputMappingContext;
 class UInputAction;
 
 UCLASS()
-class PROJECTT8_API ALobbyPlayerController : public APlayerController
+class PROJECTT8_API ALobbyPlayerController : public ACustomPlayerController
 {
     GENERATED_BODY()
 

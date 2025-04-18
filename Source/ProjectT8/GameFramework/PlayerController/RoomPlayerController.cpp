@@ -11,8 +11,8 @@ void ARoomPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    SetInputMode(FInputModeGameAndUI());
-    bShowMouseCursor = true;
+    //SetInputMode(FInputModeGameAndUI());
+    //bShowMouseCursor = true;
 
     if (IsLocalController())
     {

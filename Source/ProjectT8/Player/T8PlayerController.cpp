@@ -26,8 +26,8 @@ void AT8PlayerController::BeginPlay()
 	}
 
 	// Input
-	SetInputMode(FInputModeGameAndUI());
-	bShowMouseCursor = true;
+	//SetInputMode(FInputModeGameAndUI());
+	//bShowMouseCursor = true;
 
 	if (IsLocalController())
 	{

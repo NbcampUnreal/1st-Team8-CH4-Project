@@ -126,8 +126,8 @@ void ALobbyPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    SetInputMode(FInputModeGameAndUI());
-    bShowMouseCursor = true;
+    //SetInputMode(FInputModeGameAndUI());
+    //bShowMouseCursor = true;
 
     if (IsLocalController())
     {
@@ -147,7 +147,7 @@ void ALobbyPlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EInput = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALobbyPlayerController::HandleNextPhaseInput);
+        //EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALobbyPlayerController::HandleNextPhaseInput);
     }
 }
 

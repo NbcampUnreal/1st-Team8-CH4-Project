@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "GameFramework/Common/CustomPlayerController.h"
 #include "Player/Customize/FCharacterAppearanceData.h"
 #include "T8PlayerController.generated.h"
 
@@ -9,7 +9,7 @@ class UInputMappingContext;
 class UInputAction;
 
 UCLASS()
-class PROJECTT8_API AT8PlayerController : public APlayerController
+class PROJECTT8_API AT8PlayerController : public ACustomPlayerController
 {
 	GENERATED_BODY()
 	
