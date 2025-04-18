@@ -1,14 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "GameFramework/Common/CustomPlayerController.h"
 #include "RoomPlayerController.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
 
 UCLASS()
-class PROJECTT8_API ARoomPlayerController : public APlayerController
+class PROJECTT8_API ARoomPlayerController : public ACustomPlayerController
 {
 	GENERATED_BODY()
 	

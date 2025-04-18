@@ -1,13 +1,17 @@
 #include "T8GameMode.h"
 #include "Player/CharacterBase.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/Common/T8PlayerState.h"
 #include "GameFramework/Character.h"
 #include "AI/T8AICharacter.h"
 #include "AI/T8AIController.h"
 #include "GameFramework/GameState/LobbyGameState.h"
 #include "GameFramework/Common/T8GameInstance.h"
+#include "GameFramework/GameState/T8GameState.h"
+#include "GameFramework/GameState/ResultGameState.h"
 #include "NavigationSystem.h"
 #include "NavigationPath.h"
+#include "Player/T8PlayerController.h"
 
 
 AT8GameMode::AT8GameMode()
@@ -43,6 +47,12 @@ void AT8GameMode::BeginPlay()
             SpawnAIFromSlotData(Slot);
         }
     }
+
+    if (AT8GameState* GS = GetGameState<AT8GameState>())
+    {
+        GS->InitializePlayerUIList(GameInstance->SavedLobbySlots);
+    }
+
 }
 
 
@@ -51,32 +61,84 @@ void AT8GameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	ACharacterBase* MyCharacter = Cast<ACharacterBase>(NewPlayer->GetPawn());
-	AT8PlayerState* PS = NewPlayer->GetPlayerState<AT8PlayerState>();
-
-	if (MyCharacter && PS)
-	{
-		UE_LOG(LogTemp, Display, TEXT(""));
-		MyCharacter->ApplyApperance(PS->ApperanceData);
-	}
+    AT8PlayerController* PC = Cast<AT8PlayerController>(NewPlayer);
+    if (PC)
+    {
+        PC->Client_TriggerSendAppearance();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ERROR AT8GameMode-AT8PlayerController Is nullptr"));
+    }
 }
 
 
 
 void AT8GameMode::NotifyPlayerDeath_Implementation(ACharacter* DeadCharacter)
 {
-	// 여기에서 게임 로직에 따른 죽음 처리를 구현
-	// 예: 점수 계산, 게임 종료 조건 체크 등
-	
-	// CharacterBase로 캐스팅이 필요한 경우
+	UE_LOG(LogTemp, Warning, TEXT("NotifyPlayerDeath_Implementation called for %s"), *DeadCharacter->GetName());
+	int32 TeamID = -1;
+
 	if (ACharacterBase* BaseCharacter = Cast<ACharacterBase>(DeadCharacter))
 	{
-		// CharacterBase 특정 기능 사용
+        TeamID = BaseCharacter->TeamNumber;
+        BaseCharacter->bIsDead = true;
 	}
     else if (AT8AICharacter* AICharacter = Cast<AT8AICharacter>(DeadCharacter))
     {
-        // AI 전용 로직
+        TeamID = AICharacter->GetTeamID();
+		AICharacter->bIsDead = true;
     }
+
+    if (TeamID >= 0)
+    {
+		if (AT8GameState* GS = GetGameState<AT8GameState>())
+		{
+            GS->RemovePlayerFromTeam(TeamID);
+            CheckGameEnd();
+		}
+    }
+}
+
+bool AT8GameMode::CheckGameEnd()
+{
+    if (AT8GameState* GS = GetGameState<AT8GameState>())
+    {
+		int32 WinningTeamID = -1;
+		if (GS->IsOnlyOneTeamRemaining(WinningTeamID))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Game Over: Team %d Won!"), WinningTeamID);
+
+			UT8GameInstance* GI = Cast<UT8GameInstance>(GetGameInstance());
+            if (GI)
+            {
+                for (FSlotInfo& Slot : GI->SavedLobbySlots)
+                {
+                    if (Slot.TeamNumber == WinningTeamID)
+                    {
+                        GI->WinningPlayerStatesResult.Add(Slot.PlayerState);
+                    }
+                }
+            }
+
+            FTimerHandle GameEndTimerHandle;
+            GetWorld()->GetTimerManager().SetTimer(
+                GameEndTimerHandle,
+                [this]()
+            {
+                UWorld* World = GetWorld();
+                if (World)
+                {
+                    UE_LOG(LogTemp, Log, TEXT("AT8GameMode: Timer finished. Executing ServerTravel to BattleLevel."));
+                    World->ServerTravel("ResultMap");
+                }
+            }, 3.f, false);
+
+			return true;
+		}
+    }
+
+    return false;
 }
 
 void AT8GameMode::SpawnAllAIFromLobbySlots()

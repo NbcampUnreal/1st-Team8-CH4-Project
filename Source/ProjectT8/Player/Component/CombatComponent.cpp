@@ -2,9 +2,11 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "AI/T8AICharacter.h"
 #include "Player/CharacterBase.h"
 #include "Player/Component/ItemComponent.h"
 #include "Item/Weapon.h"
+#include "Animation/AnimMontage.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -15,6 +17,15 @@ UCombatComponent::UCombatComponent()
 void UCombatComponent::Init(ACharacter* InOwner)
 {
 	OwnerCharacter = InOwner;
+
+	if (OwnerCharacter)
+	{
+		if (UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance())
+		{
+			AnimInstance->OnMontageBlendingOut.RemoveDynamic(this, &UCombatComponent::OnAttackMontageBlendingOut);
+			AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UCombatComponent::OnAttackMontageBlendingOut);
+		}
+	}
 }
 
 void UCombatComponent::Attack()
@@ -28,6 +39,21 @@ void UCombatComponent::Attack()
 	}
 
 	Multicast_PlayAttackMontage();
+
+	AT8AICharacter* AIChar = Cast<AT8AICharacter>(OwnerCharacter);
+	if (AIChar)
+	{
+		AIChar->bCanAttack = false;
+		AIChar->bIsAttacking = true;
+
+		AIChar->GetWorldTimerManager().SetTimer(
+			AIChar->AttackCooldownTimer,
+			AIChar,
+			&AT8AICharacter::ResetCanAttack,
+			AIChar->AttackCooldown,
+			false
+		);
+	}
 }
 
 void UCombatComponent::Server_Attack_Implementation()
@@ -74,6 +100,13 @@ void UCombatComponent::Multicast_PlayAttackMontage_Implementation()
 
 void UCombatComponent::HandleAttackNotify()
 {
+	if (bAlreadyHit)
+	{
+		UE_LOG(LogTemp, Display, TEXT("bAlreadyHit TRUE!!!"));
+		return;
+	}
+	bAlreadyHit = true;
+
 	OnAttackHit();
 }
 
@@ -175,6 +208,11 @@ void UCombatComponent::ApplyKnockback(AActor* TargetActor)
 	KnockbackDir.Z = 0.5f;
 	KnockbackDir.Normalize();
 	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
+}
+
+void UCombatComponent::OnAttackMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	bAlreadyHit = false;
 }
 
 void UCombatComponent::Multicast_ApplyKnockback_Implementation(AActor* TargetActor, FVector Direction)

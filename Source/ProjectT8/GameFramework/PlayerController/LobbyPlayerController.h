@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "GameFramework/Common/CustomPlayerController.h"
 #include "LobbyPlayerController.generated.h"
 
 /**
@@ -10,9 +10,10 @@
 
 class UInputMappingContext;
 class UInputAction;
+struct FCharacterAppearanceData;
 
 UCLASS()
-class PROJECTT8_API ALobbyPlayerController : public APlayerController
+class PROJECTT8_API ALobbyPlayerController : public ACustomPlayerController
 {
     GENERATED_BODY()
 
@@ -39,6 +40,12 @@ public:
 
     UFUNCTION(Client, Reliable)
     void ClientTravelToPrivateLevel();
+
+    UFUNCTION(Server, Reliable)
+    void Server_SendMyAppearance(const FCharacterAppearanceData& MyData);
+
+    UFUNCTION(Client, Reliable)
+    void Client_TriggerSendAppearance();
 
 protected:
     virtual void BeginPlay() override;

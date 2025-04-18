@@ -11,8 +11,8 @@ void ALoadingPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    SetInputMode(FInputModeGameAndUI());
-    bShowMouseCursor = true;
+    //SetInputMode(FInputModeGameAndUI());
+    //bShowMouseCursor = true;
 
     if (IsLocalController())
     {
@@ -32,7 +32,7 @@ void ALoadingPlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EInput = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALoadingPlayerController::HandleNextPhaseInput);
+        //EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALoadingPlayerController::HandleNextPhaseInput);
     }
 }
 

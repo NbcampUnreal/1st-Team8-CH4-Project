@@ -10,6 +10,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "Player/Customize/CharacterAppearanceSubsystem.h"
+#include "Player/Customize/FCharacterAppearanceData.h"
+#include "GameFramework/Common/T8PlayerState.h"
+#include "Player/CharacterBase.h"
 
 ALobbyPlayerController::ALobbyPlayerController()
 {
@@ -122,12 +126,35 @@ void ALobbyPlayerController::ClientTravelToPrivateLevel_Implementation()
     UGameplayStatics::OpenLevel(this, FName("PrivateLevel"));
 }
 
+void ALobbyPlayerController::Client_TriggerSendAppearance_Implementation()
+{
+    UCharacterAppearanceSubsystem* Sub = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+    if (Sub)
+    {
+        Server_SendMyAppearance(Sub->CachedAppearanceData);
+    }
+}
+
+void ALobbyPlayerController::Server_SendMyAppearance_Implementation(const FCharacterAppearanceData& Data)
+{
+    AT8PlayerState* PS = GetPlayerState<AT8PlayerState>();
+    if (PS)
+    {
+        PS->ApperanceData = Data;
+
+        if (ACharacterBase* MyChar = Cast<ACharacterBase>(PS->GetPawn()))
+        {
+            MyChar->ApplyApperance(Data);
+        }
+    }
+}
+
 void ALobbyPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    SetInputMode(FInputModeGameAndUI());
-    bShowMouseCursor = true;
+    //SetInputMode(FInputModeGameAndUI());
+    //bShowMouseCursor = true;
 
     if (IsLocalController())
     {
@@ -147,7 +174,7 @@ void ALobbyPlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EInput = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALobbyPlayerController::HandleNextPhaseInput);
+        //EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &ALobbyPlayerController::HandleNextPhaseInput);
     }
 }
 
