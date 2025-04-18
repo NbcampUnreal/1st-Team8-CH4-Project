@@ -47,9 +47,6 @@ protected:
 	FString ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USceneComponent* RootComp;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
