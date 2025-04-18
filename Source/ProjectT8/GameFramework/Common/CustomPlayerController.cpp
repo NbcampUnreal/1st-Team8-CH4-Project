@@ -10,9 +10,10 @@ void ACustomPlayerController::BeginPlay()
 
     SetCustomInputMode();
 
-    if (CursorWidgetClass)
+    if (IsLocalController() && CursorWidgetClass)
     {
         CursorWidget = CreateWidget<UUserWidget>(this, CursorWidgetClass);
+        //CursorWidget = CreateWidget<UUserWidget>(GetWorld(), CursorWidgetClass);
         CursorWidget->SetIsFocusable(false);
         CursorWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 
