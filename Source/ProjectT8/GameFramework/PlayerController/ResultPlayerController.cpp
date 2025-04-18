@@ -32,7 +32,7 @@ void AResultPlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EInput = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &AResultPlayerController::HandleNextPhaseInput);
+        //EInput->BindAction(NextPhaseAction, ETriggerEvent::Triggered, this, &AResultPlayerController::HandleNextPhaseInput);
     }
 }
 

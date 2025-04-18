@@ -32,7 +32,7 @@ void ARoomPlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EInput = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        EInput->BindAction(RoomNextPhaseAction, ETriggerEvent::Triggered, this, &ARoomPlayerController::HandleNextPhaseInput);
+        //EInput->BindAction(RoomNextPhaseAction, ETriggerEvent::Triggered, this, &ARoomPlayerController::HandleNextPhaseInput);
     }
 }
 

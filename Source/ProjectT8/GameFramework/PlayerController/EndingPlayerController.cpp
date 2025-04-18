@@ -38,5 +38,5 @@ void AEndingPlayerController::SetupInputComponent()
 
 void AEndingPlayerController::HandleNextPhaseInput()
 {
-    UGameplayStatics::OpenLevel(this, FName("MultiLobbyLevel"));
+    UGameplayStatics::OpenLevel(this, FName("TitleMap"));
 }
