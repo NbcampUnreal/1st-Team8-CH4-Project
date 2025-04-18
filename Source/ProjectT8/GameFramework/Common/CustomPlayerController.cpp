@@ -56,9 +56,8 @@ void ACustomPlayerController::SetMouseLocation()
     }*/
 
     FVector2D MousePosition;
-    UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, MousePosition.X, MousePosition.Y);
 
-    if (CursorWidget)
+    if (CursorWidget && UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, MousePosition.X, MousePosition.Y))
     {
         CursorWidget->SetPositionInViewport(MousePosition, false);
     }
