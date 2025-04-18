@@ -21,9 +21,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShowUI(EGamePhase Phase);
 
-	void NotifyScreenRemoved(UUserWidget* Widget);
-
+	UFUNCTION(BlueprintCallable)
 	void OpenLevelForPhase(EGamePhase Phase);
+
+	void NotifyScreenRemoved(UUserWidget* Widget);
 
 private:
 	UPROPERTY()

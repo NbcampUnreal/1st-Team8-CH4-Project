@@ -15,7 +15,7 @@ void ATitlePlayerController::BeginPlay()
     Super::BeginPlay();
 
     //SetInputMode(FInputModeGameAndUI());
-    //bShowMouseCursor = false;
+    //bShowMouseCursor = false;6
 
     if (IsLocalController())
     {
