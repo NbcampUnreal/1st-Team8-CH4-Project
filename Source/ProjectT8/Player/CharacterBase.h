@@ -187,7 +187,7 @@ protected:
 	void InitializeFloatingStatusWidget();
 	void UpdateHealthUI();
 	void UpdatePlayerName();
-	void UpdateAppearance();
+	void HandleAppearanceByPhase(EGamePhase Phase);
 
 	EGamePhase GetCurrentGamePhase() const;
 	

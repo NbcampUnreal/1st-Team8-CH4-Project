@@ -10,6 +10,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "Player/Customize/CharacterAppearanceSubsystem.h"
+#include "Player/Customize/FCharacterAppearanceData.h"
+#include "GameFramework/Common/T8PlayerState.h"
+#include "Player/CharacterBase.h"
 
 ALobbyPlayerController::ALobbyPlayerController()
 {
@@ -120,6 +124,29 @@ void ALobbyPlayerController::ClientTravelToPrivateLevel_Implementation()
 
     // 클라이언트 측에서 PrivateLevel로 이동
     UGameplayStatics::OpenLevel(this, FName("PrivateLevel"));
+}
+
+void ALobbyPlayerController::Client_TriggerSendAppearance_Implementation()
+{
+    UCharacterAppearanceSubsystem* Sub = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+    if (Sub)
+    {
+        Server_SendMyAppearance(Sub->CachedAppearanceData);
+    }
+}
+
+void ALobbyPlayerController::Server_SendMyAppearance_Implementation(const FCharacterAppearanceData& Data)
+{
+    AT8PlayerState* PS = GetPlayerState<AT8PlayerState>();
+    if (PS)
+    {
+        PS->ApperanceData = Data;
+
+        if (ACharacterBase* MyChar = Cast<ACharacterBase>(PS->GetPawn()))
+        {
+            MyChar->ApplyApperance(Data);
+        }
+    }
 }
 
 void ALobbyPlayerController::BeginPlay()

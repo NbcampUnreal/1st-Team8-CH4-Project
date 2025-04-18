@@ -74,12 +74,26 @@ void UT8BTTask_FindNearbyWeapon::OnQueryFinished(UEnvQueryInstanceBlueprintWrapp
 
 	if (Results.Num() > 0)
 	{
-		AActor* Found = Results[0];
-		UE_LOG(LogTemp, Warning, TEXT("[BTTask_FindNearbyWeapon] 발견한 무기: %s"), *GetNameSafe(Found));
+		// 결과로 나온 액터들을 순회해서 주인이 없는 무기만 확인한다.
+		for (AActor* Actor : Results)
+		{
+			if (IsValid(Actor) && Actor->GetOwner() == nullptr)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[BTTask_FindNearbyWeapon] 발견한 무기: %s"), *GetNameSafe(Actor));
 
-		CachedOwnerComp->GetBlackboardComponent()->SetValueAsObject(TargetWeaponKey.SelectedKeyName, Found);
+				CachedOwnerComp->GetBlackboardComponent()->SetValueAsObject(TargetWeaponKey.SelectedKeyName, Actor);
 
-		FinishLatentTask(*CachedOwnerComp.Get(), EBTNodeResult::Succeeded);
+				FinishLatentTask(*CachedOwnerComp.Get(), EBTNodeResult::Succeeded);
+
+				bQueryInProgress = false;
+				RemoveFromRoot();
+
+				return;
+			}
+		}
+		// 유효한 무기가 없을 경우
+		UE_LOG(LogTemp, Warning, TEXT("[BTTask_FindNearbyWeapon] 유효한 무기가 없음 (모두 소유자가 있음)"));
+		FinishLatentTask(*CachedOwnerComp.Get(), EBTNodeResult::Failed);
 	}
 	else
 	{

@@ -475,6 +475,11 @@ void USlotStructure::RefreshSlotWidgets()
                 // Create new widget
                 if (UserSlotWidgetClass)
                 {
+                    if (!IsValid(GetWorld()) || GetWorld()->bIsTearingDown)
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("UserSlotWidget 생성 스킵: 월드 파괴 중"));
+                        return;
+                    }
                     userSlotWidget = CreateWidget<UUserWidget>(GetWorld(), UserSlotWidgetClass);
                     if (userSlotWidget)
                     {

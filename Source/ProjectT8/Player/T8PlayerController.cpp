@@ -14,17 +14,6 @@ void AT8PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsLocalController())  // 로컬 컨트롤러일 때만 실행
-	{
-		UCharacterAppearanceSubsystem* ApperanceSybsystem = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
-		if (ApperanceSybsystem)
-		{
-			ApperanceSybsystem->LoadAppearance();
-			UE_LOG(LogTemp, Warning, TEXT("Calling ServerSetAppearanceData from client"));
-			ServerSetAppearanceData(ApperanceSybsystem->CachedAppearanceData);
-		}
-	}
-
 	// Input
 	//SetInputMode(FInputModeGameAndUI());
 	//bShowMouseCursor = true;
@@ -41,20 +30,6 @@ void AT8PlayerController::BeginPlay()
 	}
 }
 
-void AT8PlayerController::ServerSetAppearanceData_Implementation(const FCharacterAppearanceData& InData)
-{
-	UE_LOG(LogTemp, Warning, TEXT("[Server] ServerSetAppearanceData_Implementation"));
-	
-	if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
-	{
-		PS->SetAppearanceData(InData);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Server] PlayerState is null in ServerSetAppearanceData_Implementation"));
-	}
-}
-
 void AT8PlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -68,4 +43,27 @@ void AT8PlayerController::SetupInputComponent()
 void AT8PlayerController::HandleNextPhaseInput()
 {
 	UGameplayStatics::OpenLevel(this, FName("ResultMap"));
+}
+
+void AT8PlayerController::Client_TriggerSendAppearance_Implementation()
+{
+	UCharacterAppearanceSubsystem* Sub = GetGameInstance()->GetSubsystem<UCharacterAppearanceSubsystem>();
+	if (Sub)
+	{
+		Server_SendMyAppearance(Sub->CachedAppearanceData);
+	}
+}
+
+void AT8PlayerController::Server_SendMyAppearance_Implementation(const FCharacterAppearanceData& Data)
+{
+	AT8PlayerState* PS = GetPlayerState<AT8PlayerState>();
+	if (PS)
+	{
+		PS->ApperanceData = Data;
+
+		if (ACharacterBase* MyChar = Cast<ACharacterBase>(PS->GetPawn()))
+		{
+			MyChar->ApplyApperance(Data);
+		}
+	}
 }

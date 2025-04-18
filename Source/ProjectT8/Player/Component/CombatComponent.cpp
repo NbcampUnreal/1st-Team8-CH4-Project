@@ -6,6 +6,7 @@
 #include "Player/CharacterBase.h"
 #include "Player/Component/ItemComponent.h"
 #include "Item/Weapon.h"
+#include "Animation/AnimMontage.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -16,6 +17,15 @@ UCombatComponent::UCombatComponent()
 void UCombatComponent::Init(ACharacter* InOwner)
 {
 	OwnerCharacter = InOwner;
+
+	if (OwnerCharacter)
+	{
+		if (UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance())
+		{
+			AnimInstance->OnMontageBlendingOut.RemoveDynamic(this, &UCombatComponent::OnAttackMontageBlendingOut);
+			AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UCombatComponent::OnAttackMontageBlendingOut);
+		}
+	}
 }
 
 void UCombatComponent::Attack()
@@ -90,6 +100,13 @@ void UCombatComponent::Multicast_PlayAttackMontage_Implementation()
 
 void UCombatComponent::HandleAttackNotify()
 {
+	if (bAlreadyHit)
+	{
+		UE_LOG(LogTemp, Display, TEXT("bAlreadyHit TRUE!!!"));
+		return;
+	}
+	bAlreadyHit = true;
+
 	OnAttackHit();
 }
 
@@ -191,6 +208,11 @@ void UCombatComponent::ApplyKnockback(AActor* TargetActor)
 	KnockbackDir.Z = 0.5f;
 	KnockbackDir.Normalize();
 	Multicast_ApplyKnockback(TargetActor, KnockbackDir);
+}
+
+void UCombatComponent::OnAttackMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	bAlreadyHit = false;
 }
 
 void UCombatComponent::Multicast_ApplyKnockback_Implementation(AActor* TargetActor, FVector Direction)

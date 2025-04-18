@@ -15,6 +15,7 @@
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/GameMode/T8GameMode.h"
 #include "GameFramework/GameState/LobbyGameState.h"
+#include "GameFramework/Common/T8PlayerState.h"
 
 
 AT8AICharacter::AT8AICharacter()
@@ -73,15 +74,6 @@ void AT8AICharacter::BeginPlay()
 		{
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 			UE_LOG(LogTemp, Warning, TEXT("초기화 이펙트 적용 완료"));
-		}
-	}
-
-	if (FloatingStatusWidget)
-	{
-		StatusWidget = Cast<UFloatingStatusWidget>(FloatingStatusWidget->GetUserWidgetObject());
-		if (StatusWidget)
-		{
-			StatusWidget->SetOwnerCharacter(Cast<ACharacterBase>(this));
 		}
 	}
 
@@ -305,6 +297,14 @@ void AT8AICharacter::InitializeFloatingStatusWidget()
 		if (StatusWidget)
 		{
 			StatusWidget->SetOwnerCharacter(this);
+			if (AT8PlayerState* PS = GetPlayerState<AT8PlayerState>())
+			{
+				StatusWidget->SetPlayerName(PS->PersonaName);
+			}
+			else
+			{
+				StatusWidget->SetPlayerName(TEXT("AI"));
+			}
 		}
 	}
 }
@@ -343,8 +343,27 @@ void AT8AICharacter::UpdateHealthUI()
 	}
 }
 
+void AT8AICharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	InitAbilityActorInfo();
+	InitializeFloatingStatusWidget();
+}
+
+void AT8AICharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	InitAbilityActorInfo();
+	InitializeFloatingStatusWidget();
+
+}
+
 void AT8AICharacter::HandleHealthChanged(float NewHealth, float MaxHealth)
 {
+	if (StatusWidget)
+	{
+		StatusWidget->UpdateHealthBar(NewHealth, MaxHealth);
+	}
 	if (!bIsDead && NewHealth <= 0.0f)
 	{
 		Die();

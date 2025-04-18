@@ -24,6 +24,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Game Data")
     ETeamSetup SavedTeamSetup;
 
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Game Result")
+    TArray<APlayerState*> WinningPlayerStatesResult;
+
     // LobbyGameState�� ������ GameInstance�� ����
     UFUNCTION(BlueprintCallable, Category = "Game Data")
     void SaveLobbyGameState(ALobbyGameState* LobbyGameState);
@@ -33,4 +36,6 @@ public:
     int32 GetAICountForTeam(int32 TeamNumber) const;
 
     const TArray<FSlotInfo>& GetSavedLobbySlots() const { return SavedLobbySlots; }
+
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
