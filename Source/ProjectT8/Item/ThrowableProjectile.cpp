@@ -41,37 +41,6 @@ void AThrowableProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* Othe
 
 	Destroy();
 
-	/*TSubclassOf<UGameplayEffect> EffectToApply = GetEffectToApply();
-	if (!EffectToApply) return;
-
-	UE_LOG(LogTemp, Warning, TEXT("```````ThrowableProjectile OnHit: %s`````````````"), *GetName());
-	DrawDebugSphere(GetWorld(), GetActorLocation(), 30.f, 12, FColor::Red, false, 3.f);
-
-	TArray<AActor*> OverlappingActors;
-	ProjectileMesh->GetOverlappingActors(OverlappingActors, ACharacterBase::StaticClass());
-
-	bool bAppliedEffect = false;
-	for (AActor* Actor : OverlappingActors)
-	{
-		if (ACharacterBase* Char = Cast<ACharacterBase>(Actor))
-		{
-			if (UAbilitySystemComponent* ASC = Char->GetAbilitySystemComponent())
-			{
-				ASC->ApplyGameplayEffectToSelf(
-					EffectToApply->GetDefaultObject<UGameplayEffect>(),
-					1.0f,
-					ASC->MakeEffectContext()
-				);
-				bAppliedEffect = true;
-			}
-		}
-	}
-	if (bAppliedEffect)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Hit] Total overlaps: %d"), OverlappingActors.Num());
-		Destroy();
-	}*/
-
 }
 
 TSubclassOf<UGameplayEffect> AThrowableProjectile::GetEffectToApply() const
