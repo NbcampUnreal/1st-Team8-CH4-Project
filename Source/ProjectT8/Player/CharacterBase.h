@@ -75,6 +75,12 @@ public:
 	UPROPERTY()
 	UUserWidget* FlashWidgetInstance;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> PoisonWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* PoisonWidgetInstance;
+
 	void InitAbilityActorInfo();
 
 	UFUNCTION(BlueprintCallable)

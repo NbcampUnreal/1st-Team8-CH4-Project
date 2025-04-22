@@ -1,13 +1,13 @@
 #include "Item/FlashGrenade.h"
-#include "Kismet/GameplayStatics.h"
-#include "Player/CharacterBase.h"
-#include "AbilitySystemComponent.h"
-#include "GameplayEffect.h"
+#include "Item/FlashProjectile.h"
 
 AFlashGrenade::AFlashGrenade()
 {
 	ItemName = "FlashGrenade";
-    EffectRadius = BlindRadius;
-	ItemMesh->SetWorldScale3D(FVector(3.5f));
-	InteractSphere->SetSphereRadius(15.0f);
+
+	static ConstructorHelpers::FClassFinder<AProjectile> ProjectileBPClass(TEXT("/Game/Blueprints/Item/BP_FlashProjectile"));
+	if (ProjectileBPClass.Succeeded())
+	{
+		ProjectileClass = ProjectileBPClass.Class;
+	}
 }

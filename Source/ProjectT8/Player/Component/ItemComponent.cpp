@@ -35,6 +35,7 @@ void UItemComponent::TryPickUpItem(ABaseItem* NewItem)
 	}
 	EquippedItem = NewItem;
 	EquippedItem->SetOwner(OwnerCharacter);
+	UE_LOG(LogTemp, Warning, TEXT("[TryPickUpItem] Equipped: %s"), *GetNameSafe(NewItem));
 
 	if (ACharacterBase* PlayerCharacter = Cast<ACharacterBase>(OwnerCharacter))
 	{
@@ -110,24 +111,16 @@ void UItemComponent::Multicast_AttachItem_Implementation(ABaseItem* Item)
 	{
 		Item->GetItemMesh()->SetVisibility(true);
 		Item->GetItemMesh()->SetSimulatePhysics(false);
-		Item->GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Item->GetItemMesh()->SetEnableGravity(false);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[AttachItem] WARNING: ItemMesh is nullptr for item: %s"), *GetNameSafe(Item));
 	}
-	if (AThrowable* ThrowableItem = Cast<AThrowable>(Item))
-	{
-		if (ThrowableItem->GetEffectCollision())
-		{
-			ThrowableItem->GetEffectCollision()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-	}
 
 	Item->GetItemMesh()->SetWorldLocation(OwnerCharacter->GetActorLocation() + FVector(0, 0, 50));
 	Item->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::KeepWorldTransform, TEXT("WeaponSocket"));
-
+		
 	// 기본 AttachOffset 적용
 	FTransform ItemTransform = Item->AttachOffset;
 	

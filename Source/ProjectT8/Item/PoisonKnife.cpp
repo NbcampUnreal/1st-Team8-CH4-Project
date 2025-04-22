@@ -1,11 +1,13 @@
 #include "Item/PoisonKnife.h"
-#include "Player/CharacterBase.h"
-#include "AbilitySystemComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Components/SphereComponent.h"
+#include "Item/PoisonProjectile.h"
 
 APoisonKnife::APoisonKnife()
 {
     ItemName = "PoisonKnife";
-    EffectRadius = PoisonRadius;
+
+	static ConstructorHelpers::FClassFinder<AProjectile> ProjectileBPClass(TEXT("/Game/Blueprints/Item/BP_PoisonProjectile"));
+	if (ProjectileBPClass.Succeeded())
+	{
+		ProjectileClass = ProjectileBPClass.Class;
+	}
 }

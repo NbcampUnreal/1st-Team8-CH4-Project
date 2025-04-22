@@ -256,6 +256,15 @@ void ACharacterBase::ShowStatusWidget(const FGameplayTag& Tag)
 	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Poisoned")))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("독 독 독!!!"));
+		if (!PoisonWidgetInstance && PoisonWidgetClass)
+		{
+			PoisonWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), PoisonWidgetClass);
+			if (PoisonWidgetInstance)
+			{
+				PoisonWidgetInstance->AddToViewport();
+				UE_LOG(LogTemp, Warning, TEXT("독 위젯 생성"));
+			}
+		}
 	}
 
 	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Burning")))
@@ -320,6 +329,16 @@ void ACharacterBase::HideStatusWidget(const FGameplayTag& Tag)
 			FlashWidgetInstance->RemoveFromParent();
 			FlashWidgetInstance = nullptr;
 			UE_LOG(LogTemp, Warning, TEXT("플래시 위젯 제거"));
+		}
+	}
+
+	if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag("State.Poisoned")))
+	{
+		if (PoisonWidgetInstance)
+		{
+			PoisonWidgetInstance->RemoveFromParent();
+			PoisonWidgetInstance = nullptr;
+			UE_LOG(LogTemp, Warning, TEXT("독 위젯 제거"));
 		}
 	}
 
